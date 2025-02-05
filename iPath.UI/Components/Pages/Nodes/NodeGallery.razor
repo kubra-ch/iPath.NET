@@ -1,0 +1,45 @@
+﻿@using Microsoft.Extensions.Options
+@using iPath.Application.Configuration
+
+@inject INodeViewModel vm
+
+
+@**** Gallery View **********************************************@
+<div class="gallery">
+	@foreach (var c in Parent.VisibleChildren)
+	{
+		<div class="gallery-item">
+			<img src="@c.ThumbUrl" alt="@c.Filename" width="@ThumbWidth" height="@ThumbHeight" @onclick=@(() => SelectChild(c.Id))>
+		</div>
+	}
+</div>
+
+
+@code {
+	[Parameter]
+	public NodeModel Parent { get; set; }
+
+	[CascadingParameter]
+	public CascadingAppState appState { get; set; }
+
+
+	[Inject]
+	public IOptions<iPathConfig> Opts { get; set; }
+
+	int ThumbWidth = 120;
+	int ThumbHeight = 120;
+
+	protected override void OnInitialized()
+	{
+		ThumbHeight = Opts.Value.ThumbSize;
+		ThumbWidth = Opts.Value.ThumbSize;
+	}
+
+	[Parameter]
+	public EventCallback<int> OnChildNodeActivated { get; set; }
+
+	async Task SelectChild(int id)
+	{
+		await OnChildNodeActivated.InvokeAsync(id);
+	}
+}

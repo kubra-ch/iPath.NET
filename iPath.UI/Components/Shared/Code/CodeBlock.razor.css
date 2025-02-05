@@ -1,0 +1,18 @@
+﻿.codeblock {
+    position: relative;
+    border: 1px solid gray;
+    padding: 4px;
+}
+
+.position-relative {
+    position: relative;
+    background-color: #f5f5f5;
+    padding: 4px;
+    border: 1px solid;
+}
+
+.copybutton {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+}

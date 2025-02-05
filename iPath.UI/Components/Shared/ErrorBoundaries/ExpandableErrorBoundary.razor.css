@@ -1,0 +1,24 @@
+﻿.error-display {
+    margin: 4px;
+    border: 1px solid red;
+    padding: 8px;
+    background-color: antiquewhite;
+    color: red;
+    position: relative;
+}
+
+.error-display-message {
+    font-weight: bold;
+    padding-top: 4px;
+    padding-bottom: 4px;
+}
+
+.error-display-buttons {
+    position: absolute;
+    right: 4px;
+    top: 4px;
+}
+
+.error-display-stack {
+    color: black;
+}

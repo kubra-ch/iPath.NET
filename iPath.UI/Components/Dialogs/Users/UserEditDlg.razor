@@ -1,0 +1,67 @@
+﻿@implements IDialogContentComponent<User>
+
+@inject AuthenticationStateProvider authStateProvider
+
+
+@* Header *@
+<FluentDialogHeader ShowDismiss="true">
+    <FluentStack VerticalAlignment="VerticalAlignment.Center">
+        <FluentIcon Value="@(new Icons.Regular.Size24.WindowApps())" />
+        <FluentLabel Typo="Typography.PaneHeader">
+            Edit Settings for @Content.Username #@Content.Id
+        </FluentLabel>
+    </FluentStack>
+</FluentDialogHeader>
+
+@* Footer *@
+<FluentDialogFooter>
+    <FluentButton Appearance="Appearance.Accent" OnClick="@SaveAsync">Save</FluentButton>
+    <FluentButton Appearance="Appearance.Neutral" OnClick="@CancelAsync">Cancel</FluentButton>
+</FluentDialogFooter>
+
+@* Body *@
+<FluentDialogBody>
+    <FluentStack Orientation="Orientation.Vertical">
+        <FluentTextField Disabled="@(!IsAdmin)" style="width: 100%;" @bind-Value="@Content.Username" Label="Username" />
+        <FluentTextField Disabled="@(!IsAdmin)" style="width: 100%;" @bind-Value="@Content.Email" Label="Email" />
+        <FluentTextField style="width: 100%;" @bind-Value="@Content.Firstname" Label="Firstname" />
+        <FluentTextField style="width: 100%;" @bind-Value="@Content.Familyname" Label="Familyname" />
+        <FluentTextField style="width: 100%;" @bind-Value="@Content.Specialisation" Label="Specialisation" />
+        <FluentSelect TOption="string" Items="CountryHelper.CountryCodes" @bind-Value="@Content.Country" Label="Country" />
+        <FluentSwitch @bind-Value="@Content.IsActive" Label="Active" />
+        @if (IsAdmin)
+        {
+            <FluentSwitch @bind-Value="@Content.IsSysAdmin" Label="System Adminstrator" />
+        }
+    </FluentStack>
+</FluentDialogBody>
+
+@code {
+    [Parameter]
+    public User Content { get; set; } = default!;
+
+    [CascadingParameter]
+    public FluentDialog Dialog { get; set; } = default!;
+
+    
+    bool IsAdmin = false;
+    protected override async Task OnInitializedAsync()
+    {
+        var iPathASP = authStateProvider as iPathAuthenticationStateProvider;
+        var session = await iPathASP.GetSessionAsync();
+        if( session.Role == "Admin" ){
+            IsAdmin = true;
+        }
+    }
+
+
+    private async Task SaveAsync()
+    {
+        await Dialog.CloseAsync(Content);
+    }
+
+    private async Task CancelAsync()
+    {
+        await Dialog.CancelAsync();
+    }
+}

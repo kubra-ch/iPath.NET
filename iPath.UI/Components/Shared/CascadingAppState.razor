@@ -1,0 +1,25 @@
+﻿@using iPath.UI.Areas.AppState
+@implements IAppState
+@inject AuthenticationStateProvider authStateProvider
+
+<CascadingValue Value="this">
+	@ChildContent
+</CascadingValue>
+
+@code {
+	[Parameter]
+	public RenderFragment ChildContent { get; set; }
+
+	private UserSession _session;
+	public async Task<UserSession> GetSessionAsync()
+	{
+		if (_session == null)
+		{
+			var iPathASP = authStateProvider as iPathAuthenticationStateProvider;
+			_session = await iPathASP.GetSessionAsync();
+		}
+		return _session;
+	}
+
+	public UserSession Session => _session;
+}

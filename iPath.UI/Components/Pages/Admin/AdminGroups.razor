@@ -1,0 +1,104 @@
+﻿@page "/admin/groups"
+
+@using iPath.UI.Components.Dialogs.Groups
+@using iPath.UI.ViewModels.Admin.Groups
+
+@inject IAdminGroupViewModel vm
+@inject IDialogService srvDialog
+@inject IToastService srvToast
+@inject AuthenticationStateProvider authState
+
+<h3>Discussion Group Administration</h3>
+
+<FluentDataGrid TGridItem="Group" ItemsProvider="@vm.GridDataProvider"
+Pagination="@pagination" @ref="grid"
+GridTemplateColumns="0.2fr 1fr 0.4fr 0.4fr 0.4fr 0.5fr">
+    <PropertyColumn Property="u => u.Id" />
+    <PropertyColumn Property="u => u.Name" />
+    <PropertyColumn Property="u => u.Owner!.Username" Title="Owner" />
+    <PropertyColumn Property=@(u => u.Community == null ? "--" : u.Community.Name) Title="Community" />
+    <PropertyColumn Property="u => u.Visibility" Title="Visibility" />
+    <TemplateColumn Title="Actions">
+        <FluentButton IconEnd="@(new Icons.Regular.Size16.Edit())" Title="Edit" OnClick=@(async () => await EditGroup(context)) />
+        <FluentButton IconEnd="@(new Icons.Regular.Size16.PersonAdd())" Title="Members" OnClick=@(async () => await EditGroupMembers(context)) />
+    </TemplateColumn>
+</FluentDataGrid>
+<FluentPaginator State="@pagination" />
+
+<FluentButton OnClick="CreateGroup">Create new Group</FluentButton>
+
+<hr />
+<p>@vm.ErrorMessage</p>
+
+@code {
+    FluentDataGrid<Group> grid;
+    PaginationState pagination = new PaginationState { ItemsPerPage = 10 };
+
+    override protected async Task OnInitializedAsync()
+    {
+        await vm.ExecuteSearchAsync();
+    }
+
+
+    async Task CreateGroup()
+    {
+        var newName = string.Empty;
+        var dialogInstance = await srvDialog.ShowDialogAsync(@<div>
+        <FluentTextField @bind-Value=newName Label="Name for new Group:" Style="width: 100%;" />
+    </div>
+    , new DialogParameters
+    {
+        Title = "Create new Group",
+    });
+
+        var result = await dialogInstance.Result;
+        if (!result.Cancelled)
+        {
+            var iPathASP = authState as iPathAuthenticationStateProvider;
+            var session = await iPathASP.GetSessionAsync();
+            await vm.CreateGroupAsync(newName, "discussion group", session.UserId, null);
+        }
+    }
+
+
+
+    async Task EditGroup(Group grp)
+    {
+        if (grp is null) return;
+
+        await vm.SelectGroupId(grp.Id);
+        grp = vm.SelectedGroup;
+
+        var dialog = await srvDialog.ShowDialogAsync<GroupEditDlg>(grp, new DialogParameters()
+            {
+                Width = "600px",
+				Title = "Edit Group",
+                PreventDismissOnOverlayClick = true,
+                PreventScroll = true,
+            });
+
+        var result = await dialog.Result;
+        if (!result.Cancelled && result.Data != null)
+        {
+            var resp = await vm.UpdateGroupAsync(grp);
+            if( !resp.Success ){
+                srvToast.ShowError(resp.Message);
+            }
+            else
+            {
+                await grid.RefreshDataAsync();
+            }
+        }
+    }
+
+    async Task EditGroupMembers(Group grp)
+    {
+
+    }
+
+    async Task DeleteGroup(Group grp)
+    {
+
+    }
+
+}

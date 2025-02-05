@@ -1,0 +1,85 @@
+﻿@using iPath.UI.ViewModels.Users
+
+@inherits LayoutComponentBase
+@inject IDialogService DialogService
+@inject AuthenticationStateProvider authStateProvider
+@inject NavigationManager nm
+
+<FluentDesignTheme StorageName="theme" />
+
+<FluentLayout>
+    <FluentToastProvider MaxToastCount="10" />
+    <FluentTooltipProvider />
+    <FluentDialogProvider />
+    <FluentHeader>
+        iPath.NET
+        <FluentSpacer />
+        @if( User != null ){
+            <FluentProfileMenu slot="end" Status="@PresenceStatus.Available" @ref="@profileMenu"
+            HeaderLabel="iPath-User"
+            Initials="@User.Initials"
+            FullName="@User.Fullname"
+            EMail="@User.Email"
+            OnFooterLinkClick="@OnNavigateToProfile"
+            OnHeaderButtonClick="@OnLogout"
+            PopoverStyle="min-width: 330px;" />
+        }
+    </FluentHeader>
+    <FluentStack Class="main" Orientation="Orientation.Horizontal" Width="100%">
+        <NavMenu />
+        <FluentBodyContent Class="body-content">
+            <div class="content">
+                @Body
+            </div>
+        </FluentBodyContent>
+    </FluentStack>
+    <FluentFooter>
+        <AuthorizeView Roles="Admin">
+            <Authorized>
+                <b>System Adminstrator</b>
+            </Authorized>
+        </AuthorizeView>
+
+        <FluentSpacer />
+        <a href="https://ipath-network.com" target="_blank">About iPath.NET</a>
+    </FluentFooter>
+</FluentLayout>
+
+<div id="blazor-error-ui">
+    An unhandled error has occurred.
+    <a href="" class="reload">Reload</a>
+    <a class="dismiss">🗙</a>
+</div>
+
+@code
+{
+    FluentProfileMenu profileMenu;
+    UserModel User;
+
+    [CascadingParameter]
+    CascadingAppState appState { get; set; } = null!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        User = null;
+        var session = await appState.GetSessionAsync();
+        if( session != null )
+        {
+            User = new UserModel(session.User);
+        }   
+    }
+
+    void OnLogout()
+    {
+        profileMenu.Open = false;
+		nm.NavigateTo("/auth/logout");
+	}
+
+    void OnNavigateToProfile()
+    {
+        profileMenu.Open = false;
+		nm.NavigateTo("/auth/profile/" + User.Id); 
+    }
+
+}
+

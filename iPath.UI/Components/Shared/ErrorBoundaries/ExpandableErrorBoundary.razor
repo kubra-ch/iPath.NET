@@ -1,0 +1,33 @@
+﻿<ExpandableErrorBoundaryCls @ref=@eb>
+    <ChildContent>
+        @ChildContent
+    </ChildContent>
+    <ErrorContent>
+        <div class="error-display">
+            <dic class="error-display-buttons">
+                <button @onclick=@(() => hideStack = !hideStack)>Details</button>
+                <button @onclick=@(() => @eb.Recover())>Try again</button>
+            </dic>
+            <div>We are sorry. An error has occured</div>
+            <div class="error-display-message">@eb.ErrorMessage</div>
+            <div class="error-display-stack" hidden="@hideStack">
+                <CodeBlock Code="@eb.StackTrace" />
+            </div>
+        </div>
+    </ErrorContent>
+</ExpandableErrorBoundaryCls>
+
+@code {
+    [Parameter]
+    public RenderFragment ChildContent {get; set;}
+
+    bool hideStack = true;
+
+    ExpandableErrorBoundaryCls eb;
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+    }
+
+}

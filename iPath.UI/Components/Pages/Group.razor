@@ -1,0 +1,132 @@
+﻿@page "/groups/{GroupId:int}"
+@using iPath.UI.ViewModels.Groups
+@using iPath.UI.ViewModels.Nodes
+
+@inject IGroupViewModel vm
+@inject IDialogService srvDialog
+@inject IToastService srvToast
+@inject NavigationManager nm
+
+@if(vm.Model is null )
+{
+	<FluentProgressRing />
+}
+else
+{
+	<ExpandableErrorBoundary>
+
+		<div class="nodeheader">
+			<div class="nodeheader_title">
+				@vm.Model.Name
+			</div>
+			<div class="nodeheader_actions">
+			</div>
+			<div class="nodeheader_appbar">
+				<FluentAppBar Orientation="Orientation.Horizontal">
+					<FluentAppBarItem Href="/"
+									  Match="NavLinkMatch.All"
+									  IconRest="HomeIcon()"
+									  IconActive="HomeIcon(active: true)"
+									  Text="Home" />
+
+					@if (appState.Session.IsAdmin)
+					{
+						<FluentAppBarItem Href=@($"/groups/edit/{GroupId}")
+										  Match="NavLinkMatch.All"
+										  IconRest="EditIcon()"
+										  IconActive="EditIcon(active: true)"
+										  Text="Edit" />
+					}
+
+					<FluentAppBarItem OnClick="CreateNode"
+									  Match="NavLinkMatch.All"
+									  IconRest="AddCaseIcon()"
+									  IconActive="AddCaseIcon(active: true)"
+									  Text="New Case" />
+				</FluentAppBar>
+			</div>
+		</div>
+
+
+		<FluentDataGrid TGridItem="NodeModel" ItemsProvider="@vm.NodesDataProvider"
+		@ref="grid" Pagination="pagination"
+		GridTemplateColumns="4fr 1fr 1fr"
+		OnRowClick="GoToNode">
+			<TemplateColumn Title="Title">
+				<div style="font-weight: bold;">@context.Caption</div>
+				@if (context.HasSubTitle)
+				{
+					<div>@context.SubTitle</div>
+				}
+			</TemplateColumn>
+			<PropertyColumn Title="Sender" Property="@(x => x.OwnerName)" Align="Align.End" />
+			<PropertyColumn Title="Created On" Property="@(x => x.CreatedDateStr)" Align="Align.End" />
+		</FluentDataGrid>
+		<FluentPaginator State="pagination" />
+
+	</ExpandableErrorBoundary>
+}
+
+@code {
+	[Parameter]
+	public int GroupId { get; set; }
+
+	PaginationState pagination = new PaginationState { ItemsPerPage = 25 };
+	FluentDataGrid<NodeModel> grid;
+
+	[CascadingParameter]
+	public CascadingAppState appState { get; set; }
+
+
+
+
+	private static Icon EditIcon(bool active = false) =>
+		active ? new Icons.Filled.Size24.Edit() : new Icons.Regular.Size24.Edit();
+
+	private static Icon AddCaseIcon(bool active = false) =>
+		active ? new Icons.Filled.Size24.AddCircle() : new Icons.Regular.Size24.AddCircle();
+
+	private static Icon HomeIcon(bool active = false) =>
+		active ? new Icons.Filled.Size24.Home() : new Icons.Regular.Size24.Home();
+
+
+
+
+	protected override async Task OnParametersSetAsync()
+	{
+		await vm.LoadGroupAsync(GroupId);
+	}
+
+	void GoToNode(FluentDataGridRow<NodeModel> row)
+	{
+		nm.NavigateTo("/nodes/" + row.Item.Id);
+	}
+
+
+	async Task CreateNode()
+	{
+		var newName = string.Empty;
+		var dialogInstance = await srvDialog.ShowDialogAsync(@<div>
+		<FluentTextField @bind-Value=newName Label="Name for new Group:" Style="width: 100%;" />
+	</div>
+	, new DialogParameters
+	{
+		Title = "Create new Case",
+	});
+
+		var result = await dialogInstance.Result;
+		if (!result.Cancelled)
+		{
+			var resp = await vm.CreateNodeAsync(appState.Session.UserId, newName, NodeType.Case);
+			if( !resp.Success )
+			{
+				srvToast.ShowError(resp.Message);
+			}
+			else
+			{
+				await grid.RefreshDataAsync();
+			}			
+		}
+	}
+}
+

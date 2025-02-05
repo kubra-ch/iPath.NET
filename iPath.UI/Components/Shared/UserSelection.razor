@@ -1,0 +1,38 @@
+﻿@using iPath.UI.ViewModels.Admin.Users
+@inject IAdminUserViewModel vm
+
+<FluentAutocomplete TOption="User"
+MaximumSelectedOptions="1"
+AutoComplete="off"
+Autofocus="false"
+Label="@Label"
+Width="250px"
+MaxAutoHeight="200px"
+Placeholder="Select user"
+OnOptionsSearch="@OnSearchAsync"
+OptionText="@(item => item.Username)"
+@bind-SelectedOptions="@selection" />
+
+@code {
+    [Parameter]
+    public User? SelectedUser { get; set; }
+
+    [Parameter]
+    public string Label { get; set; }
+
+    [Parameter]
+    public EventCallback<User> SelectedUserChanged { get; set; }
+
+    IEnumerable<User> selection {
+        get => SelectedUser != null ? new List<User> { SelectedUser } : new List<User>();
+        set {
+            SelectedUser = value.FirstOrDefault();
+            SelectedUserChanged.InvokeAsync(SelectedUser);
+        }
+    }
+
+    private async Task OnSearchAsync(OptionsSearchEventArgs<User> e)
+    {
+        e.Items = await vm.FindUsersAsync(e.Text);
+    }
+}

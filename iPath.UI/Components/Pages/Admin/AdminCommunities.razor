@@ -1,0 +1,168 @@
+﻿@page "/admin/communities"
+
+@using iPath.UI.ViewModels.Admin.Communities
+@using iPath.UI.ViewModels.Admin.Groups
+
+@inject IAdminCommunityViewModel vm
+@inject IAdminGroupViewModel vmGroups
+@inject AuthenticationStateProvider authState
+@inject IDialogService srvDialog
+@inject IToastService srvToast
+
+<FluentBreadcrumb>
+	<FluentBreadcrumbItem Href="/">
+		home
+	</FluentBreadcrumbItem>
+	<FluentBreadcrumbItem Href="/admin">
+		administration
+	</FluentBreadcrumbItem>
+	<FluentBreadcrumbItem>community administration</FluentBreadcrumbItem>
+</FluentBreadcrumb>
+
+
+
+
+@if( count == 0){
+	<p>No communities configured yet</p>
+}
+
+@if( vm.IsReady )
+{
+	<FluentGrid>
+		<FluentGridItem xs="12" md="6">
+			<div class="titleWithActions">
+				<div class="titleHeader">
+					<h4>Communites</h4>
+				</div>				
+				<div class="titleActions">
+					<FluentButton IconEnd="@(new Icons.Regular.Size16.AddCircle())"
+								  Title="Create a new community"
+								  OnClick="CreateCommunity" />
+				</div>
+			</div>
+			
+			<ExpandableErrorBoundary>
+				<FluentDataGrid TGridItem="Community" ItemsProvider="@vm.GridDataProvider"
+								GridTemplateColumns="1fr 4fr"
+								OnRowClick="@OnCommunityRowClick"
+				Pagination="@communityPagination">
+					<PropertyColumn Property="u => u.Id" />
+					<PropertyColumn Property="u => u.Name" />
+				</FluentDataGrid>
+				<FluentPaginator State="@communityPagination" />
+			</ExpandableErrorBoundary>
+
+			
+		</FluentGridItem>
+		<FluentGridItem xs="12" md="6">
+			@if( vm.SelectedCommunity is null )
+			{
+				<div class="titleWithActions">
+					<div class="titleHeader">
+						<h4>Community Groups</h4>
+					</div>
+				</div>
+			}
+			else
+			{
+				<div class="titleWithActions">
+					<div class="titleHeader">
+						<h4>@vm.SelectedCommunity?.Name - Groups</h4>
+					</div>
+					<div class="titleActions">
+						<FluentButton IconEnd="@(new Icons.Regular.Size16.AddCircle())"
+									  Title="Create a new group"
+									  OnClick="CreateGroup" />
+					</div>
+				</div>
+				<ExpandableErrorBoundary>
+					<FluentDataGrid TGridItem="Group" Items="@vm.SelectedCommunity.Groups.AsQueryable()"
+					GridTemplateColumns="1fr 4fr"
+					Pagination="@groupPagination">
+						<PropertyColumn Property="u => u.Id" />
+						<PropertyColumn Property="u => u.Name" />
+					</FluentDataGrid>
+					<FluentPaginator State="@groupPagination" />
+				</ExpandableErrorBoundary>
+			}
+		</FluentGridItem>
+	</FluentGrid>
+}
+
+
+@code {
+	PaginationState communityPagination = new PaginationState { ItemsPerPage = 10 };
+	PaginationState groupPagination = new PaginationState { ItemsPerPage = 10 };
+	int count = 0;
+
+
+	override protected async Task OnInitializedAsync()
+	{
+		count = await vm.GetCommunityCountAsync();
+		await vm.ExecuteSearchAsync();
+	}
+
+
+
+	async Task OnCommunityRowClick(FluentDataGridRow<Community> row)
+	{
+		if( row != null && row.Item != null ){
+			await vm.SelectCommunityId(row.Item.Id);
+		}
+	}
+
+	async Task CreateCommunity()
+	{
+		var newName = string.Empty;
+		var dialogInstance = await srvDialog.ShowDialogAsync(@<div>
+		<FluentTextField @bind-Value=newName Label="Name:" Style="width: 100%;" />
+	</div>
+	, new DialogParameters
+	{
+		Title = "Create new Community",
+	});
+
+		var result = await dialogInstance.Result;
+		if (!result.Cancelled)
+		{
+			var resp = await vm.CreateCommunityAsync(newName);
+			if (resp.Success)
+			{
+				await vm.ExecuteSearchAsync();
+			}
+			else
+			{
+				srvToast.ShowError(resp.Message);
+			}
+		}
+	}
+
+
+
+	async Task CreateGroup()
+	{
+		if (vm.SelectedCommunity is null)
+		{
+			srvToast.ShowError("Please select a community first");
+			return;
+		}
+
+		var newName = string.Empty;
+		var dialogInstance = await srvDialog.ShowDialogAsync(@<div>
+		<FluentTextField @bind-Value=newName Label="Name for new Group:" Style="width: 100%;" />
+	</div>
+	, new DialogParameters
+	{
+		Title = $"Create new Group for {vm.SelectedCommunity.Name}",
+	});
+
+		var result = await dialogInstance.Result;
+		if (!result.Cancelled)
+		{
+			var iPathASP = authState as iPathAuthenticationStateProvider;
+			var session = await iPathASP.GetSessionAsync();
+			await vmGroups.CreateGroupAsync(newName, "discussion group", session.UserId, vm.SelectedCommunity);
+		}
+	}
+
+}

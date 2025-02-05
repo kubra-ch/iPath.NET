@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.12.35707.178
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "iPath.Data", "iPath.Data\iPath.Data.csproj", "{A8D60FB6-3491-45AA-814E-125333411CC1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "iPath.UI", "iPath.UI\iPath.UI.csproj", "{F921AF64-F186-4134-9045-59B622B27986}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "iPath.Application", "iPath.Application\iPath.Application.csproj", "{C315996A-9501-4218-A121-E856920BC1D4}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A8D60FB6-3491-45AA-814E-125333411CC1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A8D60FB6-3491-45AA-814E-125333411CC1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A8D60FB6-3491-45AA-814E-125333411CC1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A8D60FB6-3491-45AA-814E-125333411CC1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F921AF64-F186-4134-9045-59B622B27986}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F921AF64-F186-4134-9045-59B622B27986}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F921AF64-F186-4134-9045-59B622B27986}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F921AF64-F186-4134-9045-59B622B27986}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C315996A-9501-4218-A121-E856920BC1D4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C315996A-9501-4218-A121-E856920BC1D4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C315996A-9501-4218-A121-E856920BC1D4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C315996A-9501-4218-A121-E856920BC1D4}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

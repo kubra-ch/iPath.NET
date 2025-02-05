@@ -1,0 +1,166 @@
+﻿@using iPath.UI.ViewModels.Nodes
+@implements IDialogContentComponent<NodeModel>
+
+@inject INodeViewModel vm
+@inject ILogger<NodeFileUploadDlg> logger
+
+@* Header *@
+<FluentDialogHeader ShowDismiss="true">
+    <FluentStack VerticalAlignment="VerticalAlignment.Center">
+        <FluentIcon Value="@(new Icons.Regular.Size24.WindowApps())" />
+        <FluentLabel Typo="Typography.PaneHeader">
+            Edit Settings for @Content.Caption
+        </FluentLabel>
+    </FluentStack>
+</FluentDialogHeader>
+
+@* Footer *@
+<FluentDialogFooter>
+    <FluentButton Appearance="Appearance.Accent" OnClick="@SaveAsync" Disabled="@DisableSave">Save</FluentButton>
+    <FluentButton Appearance="Appearance.Neutral" OnClick="@CancelAsync">Cancel</FluentButton>
+</FluentDialogFooter>
+
+@* Body *@
+<FluentDialogBody>
+    <FluentInputFile Id="my-file-uploader"
+    Mode="InputFileMode.SaveToTemporaryFolder"
+    Multiple="true"
+    MaximumFileCount="25"
+    MaximumFileSize="@(10*1024*1024)"
+    Accept="image/*"
+    @bind-ProgressPercent="@ProgressPercent"
+    OnFileUploaded="@OnFileUploaded"
+    OnCompleted="@OnCompletedAsync"
+    Style="height: 400px; width: 100%;">
+        <ChildContent>
+            <label for="my-file-uploader">
+                <FluentIcon Value="@(new @Icons.Regular.Size24.ArrowUpload())" />
+            </label>
+
+            <div>
+                Drag files here you wish to upload,
+                or <label for="my-file-uploader">browse</label>
+                for them<span style="color: red;">*</span>.
+                <br />
+                <em>Maximum of 25 files allowed.</em>
+            </div>
+
+            <FluentListbox Items="@UploadedFiles"
+            Width="100%" Height="280px"
+            OptionValue="@(i => i.Key.ToString())">
+                <OptionTemplate>
+                    <FluentIcon Icon="Icons.Regular.Size16.Delete" Slot="end" OnClick="@(() => Delete(@context.Key))" />
+                    @context.Value.Name
+                </OptionTemplate>
+            </FluentListbox>
+
+            <div>
+                <br />
+                <a href="#">Read more about our supported file formats.</a>
+            </div>
+        </ChildContent>
+    </FluentInputFile>
+
+    <p>@Message</p>
+
+</FluentDialogBody>
+
+@code {
+    [Parameter]
+    public NodeModel Content { get; set; } = default!;
+
+    [CascadingParameter]
+    public FluentDialog Dialog { get; set; } = default!;
+
+    [CascadingParameter]
+    public CascadingAppState appState { get; set; }
+
+    string Message;
+    bool DisableSave = true;
+
+    int ProgressPercent = 0;
+
+
+    Dictionary<int, FluentInputFileEventArgs> UploadedFiles = new();
+    List<int> DeletedUploads = new();
+
+
+    private async Task OnFileUploaded(FluentInputFileEventArgs e)
+    {
+        try
+        {
+            // save the uploaded file as tmp node
+            var resp = await vm.UploadFileAsync(appState.Session.UserId, e.Name, e.LocalFile);
+            if (!resp.Success)
+            {
+                Message = resp.Message;
+                // remove temp file
+                e.LocalFile.Delete();
+            }
+            else
+            {
+                UploadedFiles.Add(resp.childNode.Id, e);
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex.Message);
+        }
+    }
+
+    private async Task OnCompletedAsync(IEnumerable<FluentInputFileEventArgs> files)
+    {
+        ProgressPercent = 0;
+        DisableSave = false;
+    }
+
+    async Task Delete(int id)
+    {
+        try
+        {
+            if( UploadedFiles.ContainsKey(id) )
+            {
+                // delete from database
+                var resp = await vm.DeleteNodeAsync(id);
+
+                // delete temp
+                UploadedFiles[id].LocalFile.Delete();
+
+                // remove from list
+                UploadedFiles.Remove(id);
+            }
+        }
+        catch(Exception ex)
+        {
+            logger.LogError(ex.Message);
+        }
+    }
+
+
+    private async Task SaveAsync()
+    {
+        // set uploaded files to fisible
+        var resp = await vm.UpdateNodesVisibilityAsync(UploadedFiles.Keys.ToList(), eNodeVisibility.Visible);
+
+        // delete temp files
+        DeleteTempFiles();
+
+        await Dialog.CloseAsync(resp);
+    }
+
+    private async Task CancelAsync()
+    {
+        var resp = await vm.DeleteNodesAsync (UploadedFiles.Keys.ToList());
+        DeleteTempFiles();
+        await Dialog.CancelAsync();
+    }
+
+    private void DeleteTempFiles()
+    {
+        foreach (var e in UploadedFiles.Values )
+        {
+            e.LocalFile.Delete();
+        }
+        UploadedFiles.Clear();
+    }
+}

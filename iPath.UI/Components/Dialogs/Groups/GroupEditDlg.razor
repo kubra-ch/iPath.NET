@@ -1,0 +1,51 @@
+﻿@implements IDialogContentComponent<Group>
+
+@* Header *@
+<FluentDialogHeader ShowDismiss="true">
+    <FluentStack VerticalAlignment="VerticalAlignment.Center">
+        <FluentIcon Value="@(new Icons.Regular.Size24.WindowApps())" />
+        <FluentLabel Typo="Typography.PaneHeader">
+			Edit Settings for @Content.Name
+        </FluentLabel>
+    </FluentStack>
+</FluentDialogHeader>
+
+@* Footer *@
+<FluentDialogFooter>
+    <FluentButton Appearance="Appearance.Accent" OnClick="@SaveAsync">Save</FluentButton>
+    <FluentButton Appearance="Appearance.Neutral" OnClick="@CancelAsync">Cancel</FluentButton>
+</FluentDialogFooter>
+
+@* Body *@
+<FluentDialogBody>
+    <FluentStack Orientation="Orientation.Vertical">
+        <FluentTextField style="width: 100%;" @bind-Value="@Content.Name">Name:</FluentTextField>
+        <FluentTextArea style="width: 100%;" @bind-Value="@Content.Purpose">Purpose:</FluentTextArea>
+        <FluentSelect TOption="eGroupVisibility"
+                      Label="Visibility"
+                      Items="@eGroupVisibility.List"
+                      Placeholder="Make a selection..."
+                      OptionText="@(p => p.Name)"
+                      @bind-SelectedOption="@Content.Visibility" />
+		<UserSelection Label="Group Owner" @bind-SelectedUser="@Content.Owner" />
+    </FluentStack>
+    
+</FluentDialogBody>
+
+@code {
+    [Parameter]
+    public Group Content { get; set; } = default!;
+
+    [CascadingParameter]
+    public FluentDialog Dialog { get; set; } = default!;
+
+    private async Task SaveAsync()
+    {         
+        await Dialog.CloseAsync(Content);
+    }
+
+    private async Task CancelAsync()
+    {
+        await Dialog.CancelAsync();
+    }
+}

@@ -1,0 +1,115 @@
+﻿@page "/nodes/edit/{NodeId:int}"
+@using iPath.UI.Components.Pages.Nodes.Dialogs
+@using iPath.UI.ViewModels.Nodes
+
+@inject INodeViewModel vm
+@inject IToastService srvToast
+@inject IDialogService srvDialog
+@inject NavigationManager nm
+
+@if (!string.IsNullOrEmpty(Message))
+{
+	<div class="errormessage">@Message</div>
+}
+
+@if( vm.Model is null )
+{
+	<FluentProgressRing />
+}
+else
+{
+	<ExpandableErrorBoundary>
+		<div class="nodeheader">
+			<div class="nodeheader_title">
+				@vm.Model.Caption
+			</div>
+			<div class="nodeheader_actions">
+			</div>
+			<div class="nodeheader_appbar">
+				<FluentAppBar Orientation="Orientation.Horizontal" >
+					<FluentAppBarItem OnClick="HandleValidSubmit"
+					Match="NavLinkMatch.All"
+					IconRest="SaveIcon()"
+					IconActive="SaveIcon(active: true)"
+					Text="Save" />
+
+					<FluentAppBarItem OnClick="CancelEdit"
+					Match="NavLinkMatch.All"
+					IconRest="CancelIcon()"
+					IconActive="CancelIcon(active: true)"
+					Text="Cancel" />
+				</FluentAppBar>
+			</div>
+		</div>
+
+
+		<EditForm Model="@vm.Model" FormName="node_edit" novalidate OnValidSubmit="@HandleValidSubmit">
+			<FluentTextField Label="Title" @bind-Value="@vm.Model.Title" Style="width: 100%;" @onkeypress:preventDefault />
+			<FluentTextField Label="Sub Title" @bind-Value="@vm.Model.SubTitle" Style="width: 100%;" @onkeypress:preventDefault />
+
+			<FluentLabel>Description</FluentLabel>
+			<MarkupEditor Html="@vm.Model.DescriptionHtml" @ref=@descriptionEditor />
+			<!--
+			<FluentTextArea Label="Description" @bind-Value="@vm.Model.Description" Rows="10" Style="width: 100%;" @onkeypress:preventDefault />
+			-->
+			<div class="titleWithActions">
+				<div class="titleHeader">
+					<h4>Gallery</h4>
+				</div>
+			</div>
+			<NodeGallery Parent="@vm.Model" />
+
+
+			<div class="submitfooter">
+				<FluentButton Type="ButtonType.Submit" Appearance="Appearance.Accent">Submit</FluentButton>
+				<FluentButton Type="ButtonType.Reset" OnClick="CancelEdit" Appearance="Appearance.Outline">Cacel</FluentButton>
+			</div>
+
+
+		</EditForm>
+
+	</ExpandableErrorBoundary>
+}
+
+
+@code {
+	[Parameter]
+	public int NodeId { get; set; }
+
+	[CascadingParameter]
+	public CascadingAppState appState { get; set; }
+
+	string Message;
+	MarkupEditor descriptionEditor;
+
+	private static Icon SaveIcon(bool active = false) =>
+		active ? new Icons.Filled.Size24.Save() : new Icons.Regular.Size24.Save();
+
+	private static Icon CancelIcon(bool active = false) =>
+		active ? new Icons.Filled.Size24.CalendarCancel() : new Icons.Regular.Size24.CalendarCancel();
+
+
+	protected override async Task OnParametersSetAsync()
+	{
+		await vm.LoadNode(NodeId);
+	}
+
+	async Task HandleValidSubmit()
+	{
+		vm.Model.Description = await descriptionEditor.GetHtml();
+		var resp = await vm.UpdateNodeAsync();
+		if( !resp.Success )
+		{
+			Message = resp.Message;
+			srvToast.ShowError(resp.Message);
+			return;
+		}
+		nm.NavigateTo($"/nodes/{NodeId}");
+	}
+
+	void CancelEdit()
+	{
+		nm.NavigateTo($"/nodes/{NodeId}");
+	}
+
+}

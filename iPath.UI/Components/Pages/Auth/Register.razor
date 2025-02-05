@@ -1,0 +1,75 @@
+﻿@page "/auth/register"
+@using System.ComponentModel.DataAnnotations
+
+@inject IMediator mediator
+@inject NavigationManager nm
+
+<h3>Register</h3>
+
+<EditForm Model="@model" OnValidSubmit="CreateUser">
+    <DataAnnotationsValidator />
+    <FluentValidationSummary />
+
+    <FluentStack Orientation="Orientation.Vertical">
+        <FluentTextField Label="Username" Placeholder="Username" @bind-Value="model.username" />
+        <FluentTextField Label="Email" Placeholder="Password" @bind-Value ="model.email" TextFieldType="TextFieldType.Email" />
+        <FluentTextField Label="Password" @bind-Value="model.password" TextFieldType="TextFieldType.Password" />
+        <FluentTextField Label="Repeat" @bind-Value="model.password2" TextFieldType="TextFieldType.Password" />
+        <FluentButton Type="ButtonType.Submit" Appearance="Appearance.Accent">Register</FluentButton>
+    </FluentStack>
+</EditForm>
+
+@if (!string.IsNullOrEmpty(Message))
+{
+    <p style="margin-top: 2em; border: 1px solid; padding: 1em; color: red;">@Message</p>
+}
+
+@code {
+    private EditModel model = new();
+    private string Message;
+
+    private class EditModel
+    {
+        [Required, MinLength(3)]
+        // [RegularExpression(@"^[A-Z][a-z][0-9][\.\-_]$")]
+        public string username { get; set; }
+
+        [Required, EmailAddress]
+        public string email { get; set; }
+
+        [Required, MinLength(4)]
+        public string password { get; set; }
+
+        [Required, MinLength(4)]
+        public string password2 { get; set; }
+    }
+
+    async Task CreateUser()
+    {
+        Message = "creating user account...";
+        StateHasChanged();
+
+		if (model.password != model.password2)
+		{
+			Message = "Passwords do not match";
+			return;
+		}
+
+		var request = new CreateUserCommand
+			{
+				Username = model.username,
+				Email = model.email,
+				Password = model.password
+			};
+
+		var resp = await mediator.Send(request);
+        if (!resp.Success)
+        {
+            Message = resp.Message;
+        }
+        else
+        {
+			nm.NavigateTo("/auth/login"); 
+        }
+    }
+}

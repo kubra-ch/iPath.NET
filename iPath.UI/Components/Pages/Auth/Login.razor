@@ -1,0 +1,80 @@
+﻿@page "/auth/login"
+@using System.ComponentModel.DataAnnotations
+@using iPath.Data.Entities
+@using iPath.UI.Areas.AppState
+@using iPath.UI.Areas.Identity
+@using iPath.Application.Features
+
+@inject IMediator mediator
+@inject AuthenticationStateProvider authStateProvider
+@inject NavigationManager nm
+@inject ILogger<Login> logger
+
+<h3>Login</h3>
+
+<EditForm Model="@loginModel" OnValidSubmit="HandleLogin">
+    <DataAnnotationsValidator />
+    <FluentValidationSummary />
+
+    <FluentStack Orientation="Orientation.Vertical">
+        <FluentTextField Label="Username" Placeholder="Username or Password" @bind-Value="loginModel.username" />
+        <FluentTextField Label="Password" @bind-Value="loginModel.password" TextFieldType="TextFieldType.Password" />
+        <FluentButton Type="ButtonType.Submit" Appearance="Appearance.Accent">Login</FluentButton>
+    </FluentStack>
+</EditForm>
+
+
+@if( !string.IsNullOrEmpty(Message) )
+{
+    <p style="margin-top: 2em; border: 1px solid; padding: 1em; color: red;">@Message</p>
+}
+
+
+@code {
+    private LoginModel loginModel = new LoginModel();
+    private string Message;
+
+    private async Task HandleLogin()
+    {
+        Message = "authenticating..."; 
+        StateHasChanged();
+
+        LoginRequest request;
+        if( loginModel.username.Contains("@")){
+            request = new LoginRequest(Email: loginModel.username, Password: loginModel.password);
+        }
+        else
+        {
+            request = new LoginRequest(Username: loginModel.username, Password: loginModel.password);
+        }
+
+        var resp = await mediator.Send(request);
+        if (!resp.Success )
+        {
+            logger.LogError("Login Error: " + resp.Message);
+            Message = resp.Message;
+            return;
+        }
+
+        logger.LogInformation("Login for: " + resp.User.Username);
+        Message = "Login successful";
+        var iPathASP = authStateProvider as iPathAuthenticationStateProvider;
+        await iPathASP.UpdateAuthentication(new UserSession(
+            User: resp.User.ToDto(),
+            Role: resp.User.IsSysAdmin ? "Admin" : "User"
+        ));
+
+        nm.NavigateTo("/", true);
+    }
+
+
+    public class LoginModel
+    {
+        [Required, MinLength(3)]
+        public string username { get; set; }
+
+        [Required, MinLength(1)]
+        public string password { get; set; }
+    }
+
+}

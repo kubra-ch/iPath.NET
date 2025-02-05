@@ -1,0 +1,81 @@
+﻿@implements IDialogContentComponent<int>
+@using iPath.UI.ViewModels.Admin.Users
+@inject IUserMemberViewModel vm;
+
+<ExpandableErrorBoundary>
+
+@if (vm.SelectedUser != null)
+{
+    @* Header *@
+    <FluentDialogHeader ShowDismiss="true">
+        <FluentStack VerticalAlignment="VerticalAlignment.Center">
+            <FluentIcon Value="@(new Icons.Regular.Size24.WindowApps())" />
+            <FluentLabel Typo="Typography.PaneHeader">
+                Membership for @vm.SelectedUser.User.Username
+            </FluentLabel>
+        </FluentStack>
+    </FluentDialogHeader>
+
+    @* Footer *@
+    <FluentDialogFooter>
+        <FluentButton Appearance="Appearance.Accent" OnClick="@SaveAsync">Save</FluentButton>
+        <FluentButton Appearance="Appearance.Neutral" OnClick="@CancelAsync">Cancel</FluentButton>
+    </FluentDialogFooter>
+
+    @* Body *@
+    <FluentDialogBody>
+        <FluentDataGrid Items="@Roles" GridTemplateColumns="2fr 1fr 1fr 1fr 1fr 0,5fr">
+            <PropertyColumn Title="Group" Property="m => m.Groupname" Sortable="true"/>
+            <TemplateColumn Title="Guest">
+                <FluentCheckbox @bind-Value="@context.Guest" />
+            </TemplateColumn>
+            <TemplateColumn Title="Member">
+                <FluentCheckbox @bind-Value="@context.User" />
+            </TemplateColumn>
+            <TemplateColumn Title="Moderator">
+                <FluentCheckbox @bind-Value="@context.Moderator" />
+            </TemplateColumn>
+            <TemplateColumn Title="Admin">
+                <FluentCheckbox Disabled="@(!isAdmin)" @bind-Value="@context.Admin" />
+            </TemplateColumn>
+            <TemplateColumn Title="Remove" Align="Align.End">
+                <FluentButton Title="remove from group" IconEnd="@(new Icons.Regular.Size16.Delete())" OnClick="@(() => context.Clear(isAdmin))" />
+            </TemplateColumn>
+        </FluentDataGrid>
+    </FluentDialogBody>
+}
+</ExpandableErrorBoundary>
+
+@code {
+    [Parameter]
+    public int Content { get; set; } = default!;
+    private UserGroupMemberModel Model = default!;
+
+    [CascadingParameter]
+    CascadingAppState appState { get; set; } = null!;
+
+    [CascadingParameter]
+    public FluentDialog Dialog { get; set; } = default!;
+
+
+    private bool isAdmin => appState.Session.IsAdmin;
+
+    private IQueryable<MemberRoleModel> Roles => Model is null ? new List<MemberRoleModel>().AsQueryable() : Model.Membership.OrderBy(m => m.Groupname).AsQueryable();
+
+
+    protected override async Task OnParametersSetAsync()
+    {
+        Model = await vm.LoadUserAsync(Content);
+    }
+
+    private async Task SaveAsync()
+    {
+        var resp = await vm.SaveDataAsync();
+        await Dialog.CloseAsync(resp);
+    }
+
+    private async Task CancelAsync()
+    {
+        await Dialog.CancelAsync();
+    }
+}

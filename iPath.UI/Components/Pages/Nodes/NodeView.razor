@@ -1,0 +1,259 @@
+﻿@page "/nodes/{NodeId:int}"
+@using iPath.UI.Components.Pages.Nodes.Dialogs
+@using iPath.UI.ViewModels.Nodes
+
+@inject INodeViewModel vm
+@inject IToastService srvToast
+@inject IDialogService srvDialog
+
+<div>@vm.Message</div>
+
+
+@if( vm.Model is null )
+{
+	<FluentProgressRing />
+}
+else
+{
+	<ExpandableErrorBoundary>
+		<div class="nodeheader">
+			<div class="nodeheader_title">
+				@vm.Model.Caption
+			</div>
+			<div class="nodeheader_actions">
+				<FluentFlipper Direction="FlipperDirection.Previous" @onclick="@vm.PreviousImage"></FluentFlipper>
+				<FluentFlipper Direction="FlipperDirection.Next" @onclick="@vm.NextImage"></FluentFlipper>
+			</div>
+			<div class="nodeheader_appbar">
+				<FluentAppBar Orientation="Orientation.Horizontal">
+					<FluentAppBarItem Href="/"
+									  Match="NavLinkMatch.All"
+									  IconRest="HomeIcon()"
+									  IconActive="HomeIcon(active: true)"
+									  Text="Home" />
+
+					@if( vm.Model.GroupId.HasValue )
+					{
+						<FluentAppBarItem Href=@($"/groups/{vm.Model.GroupId}")
+										  Match="NavLinkMatch.All"
+										  IconRest="ListIcon()"
+										  IconActive="ListIcon(active: true)"
+										  Text="List" />
+					}
+
+					<FluentAppBarItem OnClick="ReloadNode"
+									  Match="NavLinkMatch.All"
+									  IconRest="CaseIcon()"
+									  IconActive="CaseIcon(active: true)"
+									  Text="Case" />
+
+					@if( canEdit )
+					{
+						<FluentAppBarItem Href=@($"/nodes/edit/{NodeId}")
+										  Match="NavLinkMatch.All"
+										  IconRest="EditIcon()"
+										  IconActive="EditIcon(active: true)"
+										  Text="Edit" />
+					}
+
+					<FluentAppBarItem OnClick="AddAttachment"
+									  Match="NavLinkMatch.All"
+									  IconRest="AttachIcon()"
+									  IconActive="AttachIcon(active: true)"
+									  Text="Add Image" />
+				</FluentAppBar>
+			</div>
+		</div>
+
+		<div class="node_description">
+			<div style="float: right;">
+				<span>@(vm == null || vm.CollapseDescritpion ? "+" : "-")</span>
+			</div>
+			<h4 @onclick="ToggleDescritpion">@vm.SubTitleText</h4>
+			<p hidden="@vm.CollapseDescritpion">@vm.Model.DescriptionHtml</p>
+		</div>
+
+		@***** Gallery *******************************************************@
+		@if (vm.ActiveChild != null && vm.ActiveChild.IsImage)
+		{
+			@**** Image View **********************************************@
+			<div class="image_view">
+				<img src="@vm.ActiveChild.FileUrl" alt="@vm.ActiveChild.Filename"
+					 width="@vm.ActiveChild.ImageWidth"
+					 @onclick="vm.NextImage" />
+				<div class="image_info">
+					@vm.ActiveChild.Filename
+				</div>
+			</div>
+		}
+		else
+		{
+			<div class="titleWithActions">
+				<div class="titleHeader">
+					<h4>Gallery</h4>
+				</div>
+				<div class="titleActions">
+					<FluentButton IconEnd="@(new Icons.Regular.Size16.AddCircle())"
+					Title="Add a new image"
+					OnClick="AddAttachment" />
+				</div>
+			</div>
+			<NodeGallery Parent="@vm.Model" OnChildNodeActivated="@vm.SelectChild" />
+			@if (canEdit && vm.Model.HasUnfinishedUploads)
+			{
+				<div class="gallery_alert">
+					<b>Note: </b>this items contains unfinsihed uploads.
+					<div>
+						<FluentButton Appearance="Appearance.Accent" OnClick="DeleteUnfinished">Delete Uploads</FluentButton>
+						<FluentButton Appearance="Appearance.Accent" OnClick="PublishUnfinished">Plublish Uploads</FluentButton>
+					</div>
+				</div>
+			}
+		}
+
+
+		@***** Annotations *******************************************************@
+		<div class="titleWithActions">
+			<div class="titleHeader">
+				<h4>Annotations</h4>
+			</div>
+			<div class="titleActions">
+				<FluentButton IconEnd="@(new Icons.Regular.Size16.AddCircle())"
+				Title="Create a new Case"
+				OnClick="CreateAnnotation" />
+			</div>
+		</div>
+		@foreach( var a in vm.Model.Annotations.OrderBy(a => a.CreatedOn))
+		{
+			<div class="node_annotation">
+				<div class="annotation_info">
+					<b>@a.Owner.Username</b>
+					<div>@a.CreatedOn.ToShortDateString()</div>
+				</div>
+				<div class="annotation_text">@a.Text</div>
+			</div>
+		}
+	</ExpandableErrorBoundary>
+}
+
+
+@code {
+	[Parameter]
+	public int NodeId { get; set; }
+
+
+	[CascadingParameter]
+	public CascadingAppState appState { get; set; }
+
+	private bool canEdit = false;
+
+
+	private static Icon EditIcon(bool active = false) =>
+		active ? new Icons.Filled.Size24.Edit() : new Icons.Regular.Size24.Edit();
+
+	private static Icon AttachIcon(bool active = false) =>
+		active ? new Icons.Filled.Size24.Attach() : new Icons.Regular.Size24.Attach();
+
+	private static Icon CaseIcon(bool active = false) =>
+		active ? new Icons.Filled.Size24.ArrowEnterUp() : new Icons.Regular.Size24.ArrowEnterUp();
+
+	private static Icon ListIcon(bool active = false) =>
+		active ? new Icons.Filled.Size24.Library() : new Icons.Regular.Size24.Library();
+
+	private static Icon HomeIcon(bool active = false) =>
+		active ? new Icons.Filled.Size24.Home() : new Icons.Regular.Size24.Home();
+
+
+	protected override async Task OnParametersSetAsync()
+	{
+		await ReloadNode();
+	}
+
+	async Task ReloadNode()
+	{
+		await vm.LoadNode(NodeId);
+		canEdit = vm.Model.Owner.Id == appState.Session.UserId;
+	}
+
+	void ToggleDescritpion(){
+		vm.CollapseDescritpion = !vm.CollapseDescritpion;
+	}
+
+
+	/*** Image Gallery ****************************************************************************/
+	
+	async Task AddAttachment()
+	{
+		var dialog = await srvDialog.ShowDialogAsync<NodeFileUploadDlg>(vm.Model, new DialogParameters()
+			{
+				Width = "900px",
+				Title = "Upload Images",
+				PreventDismissOnOverlayClick = true,
+				PreventScroll = true,
+			});
+
+		var result = await dialog.Result;
+		if (!result.Cancelled && result.Data != null)
+		{
+			var resp = result.Data as string;
+			if (!string.IsNullOrEmpty(resp))
+			{
+				srvToast.ShowError(resp);
+			}
+
+			await vm.LoadNode(NodeId);
+		}
+	}
+
+
+	/***** Annotations **************************************************************************************/
+	async Task CreateAnnotation()
+	{
+		var dialog = await srvDialog.ShowDialogAsync<NodeAnnotationDlg>(vm.Model, new DialogParameters()
+			{
+				Width = "900px",
+				Height = "500px",
+				Title = "Add annotation",
+				PreventDismissOnOverlayClick = true,
+				PreventScroll = true,
+			});
+
+		var result = await dialog.Result;
+		if (!result.Cancelled)
+		{
+			var resp = result.Data as AddNodeAnnotationResponse;
+			if( resp != null )
+			{
+				if( resp.Success )
+				{
+					StateHasChanged();
+				}
+				else
+				{
+					srvToast.ShowError(resp.Message);
+				}
+			}
+			else
+			{
+				srvToast.ShowError("no answer from server");
+			}
+		}
+	}
+
+
+	async Task DeleteUnfinished()
+	{
+		var nodes = vm.Model.Children.Where(c => c.Visibility == eNodeVisibility.Temp).Select(c => c.Id).ToList();
+		var resp = await vm.DeleteNodesAsync(nodes);
+		await vm.LoadNode(vm.Model.Id);
+		StateHasChanged();
+	}
+
+	async Task PublishUnfinished()
+	{
+		var nodes = vm.Model.Children.Where(c => c.Visibility == eNodeVisibility.Temp).Select(c => c.Id).ToList();
+		var resp = await vm.UpdateNodesVisibilityAsync(nodes, eNodeVisibility.Visible);
+		await vm.LoadNode(vm.Model.Id);
+		StateHasChanged();
+	}
+}

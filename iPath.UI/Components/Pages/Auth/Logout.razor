@@ -1,0 +1,16 @@
+﻿@page "/auth/logout"
+@using iPath.UI.Areas.Identity
+
+@inject AuthenticationStateProvider authStateProvider
+@inject NavigationManager nm
+
+
+
+@code {
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		var iPathASP = authStateProvider as iPathAuthenticationStateProvider;
+		await iPathASP.UpdateAuthentication(null);
+		nm.NavigateTo("/", true);
+	}
+}

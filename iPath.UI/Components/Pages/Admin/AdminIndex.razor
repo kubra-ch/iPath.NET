@@ -1,0 +1,18 @@
+﻿@page "/admin"
+@page "/admin/index"
+
+@attribute [Authorize(Roles = "Admin")]
+
+<h3>System Administration</h3>
+
+<ul>
+	<li>
+		<FluentNavLink Href="/admin/communities">Communities</FluentNavLink>
+	</li>
+	<li>
+		<FluentNavLink Href="/admin/groups">Groups</FluentNavLink>
+	</li>
+	<li>
+		<FluentNavLink Href="/admin/users">Users</FluentNavLink>
+	</li>
+</ul>

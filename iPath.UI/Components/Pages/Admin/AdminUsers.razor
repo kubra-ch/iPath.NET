@@ -1,0 +1,122 @@
+﻿@page "/admin/users"
+
+@using iPath.UI.Components.Dialogs.Users
+@using iPath.UI.ViewModels.Admin.Users
+
+@inject IAdminUserViewModel vm
+@inject IDialogService srvDialog
+@inject IToastService srvToast
+@inject AuthenticationStateProvider authStateProvider
+
+<h3>User Administration</h3>
+
+<FluentDataGrid TGridItem="User" ItemsProvider="@vm.GridDataProvider" Pagination="@pagination" @ref="grid"
+GridTemplateColumns="1fr 2fr 3fr 3fr 2fr">
+    <PropertyColumn Property="u => u.Id" />
+    <PropertyColumn Property="u => u.Username" />
+    <PropertyColumn Property="u => u.Email" />
+    <PropertyColumn Property="u => u.Country" />
+    <TemplateColumn Title="Actions" Align="Align.End">
+        @if (context.IsSysAdmin)
+        {
+            <FluentButton Appearance="Appearance.Accent" IconEnd="@(new Icons.Regular.Size16.PersonAlert())" Title="System-Administrator" />
+        }
+        <FluentButton IconEnd="@(new Icons.Regular.Size16.Edit())" Title="Edit" OnClick=@(async () => await EditUser(context)) />
+        <FluentButton IconEnd="@(new Icons.Regular.Size16.PersonAdd())" Title="Members" OnClick=@(async () => await EditUserMembers(context)) />
+    </TemplateColumn>
+</FluentDataGrid>
+<FluentPaginator State="@pagination" />
+
+@code {
+    FluentDataGrid<User> grid;
+    PaginationState pagination = new PaginationState { ItemsPerPage = 10 };
+
+    bool IsAdmin = false;
+    string usernameOrig = "";
+    string emailOrig = "";
+    override protected async Task OnInitializedAsync()
+    {
+        var iPathASP = authStateProvider as iPathAuthenticationStateProvider;
+        var session = await iPathASP.GetSessionAsync();
+        if (session.Role == "Admin")
+        {
+            IsAdmin = true;
+        }
+
+        await vm.ExecuteSearchAsync();
+    }
+
+
+    async Task EditUser(User usr)
+    {
+        if (usr is null) return;
+
+        // reload from DB;
+        usr = await vm.SelectUserId(usr.Id);
+
+        usernameOrig = usr.Username;
+        emailOrig = usr.Email;
+
+        var dialog = await srvDialog.ShowDialogAsync<UserEditDlg>(usr, new DialogParameters()
+            {
+                Width = "600px",
+                Title = "Edit User",
+                PreventDismissOnOverlayClick = true,
+                PreventScroll = true,
+            });
+
+        var result = await dialog.Result;
+        if (!result.Cancelled && result.Data != null)
+        {
+            var resp = await vm.UpdateUserAsync(usr);
+            if (!resp.Success)
+            {
+                srvToast.ShowError(resp.Message);
+            }
+            else
+            {
+                await grid.RefreshDataAsync();
+            }
+
+            if( IsAdmin ){
+                if( usernameOrig != usr.Username )
+                {
+                    var resp2 = await vm.UpdateUserNameAsync(usr.Username);
+					if (!resp2.Success) srvToast.ShowError(resp2.Message);
+                }
+                if (emailOrig != usr.Username)
+                {
+                    var resp2 = await vm.UpdateUserEmailAsync(usr.Email);
+                    if (!resp2.Success) srvToast.ShowError(resp2.Message);
+                }
+            }
+        }
+    }
+
+    async Task EditUserMembers(User usr)
+    {
+        if (usr is null) return;
+
+        var dialog = await srvDialog.ShowDialogAsync<UserMemberDlg>(usr.Id, new DialogParameters()
+            {
+                Width = "900px",
+                Title = "Edit Membership",
+                PreventDismissOnOverlayClick = true,
+                PreventScroll = true,
+            });
+
+        var result = await dialog.Result;
+        if (!result.Cancelled && result.Data != null)
+        {
+            var resp = result.Data as UpdateUserGroupMembershipResponse;
+            if (resp != null && !resp.Success)
+            {
+                srvToast.ShowError(resp.Message);
+            }
+            else
+            {
+                await grid.RefreshDataAsync();
+            }
+        }
+    }
+}

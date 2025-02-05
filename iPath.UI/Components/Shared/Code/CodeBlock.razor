@@ -1,0 +1,16 @@
+﻿@inject Microsoft.JSInterop.IJSRuntime JSRuntime
+
+<div class="position-relative">
+    <pre>
+        <code>
+            @Code
+        </code>
+    </pre>
+    <div class="copybutton">
+        <CopyToClipboardButton Text="@Code" />
+    </div>
+</div>
+
+@code {
+    [Parameter] public string Code { get; set; }
+}

@@ -1,0 +1,58 @@
+﻿@using iPath.UI.ViewModels.Nodes
+@implements IDialogContentComponent<NodeModel>
+
+@inject INodeViewModel vm
+
+@* Header *@
+<FluentDialogHeader ShowDismiss="true">
+    <FluentStack VerticalAlignment="VerticalAlignment.Center">
+        <FluentIcon Value="@(new Icons.Regular.Size24.WindowApps())" />
+        <FluentLabel Typo="Typography.PaneHeader">
+            Edit Settings for @Content.Caption
+        </FluentLabel>
+    </FluentStack>
+</FluentDialogHeader>
+
+@* Footer *@
+<FluentDialogFooter>
+    <FluentButton Appearance="Appearance.Accent" OnClick="@SaveAsync">Save</FluentButton>
+    <FluentButton Appearance="Appearance.Neutral" OnClick="@CancelAsync">Cancel</FluentButton>
+</FluentDialogFooter>
+
+@* Body *@
+<FluentDialogBody>
+    <FluentTextArea @bind-Value=aText Label="Annotation:" Autofocus="true" Rows="15" Style="width: 100%;" />
+    <p>@Message</p>
+</FluentDialogBody>
+
+@code {
+    [Parameter]
+    public NodeModel Content { get; set; } = default!;
+
+    [CascadingParameter]
+    public FluentDialog Dialog { get; set; } = default!;
+
+    [CascadingParameter]
+    public CascadingAppState appState { get; set; }
+
+    string Message;
+    string aText = "";
+
+
+    private async Task SaveAsync()
+    {
+        if( string.IsNullOrWhiteSpace(aText))
+        {
+            Message = "please enter your annotation";
+            return;
+        }
+
+        var resp = await vm.AddAnnotationAsync(UserId: appState.Session.UserId, text: aText);
+        await Dialog.CloseAsync(resp);
+    }
+
+    private async Task CancelAsync()
+    {
+        await Dialog.CancelAsync();
+    }
+}
