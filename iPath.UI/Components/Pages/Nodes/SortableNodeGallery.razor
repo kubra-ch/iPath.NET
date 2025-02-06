@@ -4,14 +4,13 @@
 @implements IDisposable
 
 @inject IJSRuntime JS
-@inject INodeViewModel vm
 @inject IToastService srvToast
 
 
 @**** Gallery View **********************************************@
 <div class="sortableGallery">
     <div id="gallery" class="gallery">
-        @foreach (var c in Parent.VisibleChildren)
+        @foreach (var c in ViewModel.Model.VisibleChildren)
         {
             <div class="gallery-item" data-id="@c.Id">
                 <img src="@c.ThumbUrl" alt="@c.Filename" width="@ThumbWidth" height="@ThumbHeight" />
@@ -30,12 +29,11 @@
 
 
 @code {
-    [Parameter]
-    public NodeModel Parent { get; set; }
-
     [CascadingParameter]
     public CascadingAppState appState { get; set; }
 
+    [Parameter]
+    public INodeViewModel ViewModel { get; set; }
 
     [Parameter]
     public EventCallback<bool> OnSortingFinished { get; set; }
@@ -74,7 +72,7 @@
     [JSInvokable]
     public void UpdateSortOrder(List<int> newOrder)
     {
-        foreach (var c in Parent.VisibleChildren)
+        foreach (var c in ViewModel.Model.VisibleChildren)
         {
             c.NewSortNr = newOrder.IndexOf(c.Id) + 1;
         }
@@ -86,26 +84,26 @@
     async Task SaveSortAsync()
     {
         var newOrder = new List<(int NodeId, int SortNr)>();
-        foreach( var c in Parent.VisibleChildren)
+        foreach (var c in ViewModel.Model.VisibleChildren)
         {
             c.NewSortNr ??= 0;
             c.SortNr = c.NewSortNr;
             newOrder.Add(new(c.Id, c.NewSortNr.Value));
         }
-        var resp = await vm.UpdateSortNumerbs(newOrder);
+        var resp = await ViewModel.UpdateSortNumerbs(newOrder);
         if( !resp.Success )
         {
             srvToast.ShowError(resp.Message);
             return;
         }
 
-        Parent.VisibleChildren.OrderBy(c => c.SortNr);
+        ViewModel.Model.VisibleChildren.OrderBy(c => c.SortNr);
         await OnSortingFinished.InvokeAsync(true);
     }
 
     async Task CancelSort()
     {
-        Parent.VisibleChildren.OrderBy(c => c.SortNr);
+        ViewModel.Model.VisibleChildren.OrderBy(c => c.SortNr);
         await OnSortingFinished.InvokeAsync(false);
     }
 

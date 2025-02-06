@@ -19,6 +19,6 @@ public interface IAdminCommunityViewModel
 
 
     Task<int> GetCommunityCountAsync();
-    Task<CreateCommunityResponse> CreateCommunityAsync(string Name);
+    Task<CommunityResponse> CreateCommunityAsync(string Name);
     // Task<UpdateCommunityResponse> UpdateCommunityAsync(Community item);
 }

@@ -77,14 +77,7 @@ public class AdminUserMediatorViewModel(IMediator mediator) : IAdminUserViewMode
 
     public async Task<CreateUserResponse> CreateUserAsync(string username, string email, string password)
     {
-        var request = new CreateUserCommand()
-        {
-            Username = username,
-            Email = email,
-            Password = password
-        };
-        var resp = await mediator.Send(request);
-        return resp;
+        return await mediator.Send(new CreateUserCommand(Username: username, Email: email, Password: password));
     }
 
     public Task<UpdateUserResponse> UpdateUserAsync(User item)

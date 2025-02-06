@@ -117,7 +117,7 @@ else
 			else
 			{
 				// sorting
-				<SortableNodeGallery Parent="@vm.Model" OnSortingFinished="@(() => gallerySortingActive = false)" />
+				<SortableNodeGallery ViewModel="vm" OnSortingFinished="@(() => gallerySortingActive = false)" />
 			}
 		}
 

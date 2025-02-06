@@ -55,14 +55,7 @@
 			return;
 		}
 
-		var request = new CreateUserCommand
-			{
-				Username = model.username,
-				Email = model.email,
-				Password = model.password
-			};
-
-		var resp = await mediator.Send(request);
+        var resp = await mediator.Send(new CreateUserCommand(Username: model.username, Email: model.email, Password: model.password));
         if (!resp.Success)
         {
             Message = resp.Message;

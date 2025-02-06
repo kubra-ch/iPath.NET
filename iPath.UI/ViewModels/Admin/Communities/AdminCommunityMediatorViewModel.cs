@@ -58,16 +58,13 @@ public class AdminCommunityMediatorViewModel(IMediator mediator) : IAdminCommuni
 
     public async Task<int> GetCommunityCountAsync()
     {
-        var request = new GetCommunityListQuery();
-        var result = await mediator.Send(request);
+        var result = await mediator.Send(new GetCommunityListQuery());
         _IsReady = true;
         return result.TotalItemsCount;
     }
 
-    public async Task<CreateCommunityResponse> CreateCommunityAsync(string name)
+    public async Task<CommunityResponse> CreateCommunityAsync(string name)
     {
-        var request = new CreateCommunityCommand { Name = name };
-        var resp = await mediator.Send(request);
-        return resp;
+        return  await mediator.Send(new CreateCommunityCommand(Name: name));
     }
 }

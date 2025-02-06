@@ -21,6 +21,8 @@ public static class ApplicationDependecyInjection
         services.AddTransient<IPasswordHasher, PasswordHasher>();
         services.AddTransient<ThumbImageService, ThumbImageService>();
 
+        services.AddScoped<ISessionStateService, SessionStateService>();
+
         return services;
     }
 

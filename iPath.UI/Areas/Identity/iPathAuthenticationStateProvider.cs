@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Components.Authorization;
+﻿using iPath.Application.Services;
+using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using System.Security.Claims;
 
@@ -7,11 +8,13 @@ namespace iPath.UI.Areas.Identity;
 public class iPathAuthenticationStateProvider : AuthenticationStateProvider
 {
     private readonly ProtectedLocalStorage _sessionStorage;
+    private readonly ISessionStateService _sessionState;
     private ClaimsPrincipal _anonymous = new ClaimsPrincipal(new ClaimsIdentity());
 
-    public iPathAuthenticationStateProvider(ProtectedLocalStorage SessionStorage)
+    public iPathAuthenticationStateProvider(ProtectedLocalStorage SessionStorage, ISessionStateService sessionState)
     {
         _sessionStorage = SessionStorage;
+        _sessionState = sessionState;
     }
 
     public override async Task<AuthenticationState> GetAuthenticationStateAsync()
@@ -20,7 +23,11 @@ public class iPathAuthenticationStateProvider : AuthenticationStateProvider
         {
             var userSession = await GetSessionAsync();
             if (userSession is null)
+            {
+                _sessionState.SessionUserId = null;
                 return await Task.FromResult(new AuthenticationState(_anonymous));
+            }
+            _sessionState.SessionUserId = userSession.UserId;
             var claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity(new[]
             {
                 new Claim(ClaimTypes.Name, userSession.User.Username),
