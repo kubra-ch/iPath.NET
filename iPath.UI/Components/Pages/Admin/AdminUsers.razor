@@ -7,34 +7,50 @@
 @inject IDialogService srvDialog
 @inject IToastService srvToast
 
+<FluentBreadcrumb>
+    <FluentBreadcrumbItem Href="/">
+        home
+    </FluentBreadcrumbItem>
+    <FluentBreadcrumbItem Href="/admin">
+        administration
+    </FluentBreadcrumbItem>
+    <FluentBreadcrumbItem>group administration</FluentBreadcrumbItem>
+</FluentBreadcrumb>
 
-<h3>User Administration</h3>
 
-<ExpandableErrorBoundary>
-    <FluentStack Orientation="Orientation.Horizontal">
-        Search: <FluentSearch @bind-Value=@vm.SearchTerm AriaLabel="Search" />
-        <FluentSwitch @bind-Value=@vm.ActiveOnly Label="active only" />
-        <FluentButton Type="ButtonType.Submit" OnClick="@vm.ExecuteSearchAsync">Search</FluentButton>
-    </FluentStack>
+<AuthorizeView Roles="Admin">
+	<NotAuthorized>
+		<div class="errormessage">not authorized</div>
+	</NotAuthorized>
+	<Authorized>
+		<h3>User Administration</h3>
 
-    <FluentDataGrid TGridItem="User" ItemsProvider="@vm.GridDataProvider" Pagination="@pagination" @ref="grid"
-    GridTemplateColumns="1fr 2fr 3fr 3fr 2fr">
-        <PropertyColumn Property="u => u.Id" Sortable="true" />
-        <PropertyColumn Property="u => u.Username" Sortable="true" />
-        <PropertyColumn Property="u => u.Email" />
-        <PropertyColumn Property="u => u.Country" />
-        <TemplateColumn Title="Actions" Align="Align.End">
-            @if (context.IsSysAdmin)
-            {
-                <FluentButton Appearance="Appearance.Accent" IconEnd="@(new Icons.Regular.Size16.PersonAlert())" Title="System-Administrator" />
-            }
-            <FluentButton IconEnd="@(new Icons.Regular.Size16.Edit())" Title="Edit" OnClick=@(async () => await EditUser(context)) />
-            <FluentButton IconEnd="@(new Icons.Regular.Size16.PersonAdd())" Title="Members" OnClick=@(async () => await EditUserMembers(context)) />
-        </TemplateColumn>
-    </FluentDataGrid>
-    <FluentPaginator State="@pagination" />
-</ExpandableErrorBoundary>
+		<ExpandableErrorBoundary>
+			<FluentStack Orientation="Orientation.Horizontal">
+				Search: <FluentSearch @bind-Value=@vm.SearchTerm AriaLabel="Search" />
+				<FluentSwitch @bind-Value=@vm.ActiveOnly Label="active only" />
+				<FluentButton Type="ButtonType.Submit" OnClick="@vm.ExecuteSearchAsync">Search</FluentButton>
+			</FluentStack>
 
+			<FluentDataGrid TGridItem="User" ItemsProvider="@vm.GridDataProvider" Pagination="@pagination" @ref="grid"
+							GridTemplateColumns="1fr 2fr 3fr 3fr 2fr">
+				<PropertyColumn Property="u => u.Id" Sortable="true" />
+				<PropertyColumn Property="u => u.Username" Sortable="true" />
+				<PropertyColumn Property="u => u.Email" />
+				<PropertyColumn Property="u => u.Country" />
+				<TemplateColumn Title="Actions" Align="Align.End" Context="usr">
+					@if (usr.IsSysAdmin)
+					{
+						<FluentButton Appearance="Appearance.Accent" IconEnd="@(new Icons.Regular.Size16.PersonAlert())" Title="System-Administrator" />
+					}
+                    <FluentButton IconEnd="@(new Icons.Regular.Size16.Edit())" Title="Edit" OnClick=@(async () => await EditUser(usr)) />
+                    <FluentButton IconEnd="@(new Icons.Regular.Size16.PersonAdd())" Title="Members" OnClick=@(async () => await EditUserMembers(usr)) />
+				</TemplateColumn>
+			</FluentDataGrid>
+			<FluentPaginator State="@pagination" />
+		</ExpandableErrorBoundary>
+	</Authorized>
+</AuthorizeView>
 
 @code {
     [CascadingParameter]

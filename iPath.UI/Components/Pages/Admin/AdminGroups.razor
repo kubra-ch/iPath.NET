@@ -8,31 +8,53 @@
 @inject IToastService srvToast
 @inject AuthenticationStateProvider authState
 
-<h3>Discussion Group Administration</h3>
+<FluentBreadcrumb>
+    <FluentBreadcrumbItem Href="/">
+        home
+    </FluentBreadcrumbItem>
+    <FluentBreadcrumbItem Href="/admin">
+        administration
+    </FluentBreadcrumbItem>
+    <FluentBreadcrumbItem>group administration</FluentBreadcrumbItem>
+</FluentBreadcrumb>
 
-<ExpandableErrorBoundary>
 
-	<FluentDataGrid TGridItem="Group" ItemsProvider="@vm.GridDataProvider"
-					Pagination="@pagination" @ref="grid"
-					GridTemplateColumns="0.2fr 1fr 0.4fr 0.4fr 0.4fr 0.5fr">
-		<PropertyColumn Property="u => u.Id" Sortable="true" />
-        <PropertyColumn Property="u => u.Name" Sortable="true" />
-		<PropertyColumn Property=@(u => u.Owner == null ? "" : u.Owner!.Username) Title="Owner" />
-		<PropertyColumn Property=@(u => u.Community == null ? "--" : u.Community.Name) Title="Community" />
-		<PropertyColumn Property="u => u.Visibility" Title="Visibility" />
-		<TemplateColumn Title="Actions">
-			<FluentButton IconEnd="@(new Icons.Regular.Size16.Edit())" Title="Edit" OnClick=@(async () => await EditGroup(context)) />
-			<FluentButton IconEnd="@(new Icons.Regular.Size16.PersonAdd())" Title="Members" OnClick=@(async () => await EditGroupMembers(context)) />
-		</TemplateColumn>
-	</FluentDataGrid>
-	<FluentPaginator State="@pagination" />
+<AuthorizeView Roles="Admin">
+	<NotAuthorized>
+        <div class="errormessage">not authorized</div>
+	</NotAuthorized>
+	<Authorized>
 
-	<FluentButton OnClick="CreateGroup">Create new Group</FluentButton>
+		<h3>Discussion Group Administration</h3>
 
-</ExpandableErrorBoundary>
+		<ExpandableErrorBoundary>
 
-<hr />
-<p>@vm.ErrorMessage</p>
+			<FluentDataGrid TGridItem="Group" ItemsProvider="@vm.GridDataProvider"
+							Pagination="@pagination" @ref="grid"
+							GridTemplateColumns="0.2fr 1fr 0.4fr 0.4fr 0.4fr 0.5fr">
+				<PropertyColumn Property="u => u.Id" Sortable="true" />
+				<PropertyColumn Property="u => u.Name" Sortable="true" />
+				<PropertyColumn Property=@(u => u.Owner == null ? "" : u.Owner!.Username) Title="Owner" />
+				<PropertyColumn Property=@(u => u.Community == null ? "--" : u.Community.Name) Title="Community" />
+				<PropertyColumn Property="u => u.Visibility" Title="Visibility" />
+				<TemplateColumn Title="Actions" Context="item">
+                    <FluentButton IconEnd="@(new Icons.Regular.Size16.Edit())" Title="Edit" OnClick=@(async () => await EditGroup(item)) />
+                    <FluentButton IconEnd="@(new Icons.Regular.Size16.PersonAdd())" Title="Members" OnClick=@(async () => await EditGroupMembers(item)) />
+				</TemplateColumn>
+			</FluentDataGrid>
+			<FluentPaginator State="@pagination" />
+
+			<FluentButton OnClick="CreateGroup">Create new Group</FluentButton>
+
+		</ExpandableErrorBoundary>
+
+		<hr />
+		<p>@vm.ErrorMessage</p>
+
+	</Authorized>
+</AuthorizeView>
+
+
 
 @code {
     FluentDataGrid<Group> grid;

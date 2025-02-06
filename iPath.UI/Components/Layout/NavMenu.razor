@@ -18,13 +18,13 @@
                 </AuthorizeView>
             </FluentNavGroup>
 
-			<AuthorizeView>
+			<AuthorizeView Roles="Admin">
 				<Authorized>
                     <FluentNavGroup Icon="@(new Icons.Regular.Size20.Person())" Title="Administration" Expanded="true">
                         <FluentNavLink Href="/admin/communities" IconColor="Color.Accent">Communities</FluentNavLink>
                         <FluentNavLink Href="/admin/groups" IconColor="Color.Accent">Groups</FluentNavLink>
                         <FluentNavLink Href="/admin/users" IconColor="Color.Accent">Users</FluentNavLink>
-                        <FluentNavLink Href="/admin/system" IconColor="Color.Accent">System</FluentNavLink>
+                        <FluentNavLink Href="/admin/index" IconColor="Color.Accent">System</FluentNavLink>
 					</FluentNavGroup>
 				</Authorized>
 			</AuthorizeView>

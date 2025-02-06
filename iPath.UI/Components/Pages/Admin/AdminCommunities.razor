@@ -20,75 +20,81 @@
 </FluentBreadcrumb>
 
 
+<AuthorizeView Roles="Admin">
+	<NotAuthorized>
+		<div class="errormessage">not authorized</div>
+	</NotAuthorized>
+	<Authorized>
+		@if (count == 0)
+		{
+			<p>No communities configured yet</p>
+		}
 
-
-@if( count == 0){
-	<p>No communities configured yet</p>
-}
-
-@if( vm.IsReady )
-{
-	<FluentGrid>
-		<FluentGridItem xs="12" md="6">
-			<div class="titleWithActions">
-				<div class="titleHeader">
-					<h4>Communites</h4>
-				</div>				
-				<div class="titleActions">
-					<FluentButton IconEnd="@(new Icons.Regular.Size16.AddCircle())"
-								  Title="Create a new community"
-								  OnClick="CreateCommunity" />
-				</div>
-			</div>
-			
-			<ExpandableErrorBoundary>
-				<FluentDataGrid TGridItem="Community" ItemsProvider="@vm.GridDataProvider"
-								GridTemplateColumns="1fr 4fr"
-								OnRowClick="@OnCommunityRowClick"
-				Pagination="@communityPagination">
-					<PropertyColumn Property="u => u.Id" />
-					<PropertyColumn Property="u => u.Name" />
-				</FluentDataGrid>
-				<FluentPaginator State="@communityPagination" />
-			</ExpandableErrorBoundary>
-
-			
-		</FluentGridItem>
-		<FluentGridItem xs="12" md="6">
-			@if( vm.SelectedCommunity is null )
-			{
-				<div class="titleWithActions">
-					<div class="titleHeader">
-						<h4>Community Groups</h4>
+		@if (vm.IsReady)
+		{
+			<FluentGrid>
+				<FluentGridItem xs="12" md="6">
+					<div class="titleWithActions">
+						<div class="titleHeader">
+							<h4>Communites</h4>
+						</div>
+						<div class="titleActions">
+							<FluentButton IconEnd="@(new Icons.Regular.Size16.AddCircle())"
+										  Title="Create a new community"
+										  OnClick="CreateCommunity" />
+						</div>
 					</div>
-				</div>
-			}
-			else
-			{
-				<div class="titleWithActions">
-					<div class="titleHeader">
-						<h4>@vm.SelectedCommunity?.Name - Groups</h4>
-					</div>
-					<div class="titleActions">
-						<FluentButton IconEnd="@(new Icons.Regular.Size16.AddCircle())"
-									  Title="Create a new group"
-									  OnClick="CreateGroup" />
-					</div>
-				</div>
-				<ExpandableErrorBoundary>
-					<FluentDataGrid TGridItem="Group" Items="@vm.SelectedCommunity.Groups.AsQueryable()"
-					GridTemplateColumns="1fr 4fr"
-					Pagination="@groupPagination">
-						<PropertyColumn Property="u => u.Id" />
-						<PropertyColumn Property="u => u.Name" />
-					</FluentDataGrid>
-					<FluentPaginator State="@groupPagination" />
-				</ExpandableErrorBoundary>
-			}
-		</FluentGridItem>
-	</FluentGrid>
-}
 
+					<ExpandableErrorBoundary>
+						<FluentDataGrid TGridItem="Community" ItemsProvider="@vm.GridDataProvider"
+										GridTemplateColumns="1fr 4fr"
+										OnRowClick="@OnCommunityRowClick"
+										Pagination="@communityPagination">
+							<PropertyColumn Property="u => u.Id" />
+							<PropertyColumn Property="u => u.Name" />
+						</FluentDataGrid>
+						<FluentPaginator State="@communityPagination" />
+					</ExpandableErrorBoundary>
+
+
+				</FluentGridItem>
+				<FluentGridItem xs="12" md="6">
+					@if (vm.SelectedCommunity is null)
+					{
+						<div class="titleWithActions">
+							<div class="titleHeader">
+								<h4>Community Groups</h4>
+							</div>
+						</div>
+					}
+					else
+					{
+						<div class="titleWithActions">
+							<div class="titleHeader">
+								<h4>@vm.SelectedCommunity?.Name - Groups</h4>
+							</div>
+							<div class="titleActions">
+								<FluentButton IconEnd="@(new Icons.Regular.Size16.AddCircle())"
+											  Title="Create a new group"
+											  OnClick="CreateGroup" />
+							</div>
+						</div>
+						<ExpandableErrorBoundary>
+							<FluentDataGrid TGridItem="Group" Items="@vm.SelectedCommunity.Groups.AsQueryable()"
+											GridTemplateColumns="1fr 4fr"
+											Pagination="@groupPagination">
+								<PropertyColumn Property="u => u.Id" />
+								<PropertyColumn Property="u => u.Name" />
+							</FluentDataGrid>
+							<FluentPaginator State="@groupPagination" />
+						</ExpandableErrorBoundary>
+					}
+				</FluentGridItem>
+			</FluentGrid>
+		}
+
+	</Authorized>
+</AuthorizeView>
 
 @code {
 	PaginationState communityPagination = new PaginationState { ItemsPerPage = 10 };
