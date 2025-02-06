@@ -1,6 +1,7 @@
 ﻿using iPath.Data.Database;
 using iPath.Data.Entities;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace iPath.Application.Features;
 
@@ -14,13 +15,15 @@ public record UpdateUserResponse(bool Success, User? Item = null!, string? Messa
 
 
 
-public class UpdateUserCommandHandler(IPathDbContext ctx)
+public class UpdateUserCommandHandler(IDbContextFactory<IPathDbContext> dbFactory)
     : IRequestHandler<UpdateUserCommand, UpdateUserResponse>
 {
     public async Task<UpdateUserResponse> Handle(UpdateUserCommand request, CancellationToken cancellationToken)
     {
         try
         {
+           using var ctx = await dbFactory.CreateDbContextAsync();
+
             // get the User from DB
             var item = await ctx.Users.FindAsync(request.Item.Id);
 
@@ -28,6 +31,7 @@ public class UpdateUserCommandHandler(IPathDbContext ctx)
             item.Familyname = request.Item.Familyname;
             item.Country = request.Item.Country;
             item.Specialisation = request.Item.Specialisation;
+            item.ModifiedOn = DateTime.UtcNow;
 
             ctx.Users.Update(item);
             await ctx.SaveChangesAsync();

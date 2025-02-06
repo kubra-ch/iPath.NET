@@ -15,7 +15,7 @@ internal class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(x => x.EmailInvariant).HasMaxLength(100);
 
         builder.HasIndex(u => u.Username).IsUnique();
-        builder.HasIndex(u => u.Email).IsUnique();
+        // builder.HasIndex(u => u.Email).IsUnique();
     }
 }
 

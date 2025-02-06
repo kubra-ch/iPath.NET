@@ -14,7 +14,8 @@ public record UploadNodeFileCommand(int NodeId, int UserId, string filename, str
 
 public record UploadNodeFileResponse(bool Success, Node? childNode= null!, string? Message = default!);
 
-public class UploadNodeFileCommandHandler(IPathDbContext ctx, IOptions<iPathConfig> opts,
+public class UploadNodeFileCommandHandler(IDbContextFactory<IPathDbContext> dbFactory, 
+    IOptions<iPathConfig> opts,
     ThumbImageService thumbService,
     ILogger<UploadNodeFileCommandHandler> logger) 
     : IRequestHandler<UploadNodeFileCommand, UploadNodeFileResponse>
@@ -27,6 +28,7 @@ public class UploadNodeFileCommandHandler(IPathDbContext ctx, IOptions<iPathConf
             if (!fi.Exists) return new UploadNodeFileResponse(false, Message: "file not found");
 
             // get parent node
+           using var ctx = await dbFactory.CreateDbContextAsync();
             var parent = await ctx.Nodes
                 .Include(n => n.ChildNodes)
                 .AsNoTracking()
@@ -46,7 +48,7 @@ public class UploadNodeFileCommandHandler(IPathDbContext ctx, IOptions<iPathConf
             // set the status to none and visibility to tmp. Files are uploaded immediately. 
             // When upload is "saved", status must be updated to 
             newNode.Status = eNodeStatus.None;
-            newNode.Visibility = eNodeVisibility.Temp;
+            newNode.Visibility = eNodeVisibility.Draft;
 
             newNode.File = new()
             {

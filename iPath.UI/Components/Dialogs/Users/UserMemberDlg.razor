@@ -36,7 +36,7 @@
                 <FluentCheckbox @bind-Value="@context.Moderator" />
             </TemplateColumn>
             <TemplateColumn Title="Admin">
-                <FluentCheckbox Disabled="@(!isAdmin)" @bind-Value="@context.Admin" />
+                <FluentCheckbox Disabled="@(!isAdmin)" @bind-Value="@context.Inactive" />
             </TemplateColumn>
             <TemplateColumn Title="Remove" Align="Align.End">
                 <FluentButton Title="remove from group" IconEnd="@(new Icons.Regular.Size16.Delete())" OnClick="@(() => context.Clear(isAdmin))" />

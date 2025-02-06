@@ -17,13 +17,15 @@ public record CreateCommunityResponse(bool Success, Community? Item = null!, str
 
 
 
-public class CreateCommunityCommandHandler(IPathDbContext ctx, IPasswordHasher hasher)
+public class CreateCommunityCommandHandler(IDbContextFactory<IPathDbContext> dbFactory, IPasswordHasher hasher)
     : IRequestHandler<CreateCommunityCommand, CreateCommunityResponse>
 {
     public async Task<CreateCommunityResponse> Handle(CreateCommunityCommand request, CancellationToken cancellationToken)
     {
+       using var ctx = await dbFactory.CreateDbContextAsync();
+
         // check that neither Communityname or email is used
-        if( await ctx.Communities.AnyAsync (u => u.Name == request.Name))
+        if ( await ctx.Communities.AnyAsync (u => u.Name == request.Name))
         {
             return new CreateCommunityResponse(false, Message: $"Community {request.Name} already exists");
         }

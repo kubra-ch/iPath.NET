@@ -1,6 +1,7 @@
 ﻿using iPath.Data.Database;
 using iPath.Data.Entities;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 
 namespace iPath.Application.Features;
@@ -18,13 +19,15 @@ public class UpdateNodeCommand : IRequest<NodeCommandRespone>
 }
 
 
-public class UpdateNodeCommandHandler(IPathDbContext ctx, IPasswordHasher hasher)
+public class UpdateNodeCommandHandler(IDbContextFactory<IPathDbContext> dbFactory, IPasswordHasher hasher)
     : IRequestHandler<UpdateNodeCommand, NodeCommandRespone>
 {
     public async Task<NodeCommandRespone> Handle(UpdateNodeCommand request, CancellationToken cancellationToken)
     {
         try
         {
+            using var ctx = await dbFactory.CreateDbContextAsync();
+
             var node = await ctx.Nodes.FindAsync(request.Id);
             if (node == null) return new NodeCommandRespone(false, Message: $"Node #{request.Id} not found");
 

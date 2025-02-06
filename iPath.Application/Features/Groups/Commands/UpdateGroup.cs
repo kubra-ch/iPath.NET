@@ -2,7 +2,6 @@
 using iPath.Data.Entities;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using System.ComponentModel.DataAnnotations;
 
 namespace iPath.Application.Features;
 
@@ -16,13 +15,15 @@ public record UpdateGroupResponse(bool Success, Group? Item = null!, string? Mes
 
 
 
-public class UpdateGroupCommandHandler(IPathDbContext ctx, IPasswordHasher hasher)
+public class UpdateGroupCommandHandler(IDbContextFactory<IPathDbContext> dbFactory, IPasswordHasher hasher)
     : IRequestHandler<UpdateGroupCommand, UpdateGroupResponse>
 {
     public async Task<UpdateGroupResponse> Handle(UpdateGroupCommand request, CancellationToken cancellationToken)
     {
         try
         {
+           using var ctx = await dbFactory.CreateDbContextAsync();
+
             // get the group from DB
             var item = await ctx.Groups.FindAsync(request.Item.Id);
 

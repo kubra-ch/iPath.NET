@@ -4,8 +4,8 @@
 public enum eMemberRole
 {
     None = 0,
-    Admin = 1,
-    Moderator = 2,
-    User = 4,
+    User = 1,
+    Inactive = 2,
+    Moderator = 4,
     Guest = 8
 }

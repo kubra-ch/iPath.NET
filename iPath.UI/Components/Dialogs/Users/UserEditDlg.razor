@@ -1,7 +1,7 @@
-﻿@implements IDialogContentComponent<User>
+﻿@using iPath.UI.ViewModels.Admin.Users
+@implements IDialogContentComponent<User>
 
-@inject AuthenticationStateProvider authStateProvider
-
+@inject IAdminUserViewModel vm
 
 @* Header *@
 <FluentDialogHeader ShowDismiss="true">
@@ -24,6 +24,13 @@
     <FluentStack Orientation="Orientation.Vertical">
         <FluentTextField Disabled="@(!IsAdmin)" style="width: 100%;" @bind-Value="@Content.Username" Label="Username" />
         <FluentTextField Disabled="@(!IsAdmin)" style="width: 100%;" @bind-Value="@Content.Email" Label="Email" />
+
+        @if( IsAdmin )
+        {
+            <FluentTextField Disabled="@(!IsAdmin)" style="width: 100%;" @bind-Value="@pwd1" Label="Password" />
+            <FluentTextField Disabled="@(!IsAdmin)" style="width: 100%;" @bind-Value="@pwd2" Label="Confirm" />
+        }
+
         <FluentTextField style="width: 100%;" @bind-Value="@Content.Firstname" Label="Firstname" />
         <FluentTextField style="width: 100%;" @bind-Value="@Content.Familyname" Label="Familyname" />
         <FluentTextField style="width: 100%;" @bind-Value="@Content.Specialisation" Label="Specialisation" />
@@ -34,29 +41,43 @@
             <FluentSwitch @bind-Value="@Content.IsSysAdmin" Label="System Adminstrator" />
         }
     </FluentStack>
+    <p>@Message</p>
+
 </FluentDialogBody>
 
 @code {
     [Parameter]
     public User Content { get; set; } = default!;
 
+    string pwd1 = default!;
+    string pwd2 = default!;
+    string Message;
+
     [CascadingParameter]
     public FluentDialog Dialog { get; set; } = default!;
 
-    
+    [CascadingParameter]
+    public CascadingAppState appSate { get; set; }
+
+
     bool IsAdmin = false;
     protected override async Task OnInitializedAsync()
     {
-        var iPathASP = authStateProvider as iPathAuthenticationStateProvider;
-        var session = await iPathASP.GetSessionAsync();
-        if( session.Role == "Admin" ){
-            IsAdmin = true;
-        }
+        IsAdmin = appSate.Session.IsAdmin;
     }
 
 
     private async Task SaveAsync()
     {
+        if( IsAdmin && !string.IsNullOrEmpty(pwd1) )
+        {
+            if( pwd1 != pwd2 ){
+                Message = "password do not match";
+                return;
+            }
+            await vm.UpdateUserPasswordAsync(pwd1, Content.IsActive);
+        }
+
         await Dialog.CloseAsync(Content);
     }
 

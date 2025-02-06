@@ -13,15 +13,17 @@ public record GetGroupQuery(int GroupId) : IRequest<GetGroupResponse>
 public record GetGroupResponse(bool Success, Group Item, string? Message = default!);
 
 
-public class GetGroupQueryHandler(IPathDbContext ctx) : IRequestHandler<GetGroupQuery, GetGroupResponse>
+public class GetGroupQueryHandler(IDbContextFactory<IPathDbContext> dbFactory) : IRequestHandler<GetGroupQuery, GetGroupResponse>
 {
     public async Task<GetGroupResponse> Handle(GetGroupQuery request, CancellationToken cancellationToken)
     {
         try
         {
+            using var ctx = await dbFactory.CreateDbContextAsync();
             var e = await ctx.Groups
                 .Include(g => g.Community)
                 .Include(g => g.Owner)
+                .AsNoTracking()
                 .FirstOrDefaultAsync(g => g.Id == request.GroupId);
 
             if (e != null) return new GetGroupResponse(true, e);

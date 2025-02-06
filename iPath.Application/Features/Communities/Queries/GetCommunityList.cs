@@ -11,11 +11,12 @@ public class GetCommunityListQuery : PaginatedListQuery, IRequest<PaginatedListR
 }
 
 
-public class GetCommunityListQueryHandler(IPathDbContext ctx)
+public class GetCommunityListQueryHandler(IDbContextFactory<IPathDbContext> dbFactory)
     : IRequestHandler<GetCommunityListQuery, PaginatedListResult<Community>>
 {
     public async Task<PaginatedListResult<Community>> Handle(GetCommunityListQuery request, CancellationToken cancellationToken)
     {
+       using var ctx = await dbFactory.CreateDbContextAsync();
         var q = ctx.Communities.AsNoTracking().AsQueryable();
         if( request.Filter != null)
         {

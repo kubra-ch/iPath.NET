@@ -6,4 +6,6 @@ public class iPathConfig
     public string DataPath { get; set; }
 
     public int ThumbSize { get; set; } = 120;
+
+    public bool AutoMigrateDatabase { get; set; }
 }

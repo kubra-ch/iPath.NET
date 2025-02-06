@@ -42,9 +42,9 @@ public class MemberRoleModel
     public bool Guest { get; set; }
     public bool User { get; set; }
     public bool Moderator { get; set; }
-    public bool Admin { get; set; }
+    public bool Inactive { get; set; }
 
-    public eMemberRole Role => (Admin ? eMemberRole.Admin : eMemberRole.None) |
+    public eMemberRole Role => (Inactive ? eMemberRole.Inactive : eMemberRole.None) |
          (Moderator ? eMemberRole.Moderator : eMemberRole.None) |
          (User ? eMemberRole.User : eMemberRole.None) |
          (Guest ? eMemberRole.Guest : eMemberRole.None);
@@ -58,7 +58,7 @@ public class MemberRoleModel
         Guest = role.HasFlag(eMemberRole.Guest);
         User = role.HasFlag(eMemberRole.User);
         Moderator = role.HasFlag(eMemberRole.Moderator);
-        Admin = role.HasFlag(eMemberRole.Admin);
+        Inactive = role.HasFlag(eMemberRole.Inactive);
     }
 
     public MemberRoleModel(GroupMember mb)
@@ -68,7 +68,7 @@ public class MemberRoleModel
         Guest = mb.Role.HasFlag(eMemberRole.Guest);
         User = mb.Role.HasFlag(eMemberRole.User);
         Moderator = mb.Role.HasFlag(eMemberRole.Moderator);
-        Admin = mb.Role.HasFlag(eMemberRole.Admin);
+        Inactive = mb.Role.HasFlag(eMemberRole.Inactive);
     }
 
     public void Clear(bool isAdmin)
@@ -76,6 +76,6 @@ public class MemberRoleModel
         Guest = false;
         User = false;
         Moderator = false;
-        if (isAdmin)  Admin = false;
+        if (isAdmin)  Inactive = false;
     }
 }

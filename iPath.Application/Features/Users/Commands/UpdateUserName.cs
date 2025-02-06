@@ -1,5 +1,4 @@
 ﻿using iPath.Data.Database;
-using iPath.Data.Entities;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,7 +8,7 @@ public record UpdateUserNameCommand(int UserId, string Username)
     : IRequest<UpdateUserResponse> { }
 
 
-public class UpdateUserNameCommandHandler(IPathDbContext ctx)
+public class UpdateUserNameCommandHandler(IDbContextFactory<IPathDbContext> dbFactory)
     : IRequestHandler<UpdateUserNameCommand, UpdateUserResponse>
 {
     public async Task<UpdateUserResponse> Handle(UpdateUserNameCommand request, CancellationToken cancellationToken)
@@ -22,6 +21,7 @@ public class UpdateUserNameCommandHandler(IPathDbContext ctx)
                 return new UpdateUserResponse(false, Message: "Username must be at least 3 characters long");
 
             // find other user with different id but same new name
+           using var ctx = await dbFactory.CreateDbContextAsync();
             var exists = await ctx.Users.AnyAsync(u => u.UsernameInvariant == username.ToLowerInvariant() && u.Id != request.UserId);
             if( exists)
                 return new UpdateUserResponse(false, Message: $"Another User with name {username} already exists"); 
@@ -33,6 +33,7 @@ public class UpdateUserNameCommandHandler(IPathDbContext ctx)
             // update properties
             item.Username = username;
             item.UsernameInvariant = username.ToLowerInvariant();
+            item.ModifiedOn = DateTime.UtcNow;
 
             ctx.Users.Update(item);
             await ctx.SaveChangesAsync();

@@ -29,10 +29,12 @@ public class AdminUserMediatorViewModel(IMediator mediator) : IAdminUserViewMode
 
 
     public string SearchTerm { get; set; } = default!;
+    public bool ActiveOnly { get; set; } = true;
+
 
     public async Task ExecuteSearchAsync()
     {
-        var request = new GetUserListQuery(); ;
+        var request = new GetUserListQuery { IsActive = this.ActiveOnly };
 
         if (!string.IsNullOrWhiteSpace(SearchTerm))
         {
@@ -103,5 +105,10 @@ public class AdminUserMediatorViewModel(IMediator mediator) : IAdminUserViewMode
     public async Task<UpdateUserResponse> UpdateUserEmailAsync(string email)
     {
         return await mediator.Send(new UpdateUserEmailCommand(SelectedUser.Id, email));
+    }
+
+    public async Task<UpdateUserResponse> UpdateUserPasswordAsync(string Password, bool IsActive)
+    {
+        return await mediator.Send(new UpdateUserPasswordCommand(UserId: SelectedUser.Id, newPassword: Password, IsActive: IsActive));
     }
 }

@@ -2,7 +2,6 @@
 using iPath.Data.Entities;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using System.ComponentModel.DataAnnotations;
 
 namespace iPath.Application.Features;
 
@@ -17,14 +16,15 @@ public class UpdateUserGroupMembershipCommand : IRequest<UpdateUserGroupMembersh
 public record UpdateUserGroupMembershipResponse(bool Success, string? Message = default!);
 
 
-public class UpdateUserGroupMembershipCommandHandler(IPathDbContext ctx)
+public class UpdateUserGroupMembershipCommandHandler(IDbContextFactory<IPathDbContext> dbFactory)
     : IRequestHandler<UpdateUserGroupMembershipCommand, UpdateUserGroupMembershipResponse>
 {
     public async Task<UpdateUserGroupMembershipResponse> Handle(UpdateUserGroupMembershipCommand request, CancellationToken cancellationToken)
     {
         try
         {
-           var m = await ctx.Set<GroupMember>().FirstOrDefaultAsync(gm => gm.UserId == request.UserId && gm.GroupId == request.GroupId);
+           using var ctx = await dbFactory.CreateDbContextAsync();
+            var m = await ctx.Set<GroupMember>().FirstOrDefaultAsync(gm => gm.UserId == request.UserId && gm.GroupId == request.GroupId);
             if (m == null)
             {
                 m = new GroupMember()

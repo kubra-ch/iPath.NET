@@ -20,13 +20,15 @@ public record CreateGroupResponse(bool Success, Group? Item = null!, string? Mes
 
 
 
-public class CreateGroupCommandHandler(IPathDbContext ctx, IPasswordHasher hasher)
+public class CreateGroupCommandHandler(IDbContextFactory<IPathDbContext> dbFactory, IPasswordHasher hasher)
     : IRequestHandler<CreateGroupCommand, CreateGroupResponse>
 {
     public async Task<CreateGroupResponse> Handle(CreateGroupCommand request, CancellationToken cancellationToken)
     {
+        using var ctx = await dbFactory.CreateDbContextAsync();
+
         // check that neither Groupname or email is used
-        if( await ctx.Groups.AnyAsync (u => u.Name == request.Name))
+        if ( await ctx.Groups.AnyAsync (u => u.Name == request.Name))
         {
             return new CreateGroupResponse(false, Message: $"Group {request.Name} already exists");
         }

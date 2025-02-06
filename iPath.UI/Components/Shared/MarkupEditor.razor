@@ -1,4 +1,5 @@
 ﻿@using Blazored.TextEditor
+@inject IJSRuntime js
 
 <BlazoredTextEditor @ref="editor">
     <ToolbarContent>
@@ -36,6 +37,7 @@
     public MarkupString Html { get; set; }
 
     BlazoredTextEditor editor;
+    string id = Guid.NewGuid().ToString();
 
     public async Task<string> GetHtml()
     {

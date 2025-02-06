@@ -23,13 +23,14 @@ public record CreateUserResponse(bool Success, User? User = null!, string? Messa
 
 
 
-public class CreateUserCommandHandler(IPathDbContext ctx, IPasswordHasher hasher)
+public class CreateUserCommandHandler(IDbContextFactory<IPathDbContext> dbFactory, IPasswordHasher hasher)
     : IRequestHandler<CreateUserCommand, CreateUserResponse>
 {
     public async Task<CreateUserResponse> Handle(CreateUserCommand request, CancellationToken cancellationToken)
     {
+        using var ctx = await dbFactory.CreateDbContextAsync();
         // check that neither username or email is used
-        if( await ctx.Users.AnyAsync (u => u.UsernameInvariant == request.Username.ToLowerInvariant()))
+        if ( await ctx.Users.AnyAsync (u => u.UsernameInvariant == request.Username.ToLowerInvariant()))
         {
             return new CreateUserResponse(false, Message: "Username already in use");
         }
@@ -47,7 +48,9 @@ public class CreateUserCommandHandler(IPathDbContext ctx, IPasswordHasher hasher
                 Email = request.Email,
                 EmailInvariant = request.Email.ToLowerInvariant(),
                 IsActive = true,
-                PasswordHash = hasher.HashPassword(request.Password)
+                PasswordHash = hasher.HashPassword(request.Password),
+                CreatedOn = DateTime.UtcNow,
+                ModifiedOn = DateTime.UtcNow
             };
             ctx.Users.Add(usr);
             await ctx.SaveChangesAsync();

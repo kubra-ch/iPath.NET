@@ -1,8 +1,13 @@
-﻿using iPath.Application.Features;
+﻿using iPath.Application.Configuration;
+using iPath.Application.Features;
 using iPath.Application.Services;
 using iPath.Data;
+using iPath.Data.Database;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace iPath.Application;
 
@@ -18,4 +23,5 @@ public static class ApplicationDependecyInjection
 
         return services;
     }
+
 }

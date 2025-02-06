@@ -21,13 +21,15 @@ public class GetGroupListDtoQuery : PaginatedListQuery, IRequest<PaginatedListRe
 }
 
 
-public class GetGroupListDtoQueryHandler(IPathDbContext ctx)
+public class GetGroupListDtoQueryHandler(IDbContextFactory<IPathDbContext> dbFactory)
     : IRequestHandler<GetGroupListDtoQuery, PaginatedListResult<GroupListDTO>>
 {
     public async Task<PaginatedListResult<GroupListDTO>> Handle(GetGroupListDtoQuery request, CancellationToken cancellationToken)
     {
+        using var ctx = await dbFactory.CreateDbContextAsync();
         var q = ctx.Groups
             .Include(g => g.Community)
+            .AsNoTracking()
             .AsQueryable();
 
         // filter by user

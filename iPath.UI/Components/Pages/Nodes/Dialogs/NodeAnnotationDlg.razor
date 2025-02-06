@@ -47,7 +47,19 @@
             return;
         }
 
-        var resp = await vm.AddAnnotationAsync(UserId: appState.Session.UserId, text: aText);
+        // create annotation
+        var resp = await vm.CreateAnnotationAsync(UserId: appState.Session.UserId);
+
+        // udpate text
+        if( resp.Success )
+        {
+            var aModel = vm.Model.Annotations.FirstOrDefault(a => a.Id == resp.item.Id);
+            if( aModel != null )
+            {
+                resp = await vm.UpdateAnnotationAsync(aModel, text: aText, visibility: eAnnotationVisibility.Visible);
+            }
+        }
+
         await Dialog.CloseAsync(resp);
     }
 

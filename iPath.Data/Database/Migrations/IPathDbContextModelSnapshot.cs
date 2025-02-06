@@ -33,21 +33,34 @@ namespace iPath.Data.Database.Migrations
                     b.Property<DateTime>("CreatedOn")
                         .HasColumnType("datetime2");
 
+                    b.Property<DateTime?>("ModifiedOn")
+                        .HasColumnType("datetime2");
+
                     b.Property<int>("NodeId")
                         .HasColumnType("int");
 
                     b.Property<int?>("OwnerId")
+                        .IsRequired()
+                        .HasColumnType("int");
+
+                    b.Property<int?>("SubNodeId")
                         .HasColumnType("int");
 
                     b.Property<string>("Text")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("Visibility")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("CreatedOn");
 
                     b.HasIndex("NodeId");
 
                     b.HasIndex("OwnerId");
+
+                    b.HasIndex("Visibility");
 
                     b.ToTable("NodeAnnotations");
                 });
@@ -60,6 +73,12 @@ namespace iPath.Data.Database.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("BaseUrl")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedOn")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("Descritption")
                         .HasColumnType("nvarchar(max)");
 
@@ -68,10 +87,15 @@ namespace iPath.Data.Database.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
+                    b.Property<int>("OwnerId")
+                        .HasColumnType("int");
+
                     b.Property<int>("Visibility")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("OwnerId");
 
                     b.ToTable("Communities");
                 });
@@ -115,6 +139,12 @@ namespace iPath.Data.Database.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<int?>("CommunityId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("GroupType")
                         .HasColumnType("int");
 
                     b.Property<string>("Name")
@@ -342,6 +372,9 @@ namespace iPath.Data.Database.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
+                    b.Property<DateTime>("CreatedOn")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -369,6 +402,9 @@ namespace iPath.Data.Database.Migrations
                     b.Property<bool>("IsSysAdmin")
                         .HasColumnType("bit");
 
+                    b.Property<DateTime>("ModifiedOn")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("PasswordHash")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -387,10 +423,10 @@ namespace iPath.Data.Database.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
-                    b.HasKey("Id");
+                    b.Property<string>("iPath2PasswordHash")
+                        .HasColumnType("nvarchar(max)");
 
-                    b.HasIndex("Email")
-                        .IsUnique();
+                    b.HasKey("Id");
 
                     b.HasIndex("Username")
                         .IsUnique();
@@ -408,7 +444,9 @@ namespace iPath.Data.Database.Migrations
 
                     b.HasOne("iPath.Data.Entities.User", "Owner")
                         .WithMany()
-                        .HasForeignKey("OwnerId");
+                        .HasForeignKey("OwnerId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
 
                     b.Navigation("Node");
 
@@ -417,6 +455,12 @@ namespace iPath.Data.Database.Migrations
 
             modelBuilder.Entity("iPath.Data.Entities.Community", b =>
                 {
+                    b.HasOne("iPath.Data.Entities.User", "Owner")
+                        .WithMany()
+                        .HasForeignKey("OwnerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.OwnsOne("iPath.Data.Entities.CommunitySetting", "Settings", b1 =>
                         {
                             b1.Property<int>("CommunityId")
@@ -438,6 +482,8 @@ namespace iPath.Data.Database.Migrations
                             b1.WithOwner()
                                 .HasForeignKey("CommunityId");
                         });
+
+                    b.Navigation("Owner");
 
                     b.Navigation("Settings");
                 });

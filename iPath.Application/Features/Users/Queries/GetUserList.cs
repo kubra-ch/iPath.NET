@@ -8,15 +8,23 @@ namespace iPath.Application.Features;
 
 public class GetUserListQuery : PaginatedListQuery, IRequest<PaginatedListResult<User>>
 {
+    public bool IsActive { get; set; }
 }
 
 
-public class GetUserListQueryHandler(IPathDbContext ctx)
+public class GetUserListQueryHandler(IDbContextFactory<IPathDbContext> dbFactory)
     : IRequestHandler<GetUserListQuery, PaginatedListResult<User>>
 {
     public async Task<PaginatedListResult<User>> Handle(GetUserListQuery request, CancellationToken cancellationToken)
     {
+        using var ctx = await dbFactory.CreateDbContextAsync();
         var q = ctx.Users.AsNoTracking().AsQueryable();
+
+        if( request.IsActive)
+        {
+            q = q.Where(x => x.IsActive);
+        }
+
         if( request.Filter != null)
         {
            foreach (var f in request.Filter.Filters)

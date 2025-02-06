@@ -10,6 +10,7 @@ public interface IAdminUserViewModel
     Task<List<User>> FindUsersAsync(string term);
 
     string SearchTerm { get; set; }
+    bool ActiveOnly { get; set; }
     Task ExecuteSearchAsync();
 
     Task<User> SelectUserId(int Id);
@@ -20,4 +21,6 @@ public interface IAdminUserViewModel
 
     Task<UpdateUserResponse> UpdateUserNameAsync(string USername);
     Task<UpdateUserResponse> UpdateUserEmailAsync(string Email);
+
+    Task<UpdateUserResponse> UpdateUserPasswordAsync(string Password, bool IsActive);
 }

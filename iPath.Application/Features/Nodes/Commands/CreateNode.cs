@@ -1,6 +1,7 @@
 ﻿using iPath.Data.Database;
 using iPath.Data.Entities;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 
 namespace iPath.Application.Features;
@@ -22,13 +23,15 @@ public record NodeCommandRespone(bool Success, Node? Item = null!, string? Messa
 
 
 
-public class CreateNodeCommandHandler(IPathDbContext ctx, IPasswordHasher hasher)
+public class CreateNodeCommandHandler(IDbContextFactory<IPathDbContext> dbFactory, IPasswordHasher hasher)
     : IRequestHandler<CreateNodeCommand, NodeCommandRespone>
 {
     public async Task<NodeCommandRespone> Handle(CreateNodeCommand request, CancellationToken cancellationToken)
     {
         try
         {
+            using var ctx = await dbFactory.CreateDbContextAsync();
+
             Node item = new Node
             {
                 Title = request.Title,

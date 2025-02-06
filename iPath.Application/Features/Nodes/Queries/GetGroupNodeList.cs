@@ -13,11 +13,12 @@ public class GetNodeListQuery : PaginatedListQuery, IRequest<PaginatedListResult
 }
 
 
-public class GetNodeListQueryHandler(IPathDbContext ctx)
+public class GetNodeListQueryHandler(IDbContextFactory<IPathDbContext> dbFactory)
     : IRequestHandler<GetNodeListQuery, PaginatedListResult<Node>>
 {
     public async Task<PaginatedListResult<Node>> Handle(GetNodeListQuery request, CancellationToken cancellationToken)
     {
+        using var ctx = await dbFactory.CreateDbContextAsync();
         var q = ctx.Nodes.AsNoTracking()
             .Include(g => g.Owner)
             .OrderByDescending(g => g.CreateOn)

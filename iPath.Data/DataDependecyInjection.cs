@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace iPath.Data;
 
@@ -10,9 +11,15 @@ public static class DataDependecyInjection
     public static IServiceCollection AddIPathInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         // DB connection
-        services.AddDbContext<IPathDbContext>(options => {
+        services.AddDbContext<IPathDbContext>(options =>
+        {
             options.UseSqlServer(configuration.GetConnectionString("iPathNetConnectionString"));
         });
+
+        services.AddDbContextFactory<IPathDbContext>(options =>
+        {
+            options.UseSqlServer(configuration.GetConnectionString("iPathNetConnectionString"));
+        }, ServiceLifetime.Scoped);
 
         return services;
     }

@@ -68,6 +68,7 @@ public class NodeModel
     public string Description { get; set; }
     public DateTime CreatedOn { get; private set; }
     public int? SortNr { get; set; }
+    public int? NewSortNr { get; set; } // placeholder for re-ordering
 
     public eNodeStatus Status { get; set; }
     public eNodeVisibility Visibility { get; set; }
@@ -86,7 +87,7 @@ public class NodeModel
     public List<NodeModel> VisibleChildren => Children.Where(c => c.Visibility == eNodeVisibility.Visible || c.Visibility == eNodeVisibility.Public)
             .OrderBy(c => c.SortNr).ToList();
 
-    public bool HasUnfinishedUploads => Children.Any(c => c.Visibility == eNodeVisibility.Temp);
+    public bool HasUnfinishedUploads(int? UserId) => Children.Any(c => c.Visibility == eNodeVisibility.Draft && (!UserId.HasValue || c.Owner.Id == UserId));
     public bool HasDeletedNodes => Children.Any(c => c.Visibility == eNodeVisibility.Deleted);
 
 
@@ -138,5 +139,11 @@ public class NodeModel
     public string OwnerName => Owner != null ? Owner.Username : "";
 
     public bool HasSubTitle => !string.IsNullOrWhiteSpace(SubTitle);
+
+
+    public string ImageCaption => $"{SortNr} - " + Filename.Substring(0, Math.Min(12, Filename.Length - 1));
+
+
+    public bool HasAnnotationDraft(int Userid) => Annotations.Any(a => a.Owner.Id == Userid && a.Visibility == eAnnotationVisibility.Draft);
 }
 

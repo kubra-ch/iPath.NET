@@ -17,13 +17,14 @@ public record UserGroupMemberDto(int GroupId, eMemberRole Role);
 public record UpdateUserMembershipResponse(bool Success, string? Message = default!);
 
 
-public class UpdateUserMembershipCommandHandler(IPathDbContext ctx)
+public class UpdateUserMembershipCommandHandler(IDbContextFactory<IPathDbContext> dbFactory)
     : IRequestHandler<UpdateUserMembershipCommand, UpdateUserMembershipResponse>
 {
     public async Task<UpdateUserMembershipResponse> Handle(UpdateUserMembershipCommand request, CancellationToken cancellationToken)
     {
         try
         {
+           using var ctx = await dbFactory.CreateDbContextAsync();
             var set = ctx.Set<GroupMember>();
             var list = await set.Where(m => m.UserId == request.UserId).ToListAsync();
 

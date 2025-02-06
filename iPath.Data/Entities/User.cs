@@ -13,9 +13,14 @@ public class User : BaseEntity
     public string EmailInvariant { get; set; }
 
     public string PasswordHash { get; set; }
+    public string? iPath2PasswordHash { get; set; }
 
     public bool IsActive { get; set; }
     public bool IsSysAdmin { get; set; }
+
+
+    public DateTime CreatedOn { get; set; }
+    public DateTime ModifiedOn { get; set; }
 
 
     [MaxLength(100)]

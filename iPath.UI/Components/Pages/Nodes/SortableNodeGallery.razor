@@ -1,0 +1,127 @@
+﻿@using Microsoft.Extensions.Options
+@using iPath.Application.Configuration
+
+@implements IDisposable
+
+@inject IJSRuntime JS
+@inject INodeViewModel vm
+@inject IToastService srvToast
+
+
+@**** Gallery View **********************************************@
+<div class="sortableGallery">
+    <div id="gallery" class="gallery">
+        @foreach (var c in Parent.VisibleChildren)
+        {
+            <div class="gallery-item" data-id="@c.Id">
+                <img src="@c.ThumbUrl" alt="@c.Filename" width="@ThumbWidth" height="@ThumbHeight" />
+                <div class="gallery-item-label">@c.ImageCaption</div>
+            </div>
+        }
+    </div>
+    <div class ="sortableGallery_footer">
+        Drag images to change sort order
+        <div  hidden=@(!sortHasChanged)>
+            <FluentButton Type="ButtonType.Submit" OnClick="SaveSortAsync">Save</FluentButton>
+            <FluentButton Type="ButtonType.Reset" OnClick="CancelSort">Cancel</FluentButton>
+        </div>
+    </div>
+</div>
+
+
+@code {
+    [Parameter]
+    public NodeModel Parent { get; set; }
+
+    [CascadingParameter]
+    public CascadingAppState appState { get; set; }
+
+
+    [Parameter]
+    public EventCallback<bool> OnSortingFinished { get; set; }
+
+
+    [Inject]
+    public IOptions<iPathConfig> Opts { get; set; }
+
+    int ThumbWidth = 120;
+    int ThumbHeight = 120;
+
+
+    protected override void OnInitialized()
+    {
+        ThumbHeight = Opts.Value.ThumbSize;
+        ThumbWidth = Opts.Value.ThumbSize;
+    }
+
+
+
+
+    private DotNetObjectReference<SortableNodeGallery> _dotNetHelper;
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _dotNetHelper = DotNetObjectReference.Create(this);
+            await JS.InvokeVoidAsync("initializeSortable", "gallery", _dotNetHelper);
+        }
+    }
+
+
+
+    private bool sortHasChanged = false;
+
+    [JSInvokable]
+    public void UpdateSortOrder(List<int> newOrder)
+    {
+        foreach (var c in Parent.VisibleChildren)
+        {
+            c.NewSortNr = newOrder.IndexOf(c.Id) + 1;
+        }
+        sortHasChanged = true;
+        StateHasChanged();
+    }
+
+
+    async Task SaveSortAsync()
+    {
+        var newOrder = new List<(int NodeId, int SortNr)>();
+        foreach( var c in Parent.VisibleChildren)
+        {
+            c.NewSortNr ??= 0;
+            c.SortNr = c.NewSortNr;
+            newOrder.Add(new(c.Id, c.NewSortNr.Value));
+        }
+        var resp = await vm.UpdateSortNumerbs(newOrder);
+        if( !resp.Success )
+        {
+            srvToast.ShowError(resp.Message);
+            return;
+        }
+
+        Parent.VisibleChildren.OrderBy(c => c.SortNr);
+        await OnSortingFinished.InvokeAsync(true);
+    }
+
+    async Task CancelSort()
+    {
+        Parent.VisibleChildren.OrderBy(c => c.SortNr);
+        await OnSortingFinished.InvokeAsync(false);
+    }
+
+    void IDisposable.Dispose()
+    {
+        if (_dotNetHelper is not null)
+        {
+            try
+            {
+                _dotNetHelper.Dispose();
+            }
+            catch (JSDisconnectedException)
+            {
+            }
+        }
+    }
+
+
+}

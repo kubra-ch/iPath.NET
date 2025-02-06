@@ -11,10 +11,11 @@ public class GetNodeQuery : IRequest<Node>
     public int Id { get; set; }
 }
 
-public class GetNodeQueryHandler(IPathDbContext ctx) : IRequestHandler<GetNodeQuery, Node>
+public class GetNodeQueryHandler(IDbContextFactory<IPathDbContext> dbFactory) : IRequestHandler<GetNodeQuery, Node>
 {
     public async Task<Node> Handle(GetNodeQuery request, CancellationToken cancellationToken)
     {
+        using var ctx = await dbFactory.CreateDbContextAsync();
         return await ctx.Nodes
             .Include(n => n.Owner)
             .Include(n => n.File)

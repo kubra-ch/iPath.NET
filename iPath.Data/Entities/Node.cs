@@ -46,9 +46,10 @@ public sealed class eNodeStatus : SmartEnum<eNodeStatus>
     private eNodeStatus(string name, int id) : base(name, id) { }
 }
 
+
 public sealed class eNodeVisibility : SmartEnum<eNodeVisibility>
 {
-    public static readonly eNodeVisibility Temp = new("Temp", 0);
+    public static readonly eNodeVisibility Draft = new("Draft", 0);
     public static readonly eNodeVisibility Visible = new("Visible", 1);
     public static readonly eNodeVisibility Public = new("Public", 2);
     public static readonly eNodeVisibility Hidden = new("Hidden", 10);

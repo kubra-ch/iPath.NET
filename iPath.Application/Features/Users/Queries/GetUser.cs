@@ -15,10 +15,11 @@ public class GetUserQuery : IRequest<User>
     public string? Email { get; set; }
 }
 
-public class GetUserQueryHandler(IPathDbContext ctx) : IRequestHandler<GetUserQuery, User>
+public class GetUserQueryHandler(IDbContextFactory<IPathDbContext> dbFactory) : IRequestHandler<GetUserQuery, User>
 {
     public async Task<User> Handle(GetUserQuery request, CancellationToken cancellationToken)
     {
+        using var ctx = await dbFactory.CreateDbContextAsync();
         User usr = null;
         if(request.Id.HasValue)
         {

@@ -12,11 +12,12 @@ public class GetGroupListQuery : PaginatedListQuery, IRequest<PaginatedListResul
 }
 
 
-public class GetGroupListQueryHandler(IPathDbContext ctx)
+public class GetGroupListQueryHandler(IDbContextFactory<IPathDbContext> dbFactory)
     : IRequestHandler<GetGroupListQuery, PaginatedListResult<Group>>
 {
     public async Task<PaginatedListResult<Group>> Handle(GetGroupListQuery request, CancellationToken cancellationToken)
     {
+        using var ctx = await dbFactory.CreateDbContextAsync();
         var q = ctx.Groups.AsNoTracking()
             .Include(g => g.Community)
             .Include(g => g.Owner)

@@ -10,22 +10,26 @@
 
 <h3>Discussion Group Administration</h3>
 
-<FluentDataGrid TGridItem="Group" ItemsProvider="@vm.GridDataProvider"
-Pagination="@pagination" @ref="grid"
-GridTemplateColumns="0.2fr 1fr 0.4fr 0.4fr 0.4fr 0.5fr">
-    <PropertyColumn Property="u => u.Id" />
-    <PropertyColumn Property="u => u.Name" />
-    <PropertyColumn Property="u => u.Owner!.Username" Title="Owner" />
-    <PropertyColumn Property=@(u => u.Community == null ? "--" : u.Community.Name) Title="Community" />
-    <PropertyColumn Property="u => u.Visibility" Title="Visibility" />
-    <TemplateColumn Title="Actions">
-        <FluentButton IconEnd="@(new Icons.Regular.Size16.Edit())" Title="Edit" OnClick=@(async () => await EditGroup(context)) />
-        <FluentButton IconEnd="@(new Icons.Regular.Size16.PersonAdd())" Title="Members" OnClick=@(async () => await EditGroupMembers(context)) />
-    </TemplateColumn>
-</FluentDataGrid>
-<FluentPaginator State="@pagination" />
+<ExpandableErrorBoundary>
 
-<FluentButton OnClick="CreateGroup">Create new Group</FluentButton>
+	<FluentDataGrid TGridItem="Group" ItemsProvider="@vm.GridDataProvider"
+					Pagination="@pagination" @ref="grid"
+					GridTemplateColumns="0.2fr 1fr 0.4fr 0.4fr 0.4fr 0.5fr">
+		<PropertyColumn Property="u => u.Id" Sortable="true" />
+        <PropertyColumn Property="u => u.Name" Sortable="true" />
+		<PropertyColumn Property=@(u => u.Owner == null ? "" : u.Owner!.Username) Title="Owner" />
+		<PropertyColumn Property=@(u => u.Community == null ? "--" : u.Community.Name) Title="Community" />
+		<PropertyColumn Property="u => u.Visibility" Title="Visibility" />
+		<TemplateColumn Title="Actions">
+			<FluentButton IconEnd="@(new Icons.Regular.Size16.Edit())" Title="Edit" OnClick=@(async () => await EditGroup(context)) />
+			<FluentButton IconEnd="@(new Icons.Regular.Size16.PersonAdd())" Title="Members" OnClick=@(async () => await EditGroupMembers(context)) />
+		</TemplateColumn>
+	</FluentDataGrid>
+	<FluentPaginator State="@pagination" />
+
+	<FluentButton OnClick="CreateGroup">Create new Group</FluentButton>
+
+</ExpandableErrorBoundary>
 
 <hr />
 <p>@vm.ErrorMessage</p>

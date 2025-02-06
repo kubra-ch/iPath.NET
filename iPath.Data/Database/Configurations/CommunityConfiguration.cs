@@ -12,6 +12,8 @@ internal class CommunityConfiguration : IEntityTypeConfiguration<Community>
 
         builder.Property(c => c.Name).HasMaxLength(200);
 
+        builder.HasOne(c => c.Owner).WithMany().HasForeignKey(c => c.OwnerId).IsRequired();
+
         builder.HasMany(c => c.Members).WithOne().HasForeignKey(x => x.CommunityId).OnDelete(DeleteBehavior.NoAction);
         builder.HasMany(c => c.Groups).WithOne().HasForeignKey(x => x.CommunityId).OnDelete(DeleteBehavior.NoAction);
 

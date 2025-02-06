@@ -1,6 +1,7 @@
 ﻿using iPath.Data.Database;
 using iPath.Data.Entities;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace iPath.Application.Features.Nodes.Commands;
 
@@ -8,10 +9,12 @@ public record UpdateNodeVisibilityCommand(int NodeId, eNodeVisibility newValue) 
 {
 }
 
-public class UpdateNodeVisibilityHandler(IPathDbContext ctx) : IRequestHandler<UpdateNodeVisibilityCommand, NodeCommandRespone>
+public class UpdateNodeVisibilityHandler(IDbContextFactory<IPathDbContext> dbFactory) : IRequestHandler<UpdateNodeVisibilityCommand, NodeCommandRespone>
 {
     public async Task<NodeCommandRespone> Handle(UpdateNodeVisibilityCommand request, CancellationToken cancellationToken)
     {
+        using var ctx = await dbFactory.CreateDbContextAsync();
+
         var n = await ctx.Nodes.FindAsync(request.NodeId);
         if (n == null) return new NodeCommandRespone(false, Message: $"Node #{request.NodeId} not found");
 
@@ -27,13 +30,15 @@ public record UpdateNodesVisibilityCommand(List<int> NodeIds, eNodeVisibility ne
 {
 }
 
-public class UpdateNodesVisibilityHandler(IPathDbContext ctx) : IRequestHandler<UpdateNodesVisibilityCommand, NodeCommandRespone>
+public class UpdateNodesVisibilityHandler(IDbContextFactory<IPathDbContext> dbFactory) : IRequestHandler<UpdateNodesVisibilityCommand, NodeCommandRespone>
 {
     public async Task<NodeCommandRespone> Handle(UpdateNodesVisibilityCommand request, CancellationToken cancellationToken)
     {
         try
         {
-            foreach( var id in request.NodeIds )
+           using var ctx = await dbFactory.CreateDbContextAsync();
+
+            foreach ( var id in request.NodeIds )
             {
                 var n = await ctx.Nodes.FindAsync(id);
                 if( n != null ) n.Visibility = request.newValue;

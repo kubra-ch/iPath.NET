@@ -83,21 +83,6 @@ public class NodeViewModelMediator(IMediator mediator, ILogger<NodeViewModelMedi
         return resp;
     }
 
-    public async Task<AddNodeAnnotationResponse> AddAnnotationAsync(int UserId, string text)
-    {
-        if (Model is null) return new AddNodeAnnotationResponse(false);
-
-        var req = new AddNodeAnnotationCommand(NodeId: Model.Id, UserId: UserId, text: text);
-        var resp = await mediator.Send(req);
-
-        if( resp.Success)
-        {
-            Model.Annotations.Add(new AnnotationModel(resp.item));
-        }
-
-        return resp;
-    }
-
     public async Task<NodeCommandRespone> DeleteNodeAsync(int NodeId)
     {
         return await mediator.Send(new DeleteNodeCommand(NodeId: NodeId));
@@ -131,5 +116,62 @@ public class NodeViewModelMediator(IMediator mediator, ILogger<NodeViewModelMedi
         request.Visibility = Model.Visibility;
 
         return await mediator.Send(request);
+    }
+
+    public async Task<NodeCommandRespone> UpdateSortNumerbs(List<(int NodeId, int SortNr)> newOrder)
+    {
+        return await mediator.Send(new UpdateNodesSortNrSortNrCommand(newOrder));
+    }
+
+    public async Task<UpdateAnnotationResponse> CreateAnnotationAsync(int UserId)
+    {
+        if (Model is null) return new UpdateAnnotationResponse(false);
+
+        var resp = await mediator.Send(new CreateAnnotationCommand(NodeId: Model.Id, UserId: UserId));
+        if (resp.Success) Model.Annotations.Add(new AnnotationModel(resp.item));
+        return resp;
+    }
+
+
+    public async Task<UpdateAnnotationResponse> UpdateAnnotationAsync(AnnotationModel model, string? text = null!, eAnnotationVisibility? visibility = null!, int? userId = null!)
+    {
+        var resp = await mediator.Send(new UpdateAnnotationCommand(Id: model.Id, Text: text, Visibility: visibility, UserId: userId));
+        if (resp.Success) model.LoadData(resp.item);
+        return resp;
+    }
+
+    public async Task<UpdateAnnotationResponse> DeleteAnnotationAsync(AnnotationModel model)
+    {
+        var resp = await mediator.Send(new UpdateAnnotationCommand(Id: model.Id, Visibility: eAnnotationVisibility.Deleted));
+        if (resp.Success)
+        {
+            if( resp.item == null )
+            {
+                // remove from DB
+                Model.Annotations.RemoveAll(a => a.Id == model.Id);
+            }
+            else
+            {
+                model.LoadData(resp.item);
+            }
+        }
+
+        return resp;
+    }
+
+
+    private Dictionary<int, string> _annotationDrafts = new();
+
+    public string GetAnnotationDraft(int Id)
+    {
+        return _annotationDrafts.ContainsKey(Id) ? _annotationDrafts[Id] : "";
+    }
+
+    public void SetAnnotationDraft(int Id, string text)
+    {
+        if (_annotationDrafts.ContainsKey(Id))
+            _annotationDrafts[Id] = text;
+        else
+            _annotationDrafts.Add(Id, text);
     }
 }

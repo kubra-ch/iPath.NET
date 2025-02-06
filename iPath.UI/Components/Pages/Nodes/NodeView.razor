@@ -5,6 +5,7 @@
 @inject INodeViewModel vm
 @inject IToastService srvToast
 @inject IDialogService srvDialog
+@inject IJSRuntime js
 
 <div>@vm.Message</div>
 
@@ -27,40 +28,40 @@ else
 			<div class="nodeheader_appbar">
 				<FluentAppBar Orientation="Orientation.Horizontal">
 					<FluentAppBarItem Href="/"
-									  Match="NavLinkMatch.All"
-									  IconRest="HomeIcon()"
-									  IconActive="HomeIcon(active: true)"
-									  Text="Home" />
+					Match="NavLinkMatch.All"
+					IconRest="HomeIcon()"
+					IconActive="HomeIcon(active: true)"
+					Text="Home" />
 
 					@if( vm.Model.GroupId.HasValue )
 					{
 						<FluentAppBarItem Href=@($"/groups/{vm.Model.GroupId}")
-										  Match="NavLinkMatch.All"
-										  IconRest="ListIcon()"
-										  IconActive="ListIcon(active: true)"
-										  Text="List" />
+						Match="NavLinkMatch.All"
+						IconRest="ListIcon()"
+						IconActive="ListIcon(active: true)"
+						Text="List" />
 					}
 
 					<FluentAppBarItem OnClick="ReloadNode"
-									  Match="NavLinkMatch.All"
-									  IconRest="CaseIcon()"
-									  IconActive="CaseIcon(active: true)"
-									  Text="Case" />
+					Match="NavLinkMatch.All"
+					IconRest="CaseIcon()"
+					IconActive="CaseIcon(active: true)"
+					Text="Case" />
 
 					@if( canEdit )
 					{
 						<FluentAppBarItem Href=@($"/nodes/edit/{NodeId}")
-										  Match="NavLinkMatch.All"
-										  IconRest="EditIcon()"
-										  IconActive="EditIcon(active: true)"
-										  Text="Edit" />
+						Match="NavLinkMatch.All"
+						IconRest="EditIcon()"
+						IconActive="EditIcon(active: true)"
+						Text="Edit" />
 					}
 
 					<FluentAppBarItem OnClick="AddAttachment"
-									  Match="NavLinkMatch.All"
-									  IconRest="AttachIcon()"
-									  IconActive="AttachIcon(active: true)"
-									  Text="Add Image" />
+					Match="NavLinkMatch.All"
+					IconRest="AttachIcon()"
+					IconActive="AttachIcon(active: true)"
+					Text="Add Image" />
 				</FluentAppBar>
 			</div>
 		</div>
@@ -79,8 +80,8 @@ else
 			@**** Image View **********************************************@
 			<div class="image_view">
 				<img src="@vm.ActiveChild.FileUrl" alt="@vm.ActiveChild.Filename"
-					 width="@vm.ActiveChild.ImageWidth"
-					 @onclick="vm.NextImage" />
+				width="@vm.ActiveChild.ImageWidth"
+				@onclick="vm.NextImage" />
 				<div class="image_info">
 					@vm.ActiveChild.Filename
 				</div>
@@ -93,21 +94,30 @@ else
 					<h4>Gallery</h4>
 				</div>
 				<div class="titleActions">
-					<FluentButton IconEnd="@(new Icons.Regular.Size16.AddCircle())"
-					Title="Add a new image"
-					OnClick="AddAttachment" />
+					<FluentButton IconEnd="@(new Icons.Regular.Size16.ArrowSort())" Title="sort images" OnClick="@(() => gallerySortingActive = true)" />
+					<FluentButton IconEnd="@(new Icons.Regular.Size16.AddCircle())" Title="Add a new image" OnClick="AddAttachment" />
 				</div>
 			</div>
-			<NodeGallery Parent="@vm.Model" OnChildNodeActivated="@vm.SelectChild" />
-			@if (canEdit && vm.Model.HasUnfinishedUploads)
+
+			@if (!gallerySortingActive)
 			{
-				<div class="gallery_alert">
-					<b>Note: </b>this items contains unfinsihed uploads.
-					<div>
-						<FluentButton Appearance="Appearance.Accent" OnClick="DeleteUnfinished">Delete Uploads</FluentButton>
-						<FluentButton Appearance="Appearance.Accent" OnClick="PublishUnfinished">Plublish Uploads</FluentButton>
+				// display
+				<NodeGallery Parent="@vm.Model" OnChildNodeActivated="@vm.SelectChild" />
+				@if (canEdit && vm.Model.HasUnfinishedUploads(appState.Session.UserId))
+				{
+					<div class="gallery_alert">
+						<b>Note: </b>this items contains unfinsihed uploads.
+						<div>
+							<FluentButton Appearance="Appearance.Accent" OnClick="DeleteUnfinished">Delete Uploads</FluentButton>
+							<FluentButton Appearance="Appearance.Accent" OnClick="PublishUnfinished">Plublish Uploads</FluentButton>
+						</div>
 					</div>
-				</div>
+				}
+			}
+			else
+			{
+				// sorting
+				<SortableNodeGallery Parent="@vm.Model" OnSortingFinished="@(() => gallerySortingActive = false)" />
 			}
 		}
 
@@ -123,15 +133,12 @@ else
 				OnClick="CreateAnnotation" />
 			</div>
 		</div>
-		@foreach( var a in vm.Model.Annotations.OrderBy(a => a.CreatedOn))
+		@foreach( var a in vm.Model.Annotations.OrderBy(a => a.CreatedOn) )
 		{
-			<div class="node_annotation">
-				<div class="annotation_info">
-					<b>@a.Owner.Username</b>
-					<div>@a.CreatedOn.ToShortDateString()</div>
-				</div>
-				<div class="annotation_text">@a.Text</div>
-			</div>
+			@if (a.IsVisibleInSession(appState.Session) )
+			{
+				<AnnotationView Model="a" ShowDeleted="false" />
+			}
 		}
 	</ExpandableErrorBoundary>
 }
@@ -181,7 +188,8 @@ else
 
 
 	/*** Image Gallery ****************************************************************************/
-	
+	private bool gallerySortingActive = false;
+
 	async Task AddAttachment()
 	{
 		var dialog = await srvDialog.ShowDialogAsync<NodeFileUploadDlg>(vm.Model, new DialogParameters()
@@ -209,6 +217,25 @@ else
 	/***** Annotations **************************************************************************************/
 	async Task CreateAnnotation()
 	{
+		// check for open draft first
+		if (vm.Model.HasAnnotationDraft(appState.Session.UserId)) return;
+
+
+		var resp = await vm.CreateAnnotationAsync(UserId: appState.Session.UserId);
+		if( !resp.Success )
+		{
+			srvToast.ShowError(resp.Message);
+		}
+		else
+		{
+			StateHasChanged();
+			var elementId = $"annotation-{resp.item.Id}";
+			await js.InvokeVoidAsync("focusElement", elementId);
+		}
+	}
+
+	async Task CreateAnnotation_Dialog()
+	{
 		var dialog = await srvDialog.ShowDialogAsync<NodeAnnotationDlg>(vm.Model, new DialogParameters()
 			{
 				Width = "900px",
@@ -221,11 +248,11 @@ else
 		var result = await dialog.Result;
 		if (!result.Cancelled)
 		{
-			var resp = result.Data as AddNodeAnnotationResponse;
+			var resp = result.Data as UpdateAnnotationResponse;
 			if( resp != null )
 			{
 				if( resp.Success )
-				{
+				{					
 					StateHasChanged();
 				}
 				else
@@ -243,7 +270,7 @@ else
 
 	async Task DeleteUnfinished()
 	{
-		var nodes = vm.Model.Children.Where(c => c.Visibility == eNodeVisibility.Temp).Select(c => c.Id).ToList();
+		var nodes = vm.Model.Children.Where(c => c.Visibility == eNodeVisibility.Draft).Select(c => c.Id).ToList();
 		var resp = await vm.DeleteNodesAsync(nodes);
 		await vm.LoadNode(vm.Model.Id);
 		StateHasChanged();
@@ -251,7 +278,7 @@ else
 
 	async Task PublishUnfinished()
 	{
-		var nodes = vm.Model.Children.Where(c => c.Visibility == eNodeVisibility.Temp).Select(c => c.Id).ToList();
+		var nodes = vm.Model.Children.Where(c => c.Visibility == eNodeVisibility.Draft).Select(c => c.Id).ToList();
 		var resp = await vm.UpdateNodesVisibilityAsync(nodes, eNodeVisibility.Visible);
 		await vm.LoadNode(vm.Model.Id);
 		StateHasChanged();

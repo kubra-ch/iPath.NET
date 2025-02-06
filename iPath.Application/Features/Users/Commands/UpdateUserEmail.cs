@@ -1,5 +1,4 @@
 ﻿using iPath.Data.Database;
-using iPath.Data.Entities;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
@@ -10,13 +9,15 @@ public record UpdateUserEmailCommand(int UserId, [EmailAddress] string Email)
     : IRequest<UpdateUserResponse> { }
 
 
-public class UpdateUserEmailCommandHandler(IPathDbContext ctx)
+public class UpdateUserEmailCommandHandler(IDbContextFactory<IPathDbContext> dbFactory)
     : IRequestHandler<UpdateUserEmailCommand, UpdateUserResponse>
 {
     public async Task<UpdateUserResponse> Handle(UpdateUserEmailCommand request, CancellationToken cancellationToken)
     {
         try
         {
+           using var ctx = await dbFactory.CreateDbContextAsync();
+
             // trim
             var email = request.Email.Trim();
 
@@ -32,6 +33,7 @@ public class UpdateUserEmailCommandHandler(IPathDbContext ctx)
             // update properties
             item.Email = email;
             item.EmailInvariant = email.ToLowerInvariant();
+            item.ModifiedOn = DateTime.UtcNow;
 
             ctx.Users.Update(item);
             await ctx.SaveChangesAsync();
