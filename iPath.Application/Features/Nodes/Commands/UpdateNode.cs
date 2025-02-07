@@ -24,26 +24,19 @@ public class UpdateNodeCommandHandler(IDbContextFactory<IPathDbContext> dbFactor
 {
     public async Task<NodeCommandRespone> Handle(UpdateNodeCommand request, CancellationToken cancellationToken)
     {
-        try
-        {
-            using var ctx = await dbFactory.CreateDbContextAsync();
+        using var ctx = await dbFactory.CreateDbContextAsync();
 
-            var node = await ctx.Nodes.FindAsync(request.Id);
-            if (node == null) return new NodeCommandRespone(false, Message: $"Node #{request.Id} not found");
+        var node = await ctx.Nodes.FindAsync(request.Id);
+        if (node == null) return new NodeCommandRespone(false, Message: $"Node #{request.Id} not found");
 
-            node.Title = request.Title;
-            node.SubTitle = request.SubTitle;
-            node.Description = request.Description;
-            node.Status = request.Status;
-            node.Visibility = request.Visibility;
-            node.ModifiedOn = DateTime.UtcNow;
+        node.Title = request.Title;
+        node.SubTitle = request.SubTitle;
+        node.Description = request.Description;
+        node.Status = request.Status;
+        node.Visibility = request.Visibility;
+        node.ModifiedOn = DateTime.UtcNow;
 
-            await ctx.SaveChangesAsync();
-            return new NodeCommandRespone(true, node);
-        }
-        catch(Exception ex)
-        {
-            return new NodeCommandRespone(false, Message: (ex.InnerException is null ? ex.Message : ex.InnerException.Message));
-        }
+        await ctx.SaveChangesAsync();
+        return new NodeCommandRespone(true, Data: node);
     }
 }

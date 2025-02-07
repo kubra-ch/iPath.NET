@@ -1,12 +1,11 @@
 ﻿using iPath.Application.Features;
-using iPath.UI.Areas.AppState;
-using MediatR;
+using iPath.UI.ViewModels.DataService;
 using Microsoft.FluentUI.AspNetCore.Components;
 
 namespace iPath.UI.ViewModels.Groups;
 
-
-public class GroupListViewModelMediator(IMediator mediator) : IGroupListViewModel
+public class GroupListViewModel
+    (IDataAccess srvData) : IGroupListViewModel
 {
     public string SearchTerm { get; set; }
     public int? UserId { get; set; }
@@ -40,7 +39,7 @@ public class GroupListViewModelMediator(IMediator mediator) : IGroupListViewMode
             request.StartIndex = req.StartIndex;
             request.Count = req.Count;
 
-            var result = await mediator.Send(request);
+            var result = (await srvData.Send(request)).Data;
 
             return GridItemsProviderResult.From(
                 items: result.Items,

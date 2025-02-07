@@ -37,6 +37,7 @@ public sealed class eGroupVisibility : SmartEnum<eGroupVisibility>
 
 public sealed class eGroupType : SmartEnum<eGroupType>
 {
+    public static readonly eGroupType None = new("None", 0);
     public static readonly eGroupType DiscussionGroup = new("Discussion Group", 1);
     public static readonly eGroupType ExpertGroup = new("Expert Group", 2);
     public static readonly eGroupType TeachingGroup = new("Teaching Group", 3);

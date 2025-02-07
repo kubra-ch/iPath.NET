@@ -1,12 +1,13 @@
 ﻿using iPath.Application.Features;
 using iPath.Application.Querying;
 using iPath.Data.Entities;
+using iPath.UI.ViewModels.DataService;
 using MediatR;
 using Microsoft.FluentUI.AspNetCore.Components;
 
 namespace iPath.UI.ViewModels.Admin.Groups;
 
-public class AdminGroupMediatorViewModel(IMediator mediator) : IAdminGroupViewModel
+public class AdminGroupViewModel(IDataAccess srvData) : IAdminGroupViewModel
 {
     private string _errorMessage = string.Empty;
     public string ErrorMessage => _errorMessage;
@@ -32,11 +33,17 @@ public class AdminGroupMediatorViewModel(IMediator mediator) : IAdminGroupViewMo
             request.SortDefinitions ??= new();
             request.SortDefinitions.Add(new SortDefinition { SortColumn = "Name" });
 
-            var result = await mediator.Send(request);
+            var response = await srvData.Send(request);
+            if (!response.Success)
+            {
+                _errorMessage = response.Message;
+                throw new Exception(response.Message);
+                return GridItemsProviderResult.From(items: new List<Group>(), totalItemCount: 0);
+            }
 
             return GridItemsProviderResult.From(
-                items: result.Items,
-                totalItemCount: result.TotalItemsCount
+                items: response.Data.Items,
+                totalItemCount: response.Data.TotalItemsCount
                 );
         };
     }
@@ -48,8 +55,8 @@ public class AdminGroupMediatorViewModel(IMediator mediator) : IAdminGroupViewMo
 
     public async Task SelectGroupId(int Id)
     {
-        var resp = await mediator.Send(new GetGroupQuery(GroupId: Id));
-        _selectedGroup = resp.Item;
+        var resp = await srvData.Send(new GetGroupQuery(GroupId: Id));
+        _selectedGroup = resp.Data;
     }
 
     private Group _selectedGroup = null;
@@ -57,15 +64,15 @@ public class AdminGroupMediatorViewModel(IMediator mediator) : IAdminGroupViewMo
 
 
 
-    public async Task<CreateGroupResponse> CreateGroupAsync(string Name, string? purpose, int? ownerId, Community? community)
+    public async Task<GroupCommandResponse> CreateGroupAsync(string Name, string? purpose, int? ownerId, Community? community)
     {
-        var request = new CreateGroupCommand { Name = Name, Purpose = purpose, OwnerId = ownerId, CommunityId = community?.Id };
-        var response = await mediator.Send(request);
+        var request = new CreateGroupCommand(Name: Name, Purpose: purpose, OwnerId: ownerId, CommunityId: community?.Id);
+        var response = await srvData.Send(request);
         if (response.Success)
         {
             if (community is not null)
             {
-                community.Groups.Add(response.Item);
+                community.Groups.Add(response.Data);
             }
         }
         else
@@ -76,9 +83,9 @@ public class AdminGroupMediatorViewModel(IMediator mediator) : IAdminGroupViewMo
     }
 
 
-    public async Task<UpdateGroupResponse> UpdateGroupAsync(Group item)
+    public async Task<GroupCommandResponse> UpdateGroupAsync(Group item)
     {
-        var request = new UpdateGroupCommand() { Item = item };
-        return await mediator.Send(request);
+        var request = new UpdateGroupCommand(item);
+        return await srvData.Send(request);
     }
 }

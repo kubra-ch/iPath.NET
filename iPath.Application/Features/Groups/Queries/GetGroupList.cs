@@ -6,16 +6,21 @@ using Microsoft.EntityFrameworkCore;
 
 namespace iPath.Application.Features;
 
-public class GetGroupListQuery : PaginatedListQuery, IRequest<PaginatedListResult<Group>>
+public class GetGroupListQuery : PaginatedListQuery, IRequest<GetGroupListResponse>
 {
     public int? CommunityId { get; set; }
 }
 
 
+public record GetGroupListResponse(bool Success, string? Message = default!, PaginatedListResult<Group> Data = null!)
+    : BaseResponseT<PaginatedListResult<Group>>(Success, Message, Data);
+
+
+
 public class GetGroupListQueryHandler(IDbContextFactory<IPathDbContext> dbFactory)
-    : IRequestHandler<GetGroupListQuery, PaginatedListResult<Group>>
+    : IRequestHandler<GetGroupListQuery, GetGroupListResponse>
 {
-    public async Task<PaginatedListResult<Group>> Handle(GetGroupListQuery request, CancellationToken cancellationToken)
+    public async Task<GetGroupListResponse> Handle(GetGroupListQuery request, CancellationToken cancellationToken)
     {
         using var ctx = await dbFactory.CreateDbContextAsync();
         var q = ctx.Groups.AsNoTracking()
@@ -46,8 +51,8 @@ public class GetGroupListQueryHandler(IDbContextFactory<IPathDbContext> dbFactor
                 }
             }
         }
-
-        return await q.GetPaginatedListResultAsync(request);
+        var data = await q.GetPaginatedListResultAsync(request);
+        return new GetGroupListResponse(true, Data: data);
     }
 }
 

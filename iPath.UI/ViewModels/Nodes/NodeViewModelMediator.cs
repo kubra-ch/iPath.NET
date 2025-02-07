@@ -1,11 +1,11 @@
 ﻿using iPath.Application.Features;
 using iPath.Application.Features.Nodes.Commands;
 using iPath.Data.Entities;
-using MediatR;
+using iPath.UI.ViewModels.DataService;
 
 namespace iPath.UI.ViewModels.Nodes;
 
-public class NodeViewModelMediator(IMediator mediator, ILogger<NodeViewModelMediator> logger) : INodeViewModel
+public class NodeViewModelMediator(IDataAccess srvData, ILogger<NodeViewModelMediator> logger) : INodeViewModel
 {
     private NodeModel _model;
     public NodeModel Model => _model;
@@ -57,50 +57,50 @@ public class NodeViewModelMediator(IMediator mediator, ILogger<NodeViewModelMedi
     public async Task LoadNode(int NodeId)
     {
         ActiveChild = null;
-        var resp = await mediator.Send(new GetNodeQuery { Id = NodeId });
-        if( resp != null)
+        var resp = await srvData.Send(new GetNodeQuery(NodeId));
+        if( resp.Success )
         {
             _message = "";
-            _model = new NodeModel(resp);
+            _model = new NodeModel(resp.Data);
         }
         else
         {
             _model = null;
-            _message = $"Node #{NodeId} not found";
+            _message = resp.Message;
         }
     }
 
-    public async Task<UploadNodeFileResponse> UploadFileAsync(int UserId, string Filename, FileInfo localFile)
+    public async Task<NodeCommandRespone> UploadFileAsync(int UserId, string Filename, FileInfo localFile)
     {
-        if (Model is null) return new UploadNodeFileResponse(false);
+        if (Model is null) return new NodeCommandRespone(false);
 
-        if (localFile == null || !localFile.Exists ) return new UploadNodeFileResponse(false, null, "upload not found");
+        if (localFile == null || !localFile.Exists ) return new NodeCommandRespone(false, "upload not found");
 
         logger.LogInformation("starting file upload: " + Filename);
 
-        var resp = await mediator.Send(new UploadNodeFileCommand(NodeId: Model.Id, UserId: UserId, filename: Filename, localFilePath: localFile.FullName));
+        var resp = await srvData.Send(new UploadNodeFileCommand(NodeId: Model.Id, UserId: UserId, filename: Filename, localFilePath: localFile.FullName));
 
         return resp;
     }
 
     public async Task<NodeCommandRespone> DeleteNodeAsync(int NodeId)
     {
-        return await mediator.Send(new DeleteNodeCommand(NodeId: NodeId));
+        return await srvData.Send(new DeleteNodeCommand(NodeId: NodeId));
     }
 
     public async Task<NodeCommandRespone> DeleteNodesAsync(List<int> NodeIds)
     {
-        return await mediator.Send(new DeleteNodesCommand(NodeIds: NodeIds));
+        return await srvData.Send(new DeleteNodesCommand(NodeIds: NodeIds));
     }
 
     public async Task<NodeCommandRespone> UpdateNodeVisibilityAsync(int NodeId, eNodeVisibility newValue)
     {
-        return await mediator.Send(new UpdateNodeVisibilityCommand(NodeId: NodeId, newValue: newValue));
+        return await srvData.Send(new UpdateNodeVisibilityCommand(NodeId: NodeId, newValue: newValue));
     }
 
     public async Task<NodeCommandRespone> UpdateNodesVisibilityAsync(List<int> NodeIds, eNodeVisibility newValue)
     {
-        return await mediator.Send(new UpdateNodesVisibilityCommand(NodeIds: NodeIds, newValue: newValue));
+        return await srvData.Send(new UpdateNodesVisibilityCommand(NodeIds: NodeIds, newValue: newValue));
     }
 
     public async Task<NodeCommandRespone> UpdateNodeAsync()
@@ -115,44 +115,44 @@ public class NodeViewModelMediator(IMediator mediator, ILogger<NodeViewModelMedi
         request.Status = Model.Status;
         request.Visibility = Model.Visibility;
 
-        return await mediator.Send(request);
+        return await srvData.Send(request);
     }
 
     public async Task<NodeCommandRespone> UpdateSortNumerbs(List<(int NodeId, int SortNr)> newOrder)
     {
-        return await mediator.Send(new UpdateNodesSortNrSortNrCommand(newOrder));
+        return await srvData.Send(new UpdateNodesSortNrSortNrCommand(newOrder));
     }
 
-    public async Task<UpdateAnnotationResponse> CreateAnnotationAsync(int UserId)
+    public async Task<AnnotationCommandResponse> CreateAnnotationAsync(int UserId)
     {
-        if (Model is null) return new UpdateAnnotationResponse(false);
+        if (Model is null) return new AnnotationCommandResponse(false);
 
-        var resp = await mediator.Send(new CreateAnnotationCommand(NodeId: Model.Id, UserId: UserId));
-        if (resp.Success) Model.Annotations.Add(new AnnotationModel(resp.item));
+        var resp = await srvData.Send(new CreateAnnotationCommand(NodeId: Model.Id, UserId: UserId));
+        if (resp.Success) Model.Annotations.Add(new AnnotationModel(resp.Data));
         return resp;
     }
 
 
-    public async Task<UpdateAnnotationResponse> UpdateAnnotationAsync(AnnotationModel model, string? text = null!, eAnnotationVisibility? visibility = null!, int? userId = null!)
+    public async Task<AnnotationCommandResponse> UpdateAnnotationAsync(AnnotationModel model, string? text = null!, eAnnotationVisibility? visibility = null!, int? userId = null!)
     {
-        var resp = await mediator.Send(new UpdateAnnotationCommand(Id: model.Id, Text: text, Visibility: visibility, UserId: userId));
-        if (resp.Success) model.LoadData(resp.item);
+        var resp = await srvData.Send(new UpdateAnnotationCommand(Id: model.Id, Text: text, Visibility: visibility, UserId: userId));
+        if (resp.Success) model.LoadData(resp.Data);
         return resp;
     }
 
-    public async Task<UpdateAnnotationResponse> DeleteAnnotationAsync(AnnotationModel model)
+    public async Task<AnnotationCommandResponse> DeleteAnnotationAsync(AnnotationModel model)
     {
-        var resp = await mediator.Send(new UpdateAnnotationCommand(Id: model.Id, Visibility: eAnnotationVisibility.Deleted));
+        var resp = await srvData.Send(new UpdateAnnotationCommand(Id: model.Id, Visibility: eAnnotationVisibility.Deleted));
         if (resp.Success)
         {
-            if( resp.item == null )
+            if( resp.Data == null )
             {
                 // remove from DB
                 Model.Annotations.RemoveAll(a => a.Id == model.Id);
             }
             else
             {
-                model.LoadData(resp.item);
+                model.LoadData(resp.Data);
             }
         }
 

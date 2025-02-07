@@ -16,11 +16,11 @@ public interface IAdminUserViewModel
     Task<User> SelectUserId(int Id);
     User SelectedUser { get; }
 
-    Task<CreateUserResponse> CreateUserAsync(string Username, string Email, string Password);
-    Task<UpdateUserResponse> UpdateUserAsync(User item);
+    Task<UserCommandResponse> CreateUserAsync(string Username, string Email, string Password);
+    Task<UserCommandResponse> UpdateUserAsync(User item);
 
-    Task<UpdateUserResponse> UpdateUserNameAsync(string USername);
-    Task<UpdateUserResponse> UpdateUserEmailAsync(string Email);
+    Task<UserCommandResponse> UpdateUserNameAsync(string USername);
+    Task<UserCommandResponse> UpdateUserEmailAsync(string Email);
 
-    Task<UpdateUserResponse> UpdateUserPasswordAsync(string Password, bool IsActive);
+    Task<UserCommandResponse> UpdateUserPasswordAsync(string Password, bool IsActive);
 }

@@ -1,12 +1,12 @@
 ﻿using iPath.Application.Features;
 using iPath.Application.Querying;
 using iPath.Data.Entities;
-using MediatR;
+using iPath.UI.ViewModels.DataService;
 using Microsoft.FluentUI.AspNetCore.Components;
 
 namespace iPath.UI.ViewModels.Admin.Communities;
 
-public class AdminCommunityMediatorViewModel(IMediator mediator) : IAdminCommunityViewModel
+public class AdminCommunityViewModel(IDataAccess srvData) : IAdminCommunityViewModel
 {
     private bool _IsReady = false;
     public bool IsReady => _IsReady;
@@ -31,12 +31,15 @@ public class AdminCommunityMediatorViewModel(IMediator mediator) : IAdminCommuni
             request.SortDefinitions ??= new();
             request.SortDefinitions.Add(new SortDefinition { SortColumn = "name" });
 
-            var result = await mediator.Send(request);
+            var response = await srvData.Send(request);
             _IsReady = true;
 
+            if (!response.Success)
+                throw new Exception(response.Message);
+
             return GridItemsProviderResult.From(
-                items: result.Items,
-                totalItemCount: result.TotalItemsCount
+                items: response.Data.Items,
+                totalItemCount: response.Data.TotalItemsCount
                 );
         };
 
@@ -49,7 +52,8 @@ public class AdminCommunityMediatorViewModel(IMediator mediator) : IAdminCommuni
 
     public async Task SelectCommunityId(int Id)
     {
-        _selectedCommunity = await mediator.Send(new GetCommunityQuery { Id = Id });
+        var response = await srvData.Send(new GetCommunityQuery(Id));
+        _selectedCommunity = response.Data;
     }
 
     private Community _selectedCommunity = null;
@@ -58,13 +62,15 @@ public class AdminCommunityMediatorViewModel(IMediator mediator) : IAdminCommuni
 
     public async Task<int> GetCommunityCountAsync()
     {
-        var result = await mediator.Send(new GetCommunityListQuery());
+        var response = await srvData.Send(new GetCommunityListQuery());
+        if (!response.Success) throw new Exception(response.Message);
+
         _IsReady = true;
-        return result.TotalItemsCount;
+        return response.Data.TotalItemsCount;
     }
 
-    public async Task<CommunityResponse> CreateCommunityAsync(string name)
+    public async Task<CommunityCommandResponse> CreateCommunityAsync(string name)
     {
-        return  await mediator.Send(new CreateCommunityCommand(Name: name));
+        return await srvData.Send(new CreateCommunityCommand(Name: name));
     }
 }

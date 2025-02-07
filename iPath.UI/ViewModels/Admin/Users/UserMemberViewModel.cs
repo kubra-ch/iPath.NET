@@ -1,12 +1,11 @@
 ﻿using iPath.Application.Features;
 using iPath.Application.Querying;
 using iPath.Data.Entities;
-using MediatR;
-using Microsoft.AspNetCore.Diagnostics;
+using iPath.UI.ViewModels.DataService;
 
 namespace iPath.UI.ViewModels.Admin.Users;
 
-public class UserMemberViewModel(IMediator mediator) : IUserMemberViewModel
+public class UserMemberViewModel(IDataAccess srvData) : IUserMemberViewModel
 {
     private UserGroupMemberModel _SelectedUser;
     public UserGroupMemberModel SelectedUser => _SelectedUser;
@@ -14,9 +13,11 @@ public class UserMemberViewModel(IMediator mediator) : IUserMemberViewModel
     public async Task<UserGroupMemberModel> LoadUserAsync(int Id)
     {
         // load existing data
-        var usr = await mediator.Send(new GetUserQuery() { Id = Id });
-        var membership = await mediator.Send(new GetGroupMembershipQuery() { UserId = Id });
-        _SelectedUser = new UserGroupMemberModel(usr, membership);
+        var response = await srvData.Send(new GetUserQuery(Id: Id));
+        if( !response.Success ) throw new Exception(response.Message);
+
+        var membership = await srvData.Send(new GetGroupMembershipQuery() { UserId = Id });
+        _SelectedUser = new UserGroupMemberModel(response.Data, membership.Data);
 
         // create entries for all groups
         var allGroups = await GetGroupList(null);
@@ -34,13 +35,13 @@ public class UserMemberViewModel(IMediator mediator) : IUserMemberViewModel
         }
         request.SortDefinitions ??= new();
         request.SortDefinitions.Add(new SortDefinition("Name", true));
-        var data = await mediator.Send(request);
-        return data.Items;
+        var response = await srvData.Send(request);
+        return  response.Success ? response.Data.Items : new List<Group>();
     }
 
-    public async Task<UpdateUserMembershipResponse> SaveDataAsync()
+    public async Task<UserCommandResponse> SaveDataAsync()
     {
-        if (SelectedUser == null) return new UpdateUserMembershipResponse(false, "no user selected");
+        if (SelectedUser == null) return new UserCommandResponse(false, "no user selected");
 
         var request = new UpdateUserMembershipCommand() { Data = new(), UserId = SelectedUser.User.Id };
         foreach (var mb in SelectedUser.Membership )
@@ -51,6 +52,6 @@ public class UserMemberViewModel(IMediator mediator) : IUserMemberViewModel
             }
         }
 
-        return await mediator.Send(request);
+        return await srvData.Send(request);
     }
 }

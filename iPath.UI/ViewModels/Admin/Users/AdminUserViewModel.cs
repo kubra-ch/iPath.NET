@@ -1,12 +1,12 @@
 ﻿using iPath.Application.Features;
 using iPath.Application.Querying;
 using iPath.Data.Entities;
-using MediatR;
+using iPath.UI.ViewModels.DataService;
 using Microsoft.FluentUI.AspNetCore.Components;
 
 namespace iPath.UI.ViewModels.Admin.Users;
 
-public class AdminUserMediatorViewModel(IMediator mediator) : IAdminUserViewModel
+public class AdminUserViewModel(IDataAccess srvData) : IAdminUserViewModel
 {
     public async Task<List<User>> FindUsersAsync(string term)
     {
@@ -23,8 +23,9 @@ public class AdminUserMediatorViewModel(IMediator mediator) : IAdminUserViewMode
         request.SortDefinitions ??= new();
         request.SortDefinitions.Add(new SortDefinition { SortColumn = "Username" });
 
-        var result = await mediator.Send(request);
-        return result.Items;
+        var response = await srvData.Send(request);
+        if( !response.Success ) throw new Exception(response.Message);
+        return response.Data.Items;
     }
 
 
@@ -50,11 +51,12 @@ public class AdminUserMediatorViewModel(IMediator mediator) : IAdminUserViewMode
             request.SortDefinitions ??= new();
             request.SortDefinitions.Add(new SortDefinition { SortColumn = "Username" });
 
-            var result = await mediator.Send(request);
+            var response = await srvData.Send(request);
+            if (!response.Success) throw new Exception(response.Message);
 
             return GridItemsProviderResult.From(
-                items: result.Items,
-                totalItemCount: result.TotalItemsCount
+                items: response.Data.Items,
+                totalItemCount: response.Data.TotalItemsCount
                 );
         };
     }
@@ -66,7 +68,7 @@ public class AdminUserMediatorViewModel(IMediator mediator) : IAdminUserViewMode
 
     public async Task<User> SelectUserId(int Id)
     {
-        _selectedUser = await mediator.Send(new GetUserQuery { Id = Id });
+        _selectedUser = (await srvData.Send(new GetUserQuery(Id: Id))).Data;
         return _selectedUser;
     }
 
@@ -75,33 +77,34 @@ public class AdminUserMediatorViewModel(IMediator mediator) : IAdminUserViewMode
 
 
 
-    public async Task<CreateUserResponse> CreateUserAsync(string username, string email, string password)
+    public async Task<Application.Features.UserCommandResponse> CreateUserAsync(string username, string email, string password)
     {
-        return await mediator.Send(new CreateUserCommand(Username: username, Email: email, Password: password));
+        return await srvData.Send(new CreateUserCommand(Username: username, Email: email, Password: password));
     }
 
-    public Task<UpdateUserResponse> UpdateUserAsync(User item)
+
+    public Task<UserCommandResponse> UpdateUserAsync(User item)
     {
         var request = new UpdateUserCommand()
         {
             Item = item
         };
-        var response = mediator.Send(request);
+        var response = srvData.Send(request);
         return response;
     }
 
-    public async Task<UpdateUserResponse> UpdateUserNameAsync(string username)
+    public async Task<UserCommandResponse> UpdateUserNameAsync(string username)
     {
-        return await mediator.Send(new UpdateUserNameCommand(SelectedUser.Id, username));
+        return await srvData.Send(new UpdateUserNameCommand(SelectedUser.Id, username));
     }
 
-    public async Task<UpdateUserResponse> UpdateUserEmailAsync(string email)
+    public async Task<UserCommandResponse> UpdateUserEmailAsync(string email)
     {
-        return await mediator.Send(new UpdateUserEmailCommand(SelectedUser.Id, email));
+        return await srvData.Send(new UpdateUserEmailCommand(SelectedUser.Id, email));
     }
 
-    public async Task<UpdateUserResponse> UpdateUserPasswordAsync(string Password, bool IsActive)
+    public async Task<UserCommandResponse> UpdateUserPasswordAsync(string Password, bool IsActive)
     {
-        return await mediator.Send(new UpdateUserPasswordCommand(UserId: SelectedUser.Id, newPassword: Password, IsActive: IsActive));
+        return await srvData.Send(new UpdateUserPasswordCommand(UserId: SelectedUser.Id, newPassword: Password, IsActive: IsActive));
     }
 }

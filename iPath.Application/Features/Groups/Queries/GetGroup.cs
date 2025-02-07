@@ -10,29 +10,23 @@ public record GetGroupQuery(int GroupId) : IRequest<GetGroupResponse>
 {
 }
 
-public record GetGroupResponse(bool Success, Group Item, string? Message = default!);
+public record GetGroupResponse(bool Success, string? Message = default!, Group Data = null!)
+    : BaseResponseT<Group>(Success, Message, Data);
 
 
 public class GetGroupQueryHandler(IDbContextFactory<IPathDbContext> dbFactory) : IRequestHandler<GetGroupQuery, GetGroupResponse>
 {
     public async Task<GetGroupResponse> Handle(GetGroupQuery request, CancellationToken cancellationToken)
     {
-        try
-        {
-            using var ctx = await dbFactory.CreateDbContextAsync();
-            var e = await ctx.Groups
-                .Include(g => g.Community)
-                .Include(g => g.Owner)
-                .AsNoTracking()
-                .FirstOrDefaultAsync(g => g.Id == request.GroupId);
+        using var ctx = await dbFactory.CreateDbContextAsync();
+        var e = await ctx.Groups
+            .Include(g => g.Community)
+            .Include(g => g.Owner)
+            .AsNoTracking()
+            .FirstOrDefaultAsync(g => g.Id == request.GroupId);
 
-            if (e != null) return new GetGroupResponse(true, e);
+        if (e != null) return new GetGroupResponse(true, Data: e);
 
-            throw new Exception($"Group with Id={request.GroupId} not found");
-        }
-        catch (Exception ex)
-        {
-            return new GetGroupResponse(false, null, ex.InnerException is null ? ex.Message : ex.InnerException.Message);
-        }
+        throw new Exception($"Group with Id={request.GroupId} not found");
     }
 }

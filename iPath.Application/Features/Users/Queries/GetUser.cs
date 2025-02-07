@@ -6,22 +6,25 @@ using System.ComponentModel.DataAnnotations;
 
 namespace iPath.Application.Features;
 
-public class GetUserQuery : IRequest<User>
-{
-    public int? Id { get; set; }
-    public string? Username { get; set; }
 
-    [EmailAddress]
-    public string? Email { get; set; }
+
+
+public record GetUserResponse(bool Success, string? Message = default!, User Data = null!)
+    : BaseResponseT<User>(Success, Message, Data);
+
+
+public record GetUserQuery(int? Id = null!, string? Username = null!, [EmailAddress] string? Email = null!) : IRequest<GetUserResponse>
+{
 }
 
-public class GetUserQueryHandler(IDbContextFactory<IPathDbContext> dbFactory) : IRequestHandler<GetUserQuery, User>
+
+public class GetUserQueryHandler(IDbContextFactory<IPathDbContext> dbFactory) : IRequestHandler<GetUserQuery, GetUserResponse>
 {
-    public async Task<User> Handle(GetUserQuery request, CancellationToken cancellationToken)
+    public async Task<GetUserResponse> Handle(GetUserQuery request, CancellationToken cancellationToken)
     {
         using var ctx = await dbFactory.CreateDbContextAsync();
         User usr = null;
-        if(request.Id.HasValue)
+        if (request.Id.HasValue)
         {
             usr = await ctx.Users.FirstOrDefaultAsync(u => u.Id == request.Id);
         }
@@ -33,6 +36,10 @@ public class GetUserQueryHandler(IDbContextFactory<IPathDbContext> dbFactory) : 
         {
             usr = await ctx.Users.FirstOrDefaultAsync(u => u.EmailInvariant == request.Email.ToLowerInvariant());
         }
-        return usr;
+
+        if (usr is null)
+            return new GetUserResponse(false, $"User #{request.Id} not found");
+        else
+            return new GetUserResponse(true, Data: usr);
     }
 }

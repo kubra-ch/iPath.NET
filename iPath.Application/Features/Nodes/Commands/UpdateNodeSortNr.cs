@@ -16,22 +16,15 @@ public class UpdateNodeSortNrSortNrCommandHandler(IDbContextFactory<IPathDbConte
 {
     public async Task<NodeCommandRespone> Handle(UpdateNodeSortNrSortNrCommand request, CancellationToken cancellationToken)
     {
-        try
-        {
-            using var ctx = await dbFactory.CreateDbContextAsync();
+        using var ctx = await dbFactory.CreateDbContextAsync();
 
-            var node = await ctx.Nodes.FindAsync(request.NodeId);
-            if (node == null) return new NodeCommandRespone(false, Message: $"Node #{request.NodeId} not found");
+        var node = await ctx.Nodes.FindAsync(request.NodeId);
+        if (node == null) return new NodeCommandRespone(false, Message: $"Node #{request.NodeId} not found");
 
-            node.SortNr = request.SortNr;
+        node.SortNr = request.SortNr;
 
-            await ctx.SaveChangesAsync();
-            return new NodeCommandRespone(true, node);
-        }
-        catch(Exception ex)
-        {
-            return new NodeCommandRespone(false, Message: (ex.InnerException is null ? ex.Message : ex.InnerException.Message));
-        }
+        await ctx.SaveChangesAsync();
+        return new NodeCommandRespone(true, Data: node);
     }
 }
 
@@ -47,7 +40,7 @@ public class UpdateNodesSortNrSortNrCommandHandler(IDbContextFactory<IPathDbCont
     {
         try
         {
-           using var ctx = await dbFactory.CreateDbContextAsync();
+            using var ctx = await dbFactory.CreateDbContextAsync();
 
             foreach (var item in request.newOrder)
             {
@@ -56,7 +49,7 @@ public class UpdateNodesSortNrSortNrCommandHandler(IDbContextFactory<IPathDbCont
             }
 
             await ctx.SaveChangesAsync();
-            return new NodeCommandRespone(true, Item: null, Message: $"{request.newOrder.Count} nodes updated");
+            return new NodeCommandRespone(true, Data: null, Message: $"{request.newOrder.Count} nodes updated");
         }
         catch (Exception ex)
         {

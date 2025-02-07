@@ -6,17 +6,22 @@ using Microsoft.EntityFrameworkCore;
 
 namespace iPath.Application.Features;
 
-public class GetNodeListQuery : PaginatedListQuery, IRequest<PaginatedListResult<Node>>
+public class GetNodeListQuery : PaginatedListQuery, IRequest<GetNodeListResponse>
 {
     public int? GroupId { get; set; }
     public int? OwnerId { get; set; }
 }
 
 
+public record GetNodeListResponse(bool Success, string? Message = default!, PaginatedListResult<Node> Data = null!)
+    : BaseResponseT<PaginatedListResult<Node>>(Success, Message, Data);
+
+
+
 public class GetNodeListQueryHandler(IDbContextFactory<IPathDbContext> dbFactory)
-    : IRequestHandler<GetNodeListQuery, PaginatedListResult<Node>>
+    : IRequestHandler<GetNodeListQuery, GetNodeListResponse>
 {
-    public async Task<PaginatedListResult<Node>> Handle(GetNodeListQuery request, CancellationToken cancellationToken)
+    public async Task<GetNodeListResponse> Handle(GetNodeListQuery request, CancellationToken cancellationToken)
     {
         using var ctx = await dbFactory.CreateDbContextAsync();
         var q = ctx.Nodes.AsNoTracking()
@@ -50,7 +55,7 @@ public class GetNodeListQueryHandler(IDbContextFactory<IPathDbContext> dbFactory
             }
         }
 
-        return await q.GetPaginatedListResultAsync(request);
+        return new GetNodeListResponse(true, Data: await q.GetPaginatedListResultAsync(request));
     }
 }
 

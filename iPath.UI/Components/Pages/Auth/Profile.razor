@@ -4,76 +4,79 @@
 @using iPath.Data.Entities
 @using iPath.UI.Areas.Identity
 
-@inject IMediator mediator
+@inject IDataAccess srvData
 @inject AuthenticationStateProvider authStateProvider
 @inject NavigationManager nm
 
 @if (model is null)
 {
-    <h3>Profile</h3>
-    @if(string.IsNullOrEmpty(Message))
-    {
-        <FluentProgressRing />
-    }
-    
+	<h3>Profile</h3>
+	@if (string.IsNullOrEmpty(Message))
+	{
+		<FluentProgressRing />
+	}
+
 }
 else
 {
-    <h3>Profile - @model.Username</h3>
+	<ExpandableErrorBoundary>
+		<h3>Profile - @model.Username</h3>
 
-    <EditForm Model="@model" OnValidSubmit="UpdateUser">
-        <DataAnnotationsValidator />
-        <FluentValidationSummary />
+		<EditForm Model="@model" OnValidSubmit="UpdateUser">
+			<DataAnnotationsValidator />
+			<FluentValidationSummary />
 
-        <FluentStack Orientation="Orientation.Vertical">
-            <FluentTextField Label="Email" Placeholder="Password" @bind-Value="model.Email" Disabled="true" TextFieldType="TextFieldType.Email" />
-
-
-            <FluentTextField Label="Firstname" Placeholder="Firstname" @bind-Value="model.Firstname" />
-            <FluentTextField Label="Familyname" Placeholder="Familyname" @bind-Value="model.Familyname" />
-            <FluentTextField Label="Country" Placeholder="Country" @bind-Value="model.Country" />
-            <FluentTextField Label="Specialisation" Placeholder="Specialisation" @bind-Value="model.Specialisation" />
+			<FluentStack Orientation="Orientation.Vertical">
+				<FluentTextField Label="Email" Placeholder="Password" @bind-Value="model.Email" Disabled="true" TextFieldType="TextFieldType.Email" />
 
 
+				<FluentTextField Label="Firstname" Placeholder="Firstname" @bind-Value="model.Firstname" />
+				<FluentTextField Label="Familyname" Placeholder="Familyname" @bind-Value="model.Familyname" />
+				<FluentTextField Label="Country" Placeholder="Country" @bind-Value="model.Country" />
+				<FluentTextField Label="Specialisation" Placeholder="Specialisation" @bind-Value="model.Specialisation" />
 
-            <FluentButton Type="ButtonType.Submit" Appearance="Appearance.Accent">Save Changes</FluentButton>
-        </FluentStack>
-    </EditForm>
+
+
+				<FluentButton Type="ButtonType.Submit" Appearance="Appearance.Accent">Save Changes</FluentButton>
+			</FluentStack>
+		</EditForm>
+
+	</ExpandableErrorBoundary>
 }
 
-@if( !string.IsNullOrEmpty(Message) )
+@if (!string.IsNullOrEmpty(Message))
 {
-    <p style="margin-top: 2em; border: 1px solid; padding: 1em; color: red;">@Message</p>
+	<p style="margin-top: 2em; border: 1px solid; padding: 1em; color: red;">@Message</p>
 }
 
 
 @code {
-    [Parameter]
-    public int UserId { get; set; }
+	[Parameter]
+	public int UserId { get; set; }
 
-    private User model;
-    private string Message;
+	private User model;
+	private string Message;
 
-    protected override async Task OnParametersSetAsync()
-    {
-        var resp = await mediator.Send(new GetUserQuery { Id = UserId });
-        if (resp is not null)
-        {
-            model = resp;
-        }
-        else
-        {
-            Message = "User not found";
-        }
-    }
+	protected override async Task OnParametersSetAsync()
+	{
+		var resp = await srvData.Send(new GetUserQuery(Id: UserId));
+		if (resp.Success)
+		{
+			model = resp.Data;
+		}
+		else
+		{
+			Message = resp.Message;
+		}
+	}
 
 
 
-    private async Task UpdateUser()
-    {
-        Message = "updating..."; 
-        StateHasChanged();
+	private async Task UpdateUser()
+	{
+		Message = "updating...";
+		StateHasChanged();
 
-    }
+	}
 
 }

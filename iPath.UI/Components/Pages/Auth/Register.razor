@@ -1,23 +1,24 @@
 ﻿@page "/auth/register"
 @using System.ComponentModel.DataAnnotations
 
-@inject IMediator mediator
+@inject IDataAccess srvData
 @inject NavigationManager nm
 
 <h3>Register</h3>
+<ExpandableErrorBoundary>
+    <EditForm Model="@model" OnValidSubmit="CreateUser">
+        <DataAnnotationsValidator />
+        <FluentValidationSummary />
 
-<EditForm Model="@model" OnValidSubmit="CreateUser">
-    <DataAnnotationsValidator />
-    <FluentValidationSummary />
-
-    <FluentStack Orientation="Orientation.Vertical">
-        <FluentTextField Label="Username" Placeholder="Username" @bind-Value="model.username" />
-        <FluentTextField Label="Email" Placeholder="Password" @bind-Value ="model.email" TextFieldType="TextFieldType.Email" />
-        <FluentTextField Label="Password" @bind-Value="model.password" TextFieldType="TextFieldType.Password" />
-        <FluentTextField Label="Repeat" @bind-Value="model.password2" TextFieldType="TextFieldType.Password" />
-        <FluentButton Type="ButtonType.Submit" Appearance="Appearance.Accent">Register</FluentButton>
-    </FluentStack>
-</EditForm>
+        <FluentStack Orientation="Orientation.Vertical">
+            <FluentTextField Label="Username" Placeholder="Username" @bind-Value="model.username" />
+            <FluentTextField Label="Email" Placeholder="Password" @bind-Value ="model.email" TextFieldType="TextFieldType.Email" />
+            <FluentTextField Label="Password" @bind-Value="model.password" TextFieldType="TextFieldType.Password" />
+            <FluentTextField Label="Repeat" @bind-Value="model.password2" TextFieldType="TextFieldType.Password" />
+            <FluentButton Type="ButtonType.Submit" Appearance="Appearance.Accent">Register</FluentButton>
+        </FluentStack>
+    </EditForm>
+</ExpandableErrorBoundary>
 
 @if (!string.IsNullOrEmpty(Message))
 {
@@ -55,7 +56,7 @@
 			return;
 		}
 
-        var resp = await mediator.Send(new CreateUserCommand(Username: model.username, Email: model.email, Password: model.password));
+        var resp = await srvData.Send(new CreateUserCommand(Username: model.username, Email: model.email, Password: model.password));
         if (!resp.Success)
         {
             Message = resp.Message;

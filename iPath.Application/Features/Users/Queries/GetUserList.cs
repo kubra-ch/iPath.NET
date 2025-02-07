@@ -6,16 +6,23 @@ using Microsoft.EntityFrameworkCore;
 
 namespace iPath.Application.Features;
 
-public class GetUserListQuery : PaginatedListQuery, IRequest<PaginatedListResult<User>>
+
+
+
+public record GetUserListResponse(bool Success, string? Message = default!, PaginatedListResult<User> Data = null!)
+    : BaseResponseT<PaginatedListResult<User>>(Success, Message, Data);
+
+
+public class GetUserListQuery : PaginatedListQuery, IRequest<GetUserListResponse>
 {
     public bool IsActive { get; set; }
 }
 
 
 public class GetUserListQueryHandler(IDbContextFactory<IPathDbContext> dbFactory)
-    : IRequestHandler<GetUserListQuery, PaginatedListResult<User>>
+    : IRequestHandler<GetUserListQuery, GetUserListResponse>
 {
-    public async Task<PaginatedListResult<User>> Handle(GetUserListQuery request, CancellationToken cancellationToken)
+    public async Task<GetUserListResponse> Handle(GetUserListQuery request, CancellationToken cancellationToken)
     {
         using var ctx = await dbFactory.CreateDbContextAsync();
         var q = ctx.Users.AsNoTracking().AsQueryable();
@@ -44,7 +51,7 @@ public class GetUserListQueryHandler(IDbContextFactory<IPathDbContext> dbFactory
             }
         }
 
-        return await q.GetPaginatedListResultAsync(request);
+        return new GetUserListResponse(true, Data: await q.GetPaginatedListResultAsync(request));
     }
 }
 

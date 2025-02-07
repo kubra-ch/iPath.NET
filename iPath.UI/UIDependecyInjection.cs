@@ -3,6 +3,7 @@ using iPath.UI.Componenets.Code;
 using iPath.UI.ViewModels.Admin.Communities;
 using iPath.UI.ViewModels.Admin.Groups;
 using iPath.UI.ViewModels.Admin.Users;
+using iPath.UI.ViewModels.DataService;
 using iPath.UI.ViewModels.Groups;
 using iPath.UI.ViewModels.Nodes;
 
@@ -15,12 +16,19 @@ public static class UIDependecyInjection
         services.AddMediatR(opts => opts.RegisterServicesFromAssemblyContaining<GetUserQuery>());
 
 
+        // data access
+        // Blazor Server over Mediator
+        services.AddScoped<IDataAccess, DataAccessMediator>();
+        // Blazor WASM over API
+        // services.AddHttpClient();
+        // services.AddScoped<IDataAccess, DataAccessREST>();
+
         // viewmodels
-        services.AddScoped<IAdminUserViewModel, AdminUserMediatorViewModel>();
-        services.AddScoped<IAdminCommunityViewModel, AdminCommunityMediatorViewModel>();
-        services.AddScoped<IAdminGroupViewModel, AdminGroupMediatorViewModel>();
+        services.AddScoped<IAdminUserViewModel, AdminUserViewModel>();
+        services.AddScoped<IAdminCommunityViewModel, AdminCommunityViewModel>();
+        services.AddScoped<IAdminGroupViewModel, AdminGroupViewModel>();
         services.AddScoped<IUserMemberViewModel, UserMemberViewModel>();
-        services.AddScoped<IGroupListViewModel, GroupListViewModelMediator>();
+        services.AddScoped<IGroupListViewModel, GroupListViewModel>();
         services.AddScoped<IGroupViewModel, GroupViewModelMediator>();
         services.AddScoped<INodeViewModel, NodeViewModelMediator>();
 

@@ -6,49 +6,37 @@ using System.ComponentModel.DataAnnotations;
 
 namespace iPath.Application.Features;
 
-public class CreateGroupCommand : IRequest<CreateGroupResponse>
-{
+public record CreateGroupCommand( 
     [MinLength(3)]
-    public string Name { get; set; }
-    public string? Purpose { get; set; }
-    public int? OwnerId { get; set; }
-    public int? CommunityId { get; set; }
-}
-
-
-public record CreateGroupResponse(bool Success, Group? Item = null!, string? Message = default!);
-
+     string Name,
+     string? Purpose,
+     int? OwnerId,
+     int? CommunityId
+) : IRequest<GroupCommandResponse>;
 
 
 public class CreateGroupCommandHandler(IDbContextFactory<IPathDbContext> dbFactory, IPasswordHasher hasher)
-    : IRequestHandler<CreateGroupCommand, CreateGroupResponse>
+    : IRequestHandler<CreateGroupCommand, GroupCommandResponse>
 {
-    public async Task<CreateGroupResponse> Handle(CreateGroupCommand request, CancellationToken cancellationToken)
+    public async Task<GroupCommandResponse> Handle(CreateGroupCommand request, CancellationToken cancellationToken)
     {
         using var ctx = await dbFactory.CreateDbContextAsync();
 
         // check that neither Groupname or email is used
-        if ( await ctx.Groups.AnyAsync (u => u.Name == request.Name))
+        if (await ctx.Groups.AnyAsync(u => u.Name == request.Name))
         {
-            return new CreateGroupResponse(false, Message: $"Group {request.Name} already exists");
+            return new GroupCommandResponse(false, Message: $"Group {request.Name} already exists");
         }
 
-        try
+        Group item = new Group
         {
-            Group item = new Group
-            {
-                Name = request.Name,
-                Purpose = request.Purpose,
-                OwnerId = request.OwnerId,
-                CommunityId = request.CommunityId
-            };
-            ctx.Groups.Add(item);
-            await ctx.SaveChangesAsync();
-            return new CreateGroupResponse(true, item);
-        }
-        catch(Exception ex)
-        {
-            return new CreateGroupResponse(false, Message: (ex.InnerException is null ? ex.Message : ex.InnerException.Message));
-        }
+            Name = request.Name,
+            Purpose = request.Purpose,
+            OwnerId = request.OwnerId,
+            CommunityId = request.CommunityId
+        };
+        ctx.Groups.Add(item);
+        await ctx.SaveChangesAsync();
+        return new GroupCommandResponse(true, Data: item);
     }
 }

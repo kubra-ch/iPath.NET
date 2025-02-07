@@ -133,7 +133,7 @@
         var result = await dialog.Result;
         if (!result.Cancelled && result.Data != null)
         {
-            var resp = result.Data as UpdateUserGroupMembershipResponse;
+            var resp = result.Data as UserCommandResponse;
             if (resp != null && !resp.Success)
             {
                 srvToast.ShowError(resp.Message);

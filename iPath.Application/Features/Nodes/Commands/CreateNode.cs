@@ -19,37 +19,26 @@ public class CreateNodeCommand : IRequest<NodeCommandRespone>
 }
 
 
-public record NodeCommandRespone(bool Success, Node? Item = null!, string? Message = default!);
-
-
-
 public class CreateNodeCommandHandler(IDbContextFactory<IPathDbContext> dbFactory, IPasswordHasher hasher)
     : IRequestHandler<CreateNodeCommand, NodeCommandRespone>
 {
     public async Task<NodeCommandRespone> Handle(CreateNodeCommand request, CancellationToken cancellationToken)
     {
-        try
-        {
-            using var ctx = await dbFactory.CreateDbContextAsync();
+        using var ctx = await dbFactory.CreateDbContextAsync();
 
-            Node item = new Node
-            {
-                Title = request.Title,
-                Description = request.Description,
-                OwnerId = request.OwnerId,
-                GroupId = request.GroupId,
-                ParentNodeId = request.ParentNodeId,
-                TopNodeId = request.TopNodetId,
-                NodeType = request.NodeType,
-                CreateOn = DateTime.UtcNow,
-            };
-            ctx.Nodes.Add(item);
-            await ctx.SaveChangesAsync();
-            return new NodeCommandRespone(true, item);
-        }
-        catch(Exception ex)
+        Node item = new Node
         {
-            return new NodeCommandRespone(false, Message: (ex.InnerException is null ? ex.Message : ex.InnerException.Message));
-        }
+            Title = request.Title,
+            Description = request.Description,
+            OwnerId = request.OwnerId,
+            GroupId = request.GroupId,
+            ParentNodeId = request.ParentNodeId,
+            TopNodeId = request.TopNodetId,
+            NodeType = request.NodeType,
+            CreateOn = DateTime.UtcNow,
+        };
+        ctx.Nodes.Add(item);
+        await ctx.SaveChangesAsync();
+        return new NodeCommandRespone(true, Data: item);
     }
 }

@@ -229,7 +229,7 @@ else
 		else
 		{
 			StateHasChanged();
-			var elementId = $"annotation-{resp.item.Id}";
+			var elementId = $"annotation-{resp.Data.Id}";
 			await js.InvokeVoidAsync("focusElement", elementId);
 		}
 	}
@@ -248,7 +248,7 @@ else
 		var result = await dialog.Result;
 		if (!result.Cancelled)
 		{
-			var resp = result.Data as UpdateAnnotationResponse;
+			var resp = result.Data as AnnotationCommandResponse;
 			if( resp != null )
 			{
 				if( resp.Success )

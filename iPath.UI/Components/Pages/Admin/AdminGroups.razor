@@ -20,38 +20,34 @@
 
 
 <AuthorizeView Roles="Admin">
-	<NotAuthorized>
+    <NotAuthorized>
         <div class="errormessage">not authorized</div>
-	</NotAuthorized>
-	<Authorized>
+    </NotAuthorized>
+    <Authorized>
 
-		<h3>Discussion Group Administration</h3>
+        <h3>Discussion Group Administration</h3>
 
-		<ExpandableErrorBoundary>
-
-			<FluentDataGrid TGridItem="Group" ItemsProvider="@vm.GridDataProvider"
-							Pagination="@pagination" @ref="grid"
-							GridTemplateColumns="0.2fr 1fr 0.4fr 0.4fr 0.4fr 0.5fr">
-				<PropertyColumn Property="u => u.Id" Sortable="true" />
-				<PropertyColumn Property="u => u.Name" Sortable="true" />
-				<PropertyColumn Property=@(u => u.Owner == null ? "" : u.Owner!.Username) Title="Owner" />
-				<PropertyColumn Property=@(u => u.Community == null ? "--" : u.Community.Name) Title="Community" />
-				<PropertyColumn Property="u => u.Visibility" Title="Visibility" />
-				<TemplateColumn Title="Actions" Context="item">
+        <ExpandableErrorBoundary>
+            <FluentDataGrid TGridItem="Group" ItemsProvider="@vm.GridDataProvider"
+            Pagination="@pagination" @ref="grid"
+            GridTemplateColumns="0.2fr 1fr 0.4fr 0.4fr 0.4fr 0.5fr">
+                <PropertyColumn Property="u => u.Id" Sortable="true" />
+                <PropertyColumn Property="u => u.Name" Sortable="true" />
+                <PropertyColumn Property=@(u => u.Owner == null ? "" : u.Owner!.Username) Title="Owner" />
+                <PropertyColumn Property=@(u => u.Community == null ? "--" : u.Community.Name) Title="Community" />
+                <PropertyColumn Property="u => u.Visibility" Title="Visibility" />
+                <TemplateColumn Title="Actions" Context="item">
                     <FluentButton IconEnd="@(new Icons.Regular.Size16.Edit())" Title="Edit" OnClick=@(async () => await EditGroup(item)) />
                     <FluentButton IconEnd="@(new Icons.Regular.Size16.PersonAdd())" Title="Members" OnClick=@(async () => await EditGroupMembers(item)) />
-				</TemplateColumn>
-			</FluentDataGrid>
-			<FluentPaginator State="@pagination" />
+                </TemplateColumn>
+            </FluentDataGrid>
+            <FluentPaginator State="@pagination" />
 
-			<FluentButton OnClick="CreateGroup">Create new Group</FluentButton>
+            <FluentButton OnClick="CreateGroup">Create new Group</FluentButton>
 
-		</ExpandableErrorBoundary>
+        </ExpandableErrorBoundary>
 
-		<hr />
-		<p>@vm.ErrorMessage</p>
-
-	</Authorized>
+    </Authorized>
 </AuthorizeView>
 
 
@@ -60,9 +56,12 @@
     FluentDataGrid<Group> grid;
     PaginationState pagination = new PaginationState { ItemsPerPage = 10 };
 
+    string ErrorMessage;
+
     override protected async Task OnInitializedAsync()
     {
         await vm.ExecuteSearchAsync();
+        ErrorMessage = vm.ErrorMessage;
     }
 
 

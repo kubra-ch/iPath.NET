@@ -23,14 +23,7 @@ public interface INodeViewModel
 
 
     // Commands
-    Task<UploadNodeFileResponse> UploadFileAsync(int UserId, string Filename, FileInfo localFile);
-
-    Task<UpdateAnnotationResponse> CreateAnnotationAsync(int UserId);
-    Task<UpdateAnnotationResponse> UpdateAnnotationAsync(AnnotationModel model, string? text = null!, eAnnotationVisibility? visibility = null!, int? userId = null!);
-    Task<UpdateAnnotationResponse> DeleteAnnotationAsync(AnnotationModel model);
-
     Task<NodeCommandRespone> UpdateNodeAsync();
-
 
     Task<NodeCommandRespone> DeleteNodeAsync(int NodeId);
     Task<NodeCommandRespone> DeleteNodesAsync(List<int> NodeIds);
@@ -39,6 +32,15 @@ public interface INodeViewModel
     Task<NodeCommandRespone> UpdateNodesVisibilityAsync(List<int> NodeIds, eNodeVisibility newValue);
 
     Task<NodeCommandRespone> UpdateSortNumerbs(List<(int NodeId, int SortNr)> newOrder);
+
+    // Attachments
+    Task<NodeCommandRespone> UploadFileAsync(int UserId, string Filename, FileInfo localFile);
+
+
+    // Annotations
+    Task<AnnotationCommandResponse> CreateAnnotationAsync(int UserId);
+    Task<AnnotationCommandResponse> UpdateAnnotationAsync(AnnotationModel model, string? text = null!, eAnnotationVisibility? visibility = null!, int? userId = null!);
+    Task<AnnotationCommandResponse> DeleteAnnotationAsync(AnnotationModel model);
 
 
     string GetAnnotationDraft(int Id);

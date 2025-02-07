@@ -53,7 +53,7 @@
         // udpate text
         if( resp.Success )
         {
-            var aModel = vm.Model.Annotations.FirstOrDefault(a => a.Id == resp.item.Id);
+            var aModel = vm.Model.Annotations.FirstOrDefault(a => a.Id == resp.Data.Id);
             if( aModel != null )
             {
                 resp = await vm.UpdateAnnotationAsync(aModel, text: aText, visibility: eAnnotationVisibility.Visible);

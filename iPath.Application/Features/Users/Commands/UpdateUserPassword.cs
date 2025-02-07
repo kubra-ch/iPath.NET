@@ -5,41 +5,35 @@ using Microsoft.EntityFrameworkCore;
 namespace iPath.Application.Features;
 
 public record UpdateUserPasswordCommand(int UserId, string? newPassword, bool IsActive)
-    : IRequest<UpdateUserResponse> { }
+    : IRequest<UserCommandResponse>
+{ }
 
 
 public class UpdateUserPasswordCommandHandler(IDbContextFactory<IPathDbContext> dbFactory, IPasswordHasher hasher)
-    : IRequestHandler<UpdateUserPasswordCommand, UpdateUserResponse>
+    : IRequestHandler<UpdateUserPasswordCommand, UserCommandResponse>
 {
-    public async Task<UpdateUserResponse> Handle(UpdateUserPasswordCommand request, CancellationToken cancellationToken)
+    public async Task<UserCommandResponse> Handle(UpdateUserPasswordCommand request, CancellationToken cancellationToken)
     {
-        try
+        // get the User from DB
+        using var ctx = await dbFactory.CreateDbContextAsync();
+        var item = await ctx.Users.FindAsync(request.UserId);
+        if (item == null) return new UserCommandResponse(false, Message: "user not found");
+
+        if (!string.IsNullOrEmpty(request.newPassword))
         {
-            // get the User from DB
-           using var ctx = await dbFactory.CreateDbContextAsync();
-            var item = await ctx.Users.FindAsync(request.UserId);
-            if (item == null) return new UpdateUserResponse(false, Message: "user not found");
+            if (request.newPassword.Length < 3)
+                return new UserCommandResponse(false, Message: "Password must be at least 3 characters long");
 
-            if(!string.IsNullOrEmpty(request.newPassword))
-            {
-                if (request.newPassword.Length < 3)
-                    return new UpdateUserResponse(false, Message: "Password must be at least 3 characters long");
-
-                // update properties
-                item.PasswordHash = hasher.HashPassword(request.newPassword);
-                item.iPath2PasswordHash = null; // delete old ipath 2 hash
-            }
-
-            item.IsActive = request.IsActive;
-            item.ModifiedOn = DateTime.UtcNow;
-
-            ctx.Users.Update(item);
-            await ctx.SaveChangesAsync();
-            return new UpdateUserResponse(true, item);
+            // update properties
+            item.PasswordHash = hasher.HashPassword(request.newPassword);
+            item.iPath2PasswordHash = null; // delete old ipath 2 hash
         }
-        catch(Exception ex)
-        {
-            return new UpdateUserResponse(false, Message: (ex.InnerException is null ? ex.Message : ex.InnerException.Message));
-        }
+
+        item.IsActive = request.IsActive;
+        item.ModifiedOn = DateTime.UtcNow;
+
+        ctx.Users.Update(item);
+        await ctx.SaveChangesAsync();
+        return new UserCommandResponse(true, Data: item);
     }
 }

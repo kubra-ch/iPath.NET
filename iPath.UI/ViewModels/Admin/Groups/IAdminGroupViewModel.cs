@@ -16,6 +16,6 @@ public interface IAdminGroupViewModel
     Task SelectGroupId(int Id);
     Group SelectedGroup { get; }
 
-    Task<CreateGroupResponse> CreateGroupAsync(string Name, string? Purpose, int? OwnerId, Community? community);
-    Task<UpdateGroupResponse> UpdateGroupAsync(Group item);
+    Task<GroupCommandResponse> CreateGroupAsync(string Name, string? Purpose, int? OwnerId, Community? community);
+    Task<GroupCommandResponse> UpdateGroupAsync(Group item);
 }

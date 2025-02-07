@@ -13,8 +13,11 @@ namespace iPath.Application.Features;
 
 public record GroupListDTO(int Id, string Name, int? CommunityId, int? NodeCount, int? NewObjCount, int? NewCommentCount);
 
+public record GetGroupListDtoResponse(bool Success, string? Message = default!, PaginatedListResult<GroupListDTO> Data = null!)
+    : BaseResponseT<PaginatedListResult<GroupListDTO>>(Success, Message, Data);
 
-public class GetGroupListDtoQuery : PaginatedListQuery, IRequest<PaginatedListResult<GroupListDTO>>
+
+public class GetGroupListDtoQuery : PaginatedListQuery, IRequest<GetGroupListDtoResponse>
 {
     public int? UserId { get; set; }
     public int? CommunityId { get; set; }
@@ -22,9 +25,9 @@ public class GetGroupListDtoQuery : PaginatedListQuery, IRequest<PaginatedListRe
 
 
 public class GetGroupListDtoQueryHandler(IDbContextFactory<IPathDbContext> dbFactory)
-    : IRequestHandler<GetGroupListDtoQuery, PaginatedListResult<GroupListDTO>>
+    : IRequestHandler<GetGroupListDtoQuery, GetGroupListDtoResponse>
 {
-    public async Task<PaginatedListResult<GroupListDTO>> Handle(GetGroupListDtoQuery request, CancellationToken cancellationToken)
+    public async Task<GetGroupListDtoResponse> Handle(GetGroupListDtoQuery request, CancellationToken cancellationToken)
     {
         using var ctx = await dbFactory.CreateDbContextAsync();
         var q = ctx.Groups
@@ -64,11 +67,13 @@ public class GetGroupListDtoQueryHandler(IDbContextFactory<IPathDbContext> dbFac
             .Select(g => new GroupListDTO(g.Id, g.Name, g.CommunityId, g.Nodes.Count(), 0, 0))
             .ToListAsync();
 
-        return new PaginatedListResult<GroupListDTO>()
+        var ret = new PaginatedListResult<GroupListDTO>()
         {
             TotalItemsCount = total,
             Items = dtos
         };
+
+        return new GetGroupListDtoResponse(true, Data: ret);
     }
 }
 

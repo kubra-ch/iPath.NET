@@ -9,5 +9,5 @@ public interface IUserMemberViewModel
     Task<List<Group>> GetGroupList(Community community);
 
     UserGroupMemberModel SelectedUser { get; }
-    Task<UpdateUserMembershipResponse> SaveDataAsync();
+    Task<UserCommandResponse> SaveDataAsync();
 }

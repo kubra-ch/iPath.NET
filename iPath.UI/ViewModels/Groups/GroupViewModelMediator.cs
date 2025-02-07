@@ -1,12 +1,12 @@
 ﻿using iPath.Application.Features;
 using iPath.Data.Entities;
+using iPath.UI.ViewModels.DataService;
 using iPath.UI.ViewModels.Nodes;
-using MediatR;
 using Microsoft.FluentUI.AspNetCore.Components;
 
 namespace iPath.UI.ViewModels.Groups;
 
-public class GroupViewModelMediator(IMediator mediator) : IGroupViewModel
+public class GroupViewModelMediator(IDataAccess srvData) : IGroupViewModel
 {
     private GroupModel _model;
     public GroupModel Model => _model;
@@ -20,7 +20,7 @@ public class GroupViewModelMediator(IMediator mediator) : IGroupViewModel
     public async Task LoadGroupAsync(int Id)
     {
         var rg = new GetGroupQuery(GroupId: Id);
-        var respg = await mediator.Send(rg);
+        var respg = await srvData.Send(rg);
         if ( !respg.Success )
         {
             _error = respg.Message;
@@ -28,10 +28,10 @@ public class GroupViewModelMediator(IMediator mediator) : IGroupViewModel
 
         _model = new GroupModel()
         {
-            Id = respg.Item.Id,
-            Name = respg.Item.Name,
-            Owner = respg.Item.Owner is null ? "" : respg.Item.Owner.Username,
-            Purpose = respg.Item.Purpose
+            Id = respg.Data.Id,
+            Name = respg.Data.Name,
+            Owner = respg.Data.Owner is null ? "" : respg.Data.Owner.Username,
+            Purpose = respg.Data.Purpose
         };
 
 
@@ -47,10 +47,15 @@ public class GroupViewModelMediator(IMediator mediator) : IGroupViewModel
             request.StartIndex = req.StartIndex;
             request.Count = req.Count;
 
-            var result = await mediator.Send(request);
+            var response = await srvData.Send(request);
+            if (!response.Success)
+            {
+                _error = respg.Message;
+                throw new Exception(respg.Message);
+            }
 
             var models = new List<NodeModel>();
-            foreach (var node in result.Items)
+            foreach (var node in response.Data.Items)
             {
                 models.Add(new NodeModel(node));
             }
@@ -58,7 +63,7 @@ public class GroupViewModelMediator(IMediator mediator) : IGroupViewModel
 
             return GridItemsProviderResult.From(
                 items: models,
-                totalItemCount: result.TotalItemsCount
+                totalItemCount: response.Data.TotalItemsCount
                 );
         };
     }
@@ -72,6 +77,6 @@ public class GroupViewModelMediator(IMediator mediator) : IGroupViewModel
             NodeType = nodeType,
             Title = Title 
         };
-        return await mediator.Send(req);
+        return await srvData.Send(req);
     }
 }

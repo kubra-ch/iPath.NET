@@ -20,7 +20,7 @@ public class UpdateNodeVisibilityHandler(IDbContextFactory<IPathDbContext> dbFac
 
         n.Visibility = request.newValue;
         await ctx.SaveChangesAsync();
-        return new NodeCommandRespone(true, Item: n);
+        return new NodeCommandRespone(true, Data: n);
     }
 }
 

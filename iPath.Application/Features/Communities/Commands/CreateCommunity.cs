@@ -8,51 +8,41 @@ using System.ComponentModel.DataAnnotations;
 
 namespace iPath.Application.Features;
 
-public record  CreateCommunityCommand(string Name, int? OwnerId = null!) : IRequest<CommunityResponse>
+public record  CreateCommunityCommand(string Name, int? OwnerId = null!) : IRequest<CommunityCommandResponse>
 {
 }
 
 
-public record CommunityResponse(bool Success, Community? Item = null!, string? Message = default!);
-
-
 
 public class CreateCommunityCommandHandler(IDbContextFactory<IPathDbContext> dbFactory, ISessionStateService sessState)
-    : IRequestHandler<CreateCommunityCommand, CommunityResponse>
+    : IRequestHandler<CreateCommunityCommand, CommunityCommandResponse>
 {
-    public async Task<CommunityResponse> Handle(CreateCommunityCommand request, CancellationToken cancellationToken)
+    public async Task<CommunityCommandResponse> Handle(CreateCommunityCommand request, CancellationToken cancellationToken)
     {
        using var ctx = await dbFactory.CreateDbContextAsync();
 
         // check that neither Communityname or email is used
         if ( await ctx.Communities.AnyAsync (u => u.Name == request.Name))
         {
-            return new CommunityResponse(false, Message: $"Community {request.Name} already exists");
+            return new CommunityCommandResponse(false, Message: $"Community {request.Name} already exists");
         }
 
-        try
+        User owner = null!;
+        if (request.OwnerId.HasValue) owner = await ctx.Users.FindAsync(request.OwnerId.Value);
+        if ( owner == null && sessState.SessionUserId.HasValue )
         {
-            User owner = null!;
-            if (request.OwnerId.HasValue) owner = await ctx.Users.FindAsync(request.OwnerId.Value);
-            if ( owner == null && sessState.SessionUserId.HasValue )
-            {
-                // fallback to sesison user
-                owner = await ctx.Users.FindAsync(sessState.SessionUserId.Value);
-            }
-
-            if (owner == null) return new CommunityResponse(false, Message: "a community owner must be sopecified"); 
-
-            Community item = new Community();
-            item.Name = request.Name;
-            item.Owner = owner;
-
-            ctx.Communities.Add(item);
-            await ctx.SaveChangesAsync();
-            return new CommunityResponse(true, item);
+            // fallback to sesison user
+            owner = await ctx.Users.FindAsync(sessState.SessionUserId.Value);
         }
-        catch(Exception ex)
-        {
-            return new CommunityResponse(false, Message: ex.Message);
-        }
+
+        if (owner == null) return new CommunityCommandResponse(false, Message: "a community owner must be sopecified"); 
+
+        Community item = new Community();
+        item.Name = request.Name;
+        item.Owner = owner;
+
+        ctx.Communities.Add(item);
+        await ctx.SaveChangesAsync();
+        return new CommunityCommandResponse(true, Data: item);
     }
 }

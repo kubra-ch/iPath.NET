@@ -6,42 +6,36 @@ using System.ComponentModel.DataAnnotations;
 namespace iPath.Application.Features;
 
 public record UpdateUserEmailCommand(int UserId, [EmailAddress] string Email)
-    : IRequest<UpdateUserResponse> { }
+    : IRequest<UserCommandResponse>
+{ }
 
 
 public class UpdateUserEmailCommandHandler(IDbContextFactory<IPathDbContext> dbFactory)
-    : IRequestHandler<UpdateUserEmailCommand, UpdateUserResponse>
+    : IRequestHandler<UpdateUserEmailCommand, UserCommandResponse>
 {
-    public async Task<UpdateUserResponse> Handle(UpdateUserEmailCommand request, CancellationToken cancellationToken)
+    public async Task<UserCommandResponse> Handle(UpdateUserEmailCommand request, CancellationToken cancellationToken)
     {
-        try
-        {
-           using var ctx = await dbFactory.CreateDbContextAsync();
+        using var ctx = await dbFactory.CreateDbContextAsync();
 
-            // trim
-            var email = request.Email.Trim();
+        // trim
+        var email = request.Email.Trim();
 
-            // find other user with different id but same new name
-            var exists = await ctx.Users.AnyAsync(u => u.EmailInvariant == email.ToLowerInvariant() && u.Id != request.UserId);
-            if( exists)
-                return new UpdateUserResponse(false, Message: $"Another User with email {email} already exists"); 
+        // find other user with different id but same new name
+        var exists = await ctx.Users.AnyAsync(u => u.EmailInvariant == email.ToLowerInvariant() && u.Id != request.UserId);
+        if (exists)
+            return new UserCommandResponse(false, Message: $"Another User with email {email} already exists");
 
 
-            // get the User from DB
-            var item = await ctx.Users.FindAsync(request.UserId);
+        // get the User from DB
+        var item = await ctx.Users.FindAsync(request.UserId);
 
-            // update properties
-            item.Email = email;
-            item.EmailInvariant = email.ToLowerInvariant();
-            item.ModifiedOn = DateTime.UtcNow;
+        // update properties
+        item.Email = email;
+        item.EmailInvariant = email.ToLowerInvariant();
+        item.ModifiedOn = DateTime.UtcNow;
 
-            ctx.Users.Update(item);
-            await ctx.SaveChangesAsync();
-            return new UpdateUserResponse(true, item);
-        }
-        catch(Exception ex)
-        {
-            return new UpdateUserResponse(false, Message: (ex.InnerException is null ? ex.Message : ex.InnerException.Message));
-        }
+        ctx.Users.Update(item);
+        await ctx.SaveChangesAsync();
+        return new UserCommandResponse(true, Data: item);
     }
 }
