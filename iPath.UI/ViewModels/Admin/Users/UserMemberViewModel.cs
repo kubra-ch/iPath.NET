@@ -1,7 +1,7 @@
 ﻿using iPath.Application.Features;
 using iPath.Application.Querying;
 using iPath.Data.Entities;
-using iPath.UI.ViewModels.DataService;
+using iPath.UI.Areas.DataAccess;
 
 namespace iPath.UI.ViewModels.Admin.Users;
 

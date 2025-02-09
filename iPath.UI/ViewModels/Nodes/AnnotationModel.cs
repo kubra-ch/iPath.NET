@@ -16,6 +16,13 @@ public class AnnotationModel
         LoadData(a);
     }
 
+    public AnnotationModel(int NodeId, UserListDto Owner)
+    {
+        this.Id = 0;
+        this.NodeId = NodeId;
+        this.Owner = Owner;
+    }
+
     public void LoadData(Annotation a)
     {
         if( Id != a.Id)  throw new Exception("can load data from another entity"); 
@@ -29,13 +36,14 @@ public class AnnotationModel
 
 
     public readonly int Id;
+    public readonly int NodeId;
     public DateTime CreatedOn { get; private set; }
     public DateTime? ModifiedOn { get; private set; }
     public string Text { get; set; }
     public readonly string OriginalText;
     public UserListDto Owner { get; private set; }
     public eAnnotationVisibility Visibility { get; private set; }
-    public bool Deleted => Visibility == eAnnotationVisibility.Deleted || Visibility == eAnnotationVisibility.Blaimed;
+    public bool IsVisible => !(Visibility == eAnnotationVisibility.Deleted || Visibility == eAnnotationVisibility.Blaimed);
 
 
     public string CreatedOnStr => CreatedOn.ToShortDateString();
@@ -56,7 +64,7 @@ public class AnnotationModel
     {
         if( session is null ) return false;
         if (Visibility == eAnnotationVisibility.Visible) return true;
-        if( Owner.Id == session.UserId ) return true;
+        if (Owner.Id == session.UserId ) return true;
         return false;
     }
 

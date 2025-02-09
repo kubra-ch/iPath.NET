@@ -48,7 +48,7 @@
         }
 
         // create annotation
-        var resp = await vm.CreateAnnotationAsync(UserId: appState.Session.UserId);
+        var resp = await vm.CreateAnnotationAsync(userId: appState.Session.UserId);
 
         // udpate text
         if( resp.Success )

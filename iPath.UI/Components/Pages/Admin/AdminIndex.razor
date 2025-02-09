@@ -33,3 +33,29 @@
 		</ul>
 	</Authorized>
 </AuthorizeView>
+
+<hr />
+
+<h4>Drafts</h4>
+<FluentListbox Items="@draftKeys" OptionText="@(d => d.ToString())" />
+<FluentButton OnClick="DeleteDrafts">Delete all drafts</FluentButton>
+
+
+@code
+{
+	[Inject]
+	public IDraftStore draftStore { get; set; }
+
+	private List<string> draftKeys;
+
+	protected override async Task OnInitializedAsync()
+	{
+		draftKeys = await draftStore.KeysAsync();
+	}
+
+	async Task DeleteDrafts()
+	{
+		await draftStore.CleanDraftsAsync(DateTime.UtcNow);
+		draftKeys = await draftStore.KeysAsync();
+	}
+}

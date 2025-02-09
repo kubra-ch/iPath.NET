@@ -1,7 +1,7 @@
 ﻿using iPath.Application.Features;
 using MediatR;
 
-namespace iPath.UI.ViewModels.DataService;
+namespace iPath.UI.Areas.DataAccess;
 
 public class DataAccessREST : IDataAccess
 {
@@ -9,7 +9,7 @@ public class DataAccessREST : IDataAccess
 
     public DataAccessREST(HttpClient http)
     {
-       _http = http;
+        _http = http;
     }
 
     public async Task<TResponse> Send<TResponse>(IRequest<TResponse> request, CancellationToken cancellationToken = default)

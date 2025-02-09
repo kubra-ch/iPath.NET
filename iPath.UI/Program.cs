@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using iPath.UI.Areas.Identity;
 using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using Serilog;
+using Blazored.LocalStorage;
 
 internal class Program
 {
@@ -22,6 +23,9 @@ internal class Program
 
         builder.Services.AddFluentUIComponents();
         builder.Services.AddHttpContextAccessor();
+
+        // data cache
+        builder.Services.AddBlazoredLocalStorage();
 
         // configuration
         builder.Services.Configure<iPathConfig>(builder.Configuration.GetSection(nameof(iPathConfig)));

@@ -1,11 +1,15 @@
 ﻿using iPath.Application.Features;
 using iPath.Application.Features.Nodes.Commands;
+using iPath.Application.Services;
 using iPath.Data.Entities;
-using iPath.UI.ViewModels.DataService;
+using iPath.UI.Areas.DataAccess;
+using iPath.UI.Areas.DraftStorage;
+using iPath.UI.ViewModels.Drafts;
+using Microsoft.AspNetCore.Session;
 
 namespace iPath.UI.ViewModels.Nodes;
 
-public class NodeViewModelMediator(IDataAccess srvData, ILogger<NodeViewModelMediator> logger) : INodeViewModel
+public class NodeViewModel(IDataAccess srvData, IDraftStore draftStore, ISessionStateService sessState, ILogger<NodeViewModel> logger) : INodeViewModel
 {
     private NodeModel _model;
     public NodeModel Model => _model;
@@ -53,6 +57,7 @@ public class NodeViewModelMediator(IDataAccess srvData, ILogger<NodeViewModelMed
 
     private string _message = default!;
     public string Message => _message;
+
 
     public async Task LoadNode(int NodeId)
     {
@@ -123,13 +128,17 @@ public class NodeViewModelMediator(IDataAccess srvData, ILogger<NodeViewModelMed
         return await srvData.Send(new UpdateNodesSortNrSortNrCommand(newOrder));
     }
 
-    public async Task<AnnotationCommandResponse> CreateAnnotationAsync(int UserId)
+    public async Task<AnnotationCommandResponse> CreateAnnotationAsync(int UserId, string? text = null!)
     {
         if (Model is null) return new AnnotationCommandResponse(false);
 
-        var resp = await srvData.Send(new CreateAnnotationCommand(NodeId: Model.Id, UserId: UserId));
+        var resp = await srvData.Send(new CreateAnnotationCommand(NodeId: Model.Id, UserId: UserId, text: text));
         if (resp.Success) Model.Annotations.Add(new AnnotationModel(resp.Data));
         return resp;
+    }
+    public async Task<AnnotationCommandResponse> CreateAnnotationAsync(AnnotationDraft draft)
+    {
+        return await CreateAnnotationAsync(UserId: draft.User.Id, text: draft.Text);
     }
 
 
@@ -160,18 +169,18 @@ public class NodeViewModelMediator(IDataAccess srvData, ILogger<NodeViewModelMed
     }
 
 
-    private Dictionary<int, string> _annotationDrafts = new();
 
-    public string GetAnnotationDraft(int Id)
-    {
-        return _annotationDrafts.ContainsKey(Id) ? _annotationDrafts[Id] : "";
-    }
+    public IDraftStore DraftStore => draftStore;
 
-    public void SetAnnotationDraft(int Id, string text)
+    public async Task<AnnotationDraft> GetAnnotationDraft(int userId, bool autoCreate)
     {
-        if (_annotationDrafts.ContainsKey(Id))
-            _annotationDrafts[Id] = text;
-        else
-            _annotationDrafts.Add(Id, text);
+        var d = await draftStore.GetDraft<AnnotationDraft>(AnnotationDraft.NodeKey(Model.Id));
+        if( d == null && autoCreate)
+        {
+            d = AnnotationDraft.ForNode(Model.Id);
+            d.User = sessState.User;
+            draftStore.SetDraft(d);
+        }
+        return d;
     }
 }

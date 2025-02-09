@@ -2,44 +2,44 @@
 
 @using System.ComponentModel.DataAnnotations
 @using iPath.Data.Entities
+@using iPath.UI.Areas.DraftStorage
 @using iPath.UI.Areas.Identity
+@using iPath.UI.ViewModels.Drafts
+@using iPath.UI.ViewModels.Users
 
-@inject IDataAccess srvData
+@inject IUserProfileViewModel vm
 @inject AuthenticationStateProvider authStateProvider
 @inject NavigationManager nm
+@inject IDraftStore srvDrafts
 
-@if (model is null)
+@if (vm.Model is null)
 {
 	<h3>Profile</h3>
 	@if (string.IsNullOrEmpty(Message))
 	{
 		<FluentProgressRing />
 	}
-
 }
 else
 {
 	<ExpandableErrorBoundary>
-		<h3>Profile - @model.Username</h3>
+		<h3>Profile - @vm.Model.Username</h3>
 
-		<EditForm Model="@model" OnValidSubmit="UpdateUser">
+@* 		<EditForm Model="vm.Model" OnValidSubmit="UpdateUser">
 			<DataAnnotationsValidator />
 			<FluentValidationSummary />
 
 			<FluentStack Orientation="Orientation.Vertical">
-				<FluentTextField Label="Email" Placeholder="Password" @bind-Value="model.Email" Disabled="true" TextFieldType="TextFieldType.Email" />
+				<FluentTextField Label="Email" Placeholder="Password" @bind-Value="vm.Model.Email" Disabled="true" TextFieldType="TextFieldType.Email" />
 
-
-				<FluentTextField Label="Firstname" Placeholder="Firstname" @bind-Value="model.Firstname" />
-				<FluentTextField Label="Familyname" Placeholder="Familyname" @bind-Value="model.Familyname" />
-				<FluentTextField Label="Country" Placeholder="Country" @bind-Value="model.Country" />
-				<FluentTextField Label="Specialisation" Placeholder="Specialisation" @bind-Value="model.Specialisation" />
-
-
+				<FluentTextField Label="Firstname" Placeholder="Firstname" @bind-Value="@vm.Model.Firstname" />
+				<FluentTextField Label="Familyname" Placeholder="Familyname" @bind-Value="@vm.Model.Familyname" />
+				<FluentTextField Label="Country" Placeholder="Country" @bind-Value="vm.Model.Country" />
+				<FluentTextField Label="Specialisation" Placeholder="Specialisation" @bind-Value="vm.Model.Specialisation" />
 
 				<FluentButton Type="ButtonType.Submit" Appearance="Appearance.Accent">Save Changes</FluentButton>
 			</FluentStack>
-		</EditForm>
+		</EditForm> *@
 
 	</ExpandableErrorBoundary>
 }
@@ -54,29 +54,13 @@ else
 	[Parameter]
 	public int UserId { get; set; }
 
-	private User model;
 	private string Message;
-
-	protected override async Task OnParametersSetAsync()
-	{
-		var resp = await srvData.Send(new GetUserQuery(Id: UserId));
-		if (resp.Success)
-		{
-			model = resp.Data;
-		}
-		else
-		{
-			Message = resp.Message;
-		}
-	}
-
 
 
 	private async Task UpdateUser()
 	{
 		Message = "updating...";
 		StateHasChanged();
-
 	}
 
 }

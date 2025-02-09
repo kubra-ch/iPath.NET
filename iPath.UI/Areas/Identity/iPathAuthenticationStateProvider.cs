@@ -1,4 +1,5 @@
-﻿using iPath.Application.Services;
+﻿using iPath.Application.Features;
+using iPath.Application.Services;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using System.Security.Claims;
@@ -24,10 +25,10 @@ public class iPathAuthenticationStateProvider : AuthenticationStateProvider
             var userSession = await GetSessionAsync();
             if (userSession is null)
             {
-                _sessionState.SessionUserId = null;
+                _sessionState.Init(null, false);
                 return await Task.FromResult(new AuthenticationState(_anonymous));
             }
-            _sessionState.SessionUserId = userSession.UserId;
+            _sessionState.Init(userSession.User, userSession.IsAdmin);
             var claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity(new[]
             {
                 new Claim(ClaimTypes.Name, userSession.User.Username),

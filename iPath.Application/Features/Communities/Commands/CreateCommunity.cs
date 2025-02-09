@@ -29,10 +29,10 @@ public class CreateCommunityCommandHandler(IDbContextFactory<IPathDbContext> dbF
 
         User owner = null!;
         if (request.OwnerId.HasValue) owner = await ctx.Users.FindAsync(request.OwnerId.Value);
-        if ( owner == null && sessState.SessionUserId.HasValue )
+        if ( owner == null && sessState.IsAuthenticated )
         {
             // fallback to sesison user
-            owner = await ctx.Users.FindAsync(sessState.SessionUserId.Value);
+            owner = await ctx.Users.FindAsync(sessState.User.Id);
         }
 
         if (owner == null) return new CommunityCommandResponse(false, Message: "a community owner must be sopecified"); 

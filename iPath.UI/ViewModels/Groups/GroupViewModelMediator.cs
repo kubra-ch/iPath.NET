@@ -1,6 +1,6 @@
 ﻿using iPath.Application.Features;
 using iPath.Data.Entities;
-using iPath.UI.ViewModels.DataService;
+using iPath.UI.Areas.DataAccess;
 using iPath.UI.ViewModels.Nodes;
 using Microsoft.FluentUI.AspNetCore.Components;
 

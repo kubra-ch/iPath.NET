@@ -1,5 +1,7 @@
 ﻿using iPath.Application.Features;
 using iPath.Data.Entities;
+using iPath.UI.Areas.DraftStorage;
+using iPath.UI.ViewModels.Drafts;
 
 namespace iPath.UI.ViewModels.Nodes;
 
@@ -38,12 +40,13 @@ public interface INodeViewModel
 
 
     // Annotations
-    Task<AnnotationCommandResponse> CreateAnnotationAsync(int UserId);
+    Task<AnnotationCommandResponse> CreateAnnotationAsync(int userId, string? text = null!);
+    Task<AnnotationCommandResponse> CreateAnnotationAsync(AnnotationDraft draft);
     Task<AnnotationCommandResponse> UpdateAnnotationAsync(AnnotationModel model, string? text = null!, eAnnotationVisibility? visibility = null!, int? userId = null!);
     Task<AnnotationCommandResponse> DeleteAnnotationAsync(AnnotationModel model);
 
 
-    string GetAnnotationDraft(int Id);
-    void SetAnnotationDraft(int Id, string text);
+    Task<AnnotationDraft> GetAnnotationDraft(int userId, bool autoCreate);
+    IDraftStore DraftStore { get; }
 
 }

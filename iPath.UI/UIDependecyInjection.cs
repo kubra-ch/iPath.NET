@@ -1,9 +1,10 @@
 ﻿using iPath.Application.Features;
+using iPath.UI.Areas.DataAccess;
+using iPath.UI.Areas.DraftStorage;
 using iPath.UI.Componenets.Code;
 using iPath.UI.ViewModels.Admin.Communities;
 using iPath.UI.ViewModels.Admin.Groups;
 using iPath.UI.ViewModels.Admin.Users;
-using iPath.UI.ViewModels.DataService;
 using iPath.UI.ViewModels.Groups;
 using iPath.UI.ViewModels.Nodes;
 
@@ -23,6 +24,9 @@ public static class UIDependecyInjection
         // services.AddHttpClient();
         // services.AddScoped<IDataAccess, DataAccessREST>();
 
+        // Drafts 
+        services.AddScoped<IDraftStore, DraftServiceBlazorStore>();
+
         // viewmodels
         services.AddScoped<IAdminUserViewModel, AdminUserViewModel>();
         services.AddScoped<IAdminCommunityViewModel, AdminCommunityViewModel>();
@@ -30,7 +34,7 @@ public static class UIDependecyInjection
         services.AddScoped<IUserMemberViewModel, UserMemberViewModel>();
         services.AddScoped<IGroupListViewModel, GroupListViewModel>();
         services.AddScoped<IGroupViewModel, GroupViewModelMediator>();
-        services.AddScoped<INodeViewModel, NodeViewModelMediator>();
+        services.AddScoped<INodeViewModel, NodeViewModel>();
 
         // UI services
         services.AddScoped<ClipboardService>();

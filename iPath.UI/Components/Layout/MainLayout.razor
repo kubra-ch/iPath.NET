@@ -1,9 +1,11 @@
-﻿@using iPath.UI.ViewModels.Users
+﻿@using iPath.UI.Areas.DraftStorage
+@using iPath.UI.ViewModels.Users
 
 @inherits LayoutComponentBase
 @inject IDialogService DialogService
 @inject AuthenticationStateProvider authStateProvider
 @inject NavigationManager nm
+@inject IDraftStore srvDraft
 
 <FluentDesignTheme StorageName="theme" />
 

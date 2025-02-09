@@ -1,7 +1,7 @@
 ﻿using iPath.Application.Features;
 using MediatR;
 
-namespace iPath.UI.ViewModels.DataService;
+namespace iPath.UI.Areas.DataAccess;
 
 public class DataAccessMediator(IMediator mediator, ILogger<DataAccessREST> logger) : IDataAccess
 {

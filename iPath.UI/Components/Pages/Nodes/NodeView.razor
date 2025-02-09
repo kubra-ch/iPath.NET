@@ -3,6 +3,7 @@
 @using iPath.UI.ViewModels.Nodes
 
 @inject INodeViewModel vm
+@inject IDraftStore srvDraft
 @inject IToastService srvToast
 @inject IDialogService srvDialog
 @inject IJSRuntime js
@@ -133,11 +134,14 @@ else
 				OnClick="CreateAnnotation" />
 			</div>
 		</div>
+
+		<AnnotationEdit @ref=@annoEdit />
+
 		@foreach( var a in vm.Model.Annotations.OrderBy(a => a.CreatedOn) )
 		{
 			@if (a.IsVisibleInSession(appState.Session) )
 			{
-				<AnnotationView Model="a" ShowDeleted="false" />
+				<AnnotationView Model="a" />
 			}
 		}
 	</ExpandableErrorBoundary>
@@ -215,24 +219,12 @@ else
 
 
 	/***** Annotations **************************************************************************************/
+	AnnotationEdit annoEdit;
 	async Task CreateAnnotation()
 	{
-		// check for open draft first
-		if (vm.Model.HasAnnotationDraft(appState.Session.UserId)) return;
-
-
-		var resp = await vm.CreateAnnotationAsync(UserId: appState.Session.UserId);
-		if( !resp.Success )
-		{
-			srvToast.ShowError(resp.Message);
-		}
-		else
-		{
-			StateHasChanged();
-			var elementId = $"annotation-{resp.Data.Id}";
-			await js.InvokeVoidAsync("focusElement", elementId);
-		}
+		await annoEdit.ShowEditor();
 	}
+
 
 	async Task CreateAnnotation_Dialog()
 	{

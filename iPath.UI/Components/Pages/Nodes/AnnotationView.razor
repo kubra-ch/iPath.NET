@@ -1,190 +1,23 @@
-﻿@implements IDisposable
+﻿@using iPath.UI.Areas.DraftStorage
 
 @inject INodeViewModel vm
 @inject IToastService srvToast;
 @inject ILogger<AnnotationView> logger
 
-
-@if( !EditMode )
-{
-	<div class="node_annotation" hidden="@isHidden">
-		<div class="annotation_info">
-			@if (Model.Deleted )
-			{
-				<FluentBadge Fill="somevalue" BackgroundColor="red" Color="white">@Model.Visibility.Name</FluentBadge><br />
-			}
-			<b>@Model.Owner.Username</b>
-			<div>@Model.CreatedOn.ToShortDateString()</div>
-		</div>
-		<div class="annotation_text">@Model.Html</div>
+<div class="node_annotation">
+	<div class="annotation_info">
+		@if (!Model.IsVisible)
+		{
+			<FluentBadge Fill="somevalue" BackgroundColor="red" Color="white">@Model.Visibility.Name</FluentBadge><br />
+		}
+		<b>@Model.Owner.Username</b>
+		<div>@Model.CreatedOn.ToShortDateString()</div>
 	</div>
-}
-else
-{
-	<div class="annotation_form" hidden="@isHidden" id=@($"annotation-{Model.Id}")>
-		<h4>New annotation by <i>@Model.Owner.Username</i> from @Model.CreatedOn [@Model.Visibility]</h4>
-
-		<FluentTextArea Rows="10" @bind-Value="AnnotationText" @bind-Value:after="OnTextChanged" Style="width: 100%;" @ref=@editor />
-
-		<div class="submitfooter">
-			<FluentButton OnClick="SubmitAsync" Type="ButtonType.Submit" Appearance="Appearance.Accent">Submit</FluentButton>
-			<FluentButton OnClick="DeleteAsync" Appearance="Appearance.Lightweight">Delete</FluentButton>
-			<FluentButton OnClick="CancelEdit" Appearance="Appearance.Outline">Cacel</FluentButton>
-		</div>
-	</div>
-}
+	<div class="annotation_text">@Model.Html</div>
+</div>
 
 
 @code {
 	[Parameter]
 	public AnnotationModel Model { get; set; }
-	private int? ModelId;
-
-	[Parameter]
-	public bool EditMode { get; set; }
-
-	[Parameter]
-	public bool ShowDeleted { get; set; } = false;
-
-	string AnnotationText = "";
-	private FluentTextArea editor;
-
-	// hide deleted Annotations
-	bool isHidden = false;
-
-	private CancellationTokenSource cts = new CancellationTokenSource();
-
-
-	protected override void OnParametersSet()
-	{
-		if( Model != null )
-		{
-			if( !string.IsNullOrEmpty(vm.GetAnnotationDraft(Model.Id)) )
-			{
-				AnnotationText = vm.GetAnnotationDraft(Model.Id);
-			}
-			else
-			{
-				AnnotationText = Model.Text;
-				UpdateVisibility();
-			}
-
-
-			// Autosave for new Annotations => Draft state
-			if( Model.Visibility == eAnnotationVisibility.Draft && !ModelId.HasValue )
-			{
-				ModelId = Model.Id;
-				logger.LogInformation($"starting autosave on annotation #{Model.Id}");
-				Task autoSave = new Task(() => AutoSaveAsync(cts.Token));
-				autoSave.Start();
-			}
-		}
-		else
-		{
-			cts.Cancel();
-		}
-	}
-
-	void UpdateVisibility()
-	{
-		if( Model != null)
-		{
-			// hide deleted items
-			isHidden = ShowDeleted ? false : Model.Deleted;
-
-			// draft items => show as editor
-			if( Model.Visibility == eAnnotationVisibility.Draft )
-			{
-				EditMode = true;
-			}
-		}
-	}
-
-
-	async Task SubmitAsync()
-	{
-		if( string.IsNullOrWhiteSpace(AnnotationText) )
-		{
-			srvToast.ShowError("Please enter saome text");
-			return;
-		}
-
-		cts.Cancel();
-		Model.Text = editor.Value;
-		var resp = await vm.UpdateAnnotationAsync(Model, text: Model.Text, visibility: eAnnotationVisibility.Visible);
-		if( !resp.Success )
-		{
-			srvToast.ShowError(resp.Message);
-		}
-		else
-		{
-			EditMode = false;
-			Model.LoadData(resp.Data);
-		}
-		UpdateVisibility();
-	}
-
-
-	async Task DeleteAsync()
-	{
-		cts.Cancel();
-		var resp = await vm.DeleteAnnotationAsync(Model);
-		if (!resp.Success)
-		{
-			srvToast.ShowError(resp.Message);
-		}
-		else
-		{
-			EditMode = false;
-			Model.SetDeleted(); 
-		}
-		UpdateVisibility();
-	}
-
-	async Task CancelEdit()
-	{
-		cts.Cancel();
-		Model.ResetText();
-		if( string.IsNullOrWhiteSpace(Model.Text)){
-			await DeleteAsync();
-		}
-
-		EditMode = false;
-		UpdateVisibility();
-	}
-
-
-	private async void AutoSaveAsync(CancellationToken cts)
-	{
-		string _lastText = Model.Text;
-		while( !cts.IsCancellationRequested )
-		{
-			System.Threading.Thread.Sleep(1000);
-			if( _lastText != AnnotationText ){
-				_lastText = AnnotationText;
-				logger.LogInformation($"autosaving on annotation #{Model.Id}");
-				var resp = await vm.UpdateAnnotationAsync(Model, text: _lastText);
-			}
-		}
-	}
-
-
-	void OnTextChanged()
-	{
-		vm.SetAnnotationDraft(Model.Id, AnnotationText);
-	}
-
-
-
-	void IDisposable.Dispose()
-	{
-		cts.Cancel();
-		cts.Dispose();
-
-		// auto delete empty
-		if( Model != null && Model.Visibility == eAnnotationVisibility.Draft && string.IsNullOrWhiteSpace(Model.Text) )
-		{
-			vm.DeleteAnnotationAsync(Model);
-		}
-	}
 }

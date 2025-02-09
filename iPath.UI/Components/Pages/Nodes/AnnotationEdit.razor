@@ -1,0 +1,86 @@
+﻿@using System.Diagnostics
+@using iPath.UI.ViewModels.Drafts
+@implements IDisposable
+
+@inject INodeViewModel vm
+@inject IToastService srvToast
+
+@if( Visible && Model != null )
+{
+	<div class="annotation_form">
+		<h4>@Title</h4>
+
+		<EditForm Model="Model">
+			<FluentTextArea @bind-Value="@Model.Text" @bind-Value:after="TextValueChanged"
+			Rows="10" style="width: 100%;" Immediate="true" ImmediateDelay="1000"/>
+		</EditForm>
+
+		<div class="sortableGallery_footer">
+			<FluentButton Appearance="Appearance.Accent" OnClick="Save">Save</FluentButton>
+			<FluentButton OnClick="Cancel">Cancel</FluentButton>
+			<!-- <FluentButton>Delete</FluentButton> -->
+		</div>
+	</div>
+}
+
+
+@code {
+	bool Visible = false;
+
+	AnnotationDraft Model;
+
+	[CascadingParameter]
+	public CascadingAppState appState { get; set; }
+
+
+
+	public async Task ShowEditor()
+	{
+		if (vm.Model != null)
+		{
+			Model = await vm.GetAnnotationDraft(userId: appState.Session.UserId, true);		
+			Visible = true;
+			StateHasChanged();
+		}
+	}
+
+	string Title = "New Annotation";
+
+
+	async Task TextValueChanged()
+	{
+		vm.DraftStore.SetDraft(Model);
+	}
+
+	async Task Save()
+	{
+		if( !string.IsNullOrEmpty(Model.Text) )
+		{
+			var resp = await vm.CreateAnnotationAsync(Model);
+			if (!resp.Sucess)
+			{
+				srvToast.ShowError(resp.Message);
+				await vm.DraftStore.SetDraft(Model);
+			}
+			else
+			{
+				await vm.DraftStore.RemoveAsync(Model.DraftId);
+				Visible = false;
+				Model = null;
+				vm.Model.Annotations.Add(new AnnotationModel(resp.Data));
+				StateHasChanged();
+			}
+		}
+	}
+
+	async Task Cancel()
+	{
+		await vm.DraftStore.RemoveAsync(Model.DraftId);
+		Model = null;
+		Visible = false;
+	}
+
+	void IDisposable.Dispose()
+	{
+	}
+}

@@ -1,5 +1,5 @@
 ﻿using iPath.Application.Features;
-using iPath.UI.ViewModels.DataService;
+using iPath.UI.Areas.DataAccess;
 using Microsoft.FluentUI.AspNetCore.Components;
 
 namespace iPath.UI.ViewModels.Groups;
