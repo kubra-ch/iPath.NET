@@ -56,8 +56,22 @@ public class GetGroupListDtoQueryHandler(IDbContextFactory<IPathDbContext> dbFac
         // get the total group count
         var total = await q.AsNoTracking().CountAsync();
 
-        // sort by name and apply pagination
-        q = q.OrderBy(g => g.Name);
+        // sorting 
+        // q = q.ApplySort(request.SortDefinitions);
+        var sd = request.SortDefinitions.FirstOrDefault();
+        if (sd != null)
+        {
+            if(sd.SortAscending)
+            {
+                q = q.OrderBy(g => g.Name);
+            }
+            else
+            {
+                q = q.OrderByDescending(g => g.Name);
+            }
+        }
+
+        // pagination
         if (request.Count.HasValue)
             q = q.Skip(request.StartIndex * request.Count.Value).Take(request.Count.Value);
 
@@ -76,4 +90,5 @@ public class GetGroupListDtoQueryHandler(IDbContextFactory<IPathDbContext> dbFac
         return new GetGroupListDtoResponse(true, Data: ret);
     }
 }
+
 

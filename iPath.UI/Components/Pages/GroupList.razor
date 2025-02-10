@@ -11,7 +11,7 @@
 	<FluentDataGrid ItemsProvider="@vm.GridDataProvider" TGridItem="GroupListDTO"
 	@ref=@grid Pagination="@pagination" GridTemplateColumns="4fr 1fr"
 	OnRowClick="GotoGorup">
-		<PropertyColumn Property="@(x => x.Name)" Title="Group Name" />
+		<PropertyColumn Property="@(x => x.Name)" Title="Group Name" Sortable="true" InitialSortDirection="SortDirection.Ascending" />
 		<PropertyColumn Property="@(x => x.NodeCount)" Title="Nodes" Align="Align.End" />
 	</FluentDataGrid>
 	<FluentPaginator State="@pagination" />
@@ -35,6 +35,9 @@
 
 	void GotoGorup(FluentDataGridRow<GroupListDTO> row)
 	{
-		nm.NavigateTo($"/groups/{row.Item.Id}");
+		if (row.Item != null)
+		{
+			nm.NavigateTo($"/groups/{row.Item.Id}");
+		}
 	}
 }

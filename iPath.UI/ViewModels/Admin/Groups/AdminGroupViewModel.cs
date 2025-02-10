@@ -30,8 +30,22 @@ public class AdminGroupViewModel(IDataAccess srvData) : IAdminGroupViewModel
         {
             request.StartIndex = req.StartIndex;
             request.Count = req.Count;
-            request.SortDefinitions ??= new();
-            request.SortDefinitions.Add(new SortDefinition { SortColumn = "Name" });
+
+            // sorting
+            request.SortDefinitions = new();
+            var sort = req.GetSortByProperties();
+            if (sort != null && sort.Any())
+            {
+                foreach (var p in sort)
+                {
+                    var sd = new SortDefinition { SortColumn = p.PropertyName, SortAscending = (p.Direction == SortDirection.Ascending) };
+                    request.SortDefinitions.Add(sd);
+                }
+            }
+            else
+            {
+                request.SortDefinitions.Add(new SortDefinition { SortColumn = "CreatedOn", SortAscending = false });
+            }
 
             var response = await srvData.Send(request);
             if (!response.Success)

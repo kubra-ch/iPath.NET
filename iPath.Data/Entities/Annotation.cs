@@ -21,6 +21,10 @@ public class Annotation : BaseEntity
 
     public DateTime CreatedOn { get; set; }
     public DateTime? ModifiedOn { get; set; }
+
+    public int? ReplyToAnnotationId { get; set; }
+    public Annotation? ReplyToAnnotation { get; set; }
+    public ICollection<Annotation>? Replies { get; set; }
 }
 
 

@@ -9,8 +9,20 @@ internal class AnnotationConfiguration : IEntityTypeConfiguration<Annotation>
     public void Configure(EntityTypeBuilder<Annotation> builder)
     {
         builder.HasKey(x => x.Id);
-        builder.HasOne(a => a.Node).WithMany(n => n.Annotations).HasForeignKey(a => a.NodeId).IsRequired();
-        builder.HasOne(a => a.Owner).WithMany().HasForeignKey(a => a.OwnerId).IsRequired().OnDelete(DeleteBehavior.NoAction);
+        builder.HasOne(a => a.Node)
+            .WithMany(n => n.Annotations)
+            .HasForeignKey(a => a.NodeId)
+            .IsRequired();
+
+        builder.HasOne(a => a.Owner).WithMany()
+            .HasForeignKey(a => a.OwnerId)
+            .IsRequired()
+            .OnDelete(DeleteBehavior.NoAction);
+
+        builder.HasOne(a => a.ReplyToAnnotation)
+            .WithMany(a => a.Replies)
+            .HasForeignKey(a => a.ReplyToAnnotationId)
+            .IsRequired(false);
 
         builder.HasIndex(a => a.CreatedOn);
         builder.HasIndex(a => a.OwnerId);

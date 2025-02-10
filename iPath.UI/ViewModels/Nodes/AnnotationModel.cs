@@ -60,11 +60,11 @@ public class AnnotationModel
         Visibility = eAnnotationVisibility.Deleted;
     }
 
-    public bool IsVisibleInSession(UserSession session)
+    public bool IsVisibleInSession(ISessionStateService session)
     {
         if( session is null ) return false;
         if (Visibility == eAnnotationVisibility.Visible) return true;
-        if (Owner.Id == session.UserId ) return true;
+        if (session.User != null && Owner.Id == session.User.Id ) return true;
         return false;
     }
 

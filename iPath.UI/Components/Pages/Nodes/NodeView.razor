@@ -11,13 +11,13 @@
 <div>@vm.Message</div>
 
 
-@if( vm.Model is null )
-{
-	<FluentProgressRing />
-}
-else
-{
-	<ExpandableErrorBoundary>
+<ExpandableErrorBoundary>
+	@if (vm.Model == null)
+	{
+		<FluentProgressRing />
+	}
+	else
+	{
 		<div class="nodeheader">
 			<div class="nodeheader_title">
 				@vm.Model.Caption
@@ -29,40 +29,40 @@ else
 			<div class="nodeheader_appbar">
 				<FluentAppBar Orientation="Orientation.Horizontal">
 					<FluentAppBarItem Href="/"
-					Match="NavLinkMatch.All"
-					IconRest="HomeIcon()"
-					IconActive="HomeIcon(active: true)"
-					Text="Home" />
+									  Match="NavLinkMatch.All"
+									  IconRest="HomeIcon()"
+									  IconActive="HomeIcon(active: true)"
+									  Text="Home" />
 
-					@if( vm.Model.GroupId.HasValue )
+					@if (vm.Model.GroupId.HasValue)
 					{
 						<FluentAppBarItem Href=@($"/groups/{vm.Model.GroupId}")
-						Match="NavLinkMatch.All"
-						IconRest="ListIcon()"
-						IconActive="ListIcon(active: true)"
-						Text="List" />
+										  Match="NavLinkMatch.All"
+										  IconRest="ListIcon()"
+										  IconActive="ListIcon(active: true)"
+										  Text="List" />
 					}
 
 					<FluentAppBarItem OnClick="ReloadNode"
-					Match="NavLinkMatch.All"
-					IconRest="CaseIcon()"
-					IconActive="CaseIcon(active: true)"
-					Text="Case" />
+									  Match="NavLinkMatch.All"
+									  IconRest="CaseIcon()"
+									  IconActive="CaseIcon(active: true)"
+									  Text="Case" />
 
-					@if( canEdit )
+					@if (canEdit)
 					{
 						<FluentAppBarItem Href=@($"/nodes/edit/{NodeId}")
-						Match="NavLinkMatch.All"
-						IconRest="EditIcon()"
-						IconActive="EditIcon(active: true)"
-						Text="Edit" />
+										  Match="NavLinkMatch.All"
+										  IconRest="EditIcon()"
+										  IconActive="EditIcon(active: true)"
+										  Text="Edit" />
 					}
 
 					<FluentAppBarItem OnClick="AddAttachment"
-					Match="NavLinkMatch.All"
-					IconRest="AttachIcon()"
-					IconActive="AttachIcon(active: true)"
-					Text="Add Image" />
+									  Match="NavLinkMatch.All"
+									  IconRest="AttachIcon()"
+									  IconActive="AttachIcon(active: true)"
+									  Text="Add Image" />
 				</FluentAppBar>
 			</div>
 		</div>
@@ -81,8 +81,8 @@ else
 			@**** Image View **********************************************@
 			<div class="image_view">
 				<img src="@vm.ActiveChild.FileUrl" alt="@vm.ActiveChild.Filename"
-				width="@vm.ActiveChild.ImageWidth"
-				@onclick="vm.NextImage" />
+					 width="@vm.ActiveChild.ImageWidth"
+					 @onclick="vm.NextImage" />
 				<div class="image_info">
 					@vm.ActiveChild.Filename
 				</div>
@@ -109,8 +109,8 @@ else
 					<div class="gallery_alert">
 						<b>Note: </b>this items contains unfinsihed uploads.
 						<div>
-							<FluentButton Appearance="Appearance.Accent" OnClick="DeleteUnfinished">Delete Uploads</FluentButton>
-							<FluentButton Appearance="Appearance.Accent" OnClick="PublishUnfinished">Plublish Uploads</FluentButton>
+							<FluentButton Appearance="Appearance.Accent" OnClick="DeleteUnfinishedUploads">Delete Uploads</FluentButton>
+							<FluentButton Appearance="Appearance.Accent" OnClick="PublishUnfinishedUploads">Plublish Uploads</FluentButton>
 						</div>
 					</div>
 				}
@@ -124,28 +124,10 @@ else
 
 
 		@***** Annotations *******************************************************@
-		<div class="titleWithActions">
-			<div class="titleHeader">
-				<h4>Annotations</h4>
-			</div>
-			<div class="titleActions">
-				<FluentButton IconEnd="@(new Icons.Regular.Size16.AddCircle())"
-				Title="Create a new Case"
-				OnClick="CreateAnnotation" />
-			</div>
-		</div>
+		<AnnotationsView vm="@vm" />
 
-		<AnnotationEdit @ref=@annoEdit />
-
-		@foreach( var a in vm.Model.Annotations.OrderBy(a => a.CreatedOn) )
-		{
-			@if (a.IsVisibleInSession(appState.Session) )
-			{
-				<AnnotationView Model="a" />
-			}
-		}
-	</ExpandableErrorBoundary>
-}
+	}
+</ExpandableErrorBoundary>
 
 
 @code {
@@ -175,6 +157,12 @@ else
 		active ? new Icons.Filled.Size24.Home() : new Icons.Regular.Size24.Home();
 
 
+
+	protected override void OnInitialized()
+	{
+		vm.ResetData();
+	}
+
 	protected override async Task OnParametersSetAsync()
 	{
 		await ReloadNode();
@@ -182,11 +170,19 @@ else
 
 	async Task ReloadNode()
 	{
-		await vm.LoadNode(NodeId);
-		canEdit = vm.Model.Owner.Id == appState.Session.UserId;
+		try
+		{
+			await vm.LoadNode(NodeId);
+			canEdit = appState.Session.IsAdmin || vm.Model.Owner.Id == appState.Session.UserId;
+		}
+		catch (Exception ex)
+		{
+			srvToast.ShowError(ex.Message);
+		}
 	}
 
-	void ToggleDescritpion(){
+	void ToggleDescritpion()
+	{
 		vm.CollapseDescritpion = !vm.CollapseDescritpion;
 	}
 
@@ -217,50 +213,7 @@ else
 		}
 	}
 
-
-	/***** Annotations **************************************************************************************/
-	AnnotationEdit annoEdit;
-	async Task CreateAnnotation()
-	{
-		await annoEdit.ShowEditor();
-	}
-
-
-	async Task CreateAnnotation_Dialog()
-	{
-		var dialog = await srvDialog.ShowDialogAsync<NodeAnnotationDlg>(vm.Model, new DialogParameters()
-			{
-				Width = "900px",
-				Height = "500px",
-				Title = "Add annotation",
-				PreventDismissOnOverlayClick = true,
-				PreventScroll = true,
-			});
-
-		var result = await dialog.Result;
-		if (!result.Cancelled)
-		{
-			var resp = result.Data as AnnotationCommandResponse;
-			if( resp != null )
-			{
-				if( resp.Success )
-				{					
-					StateHasChanged();
-				}
-				else
-				{
-					srvToast.ShowError(resp.Message);
-				}
-			}
-			else
-			{
-				srvToast.ShowError("no answer from server");
-			}
-		}
-	}
-
-
-	async Task DeleteUnfinished()
+	async Task DeleteUnfinishedUploads()
 	{
 		var nodes = vm.Model.Children.Where(c => c.Visibility == eNodeVisibility.Draft).Select(c => c.Id).ToList();
 		var resp = await vm.DeleteNodesAsync(nodes);
@@ -268,11 +221,12 @@ else
 		StateHasChanged();
 	}
 
-	async Task PublishUnfinished()
+	async Task PublishUnfinishedUploads()
 	{
 		var nodes = vm.Model.Children.Where(c => c.Visibility == eNodeVisibility.Draft).Select(c => c.Id).ToList();
 		var resp = await vm.UpdateNodesVisibilityAsync(nodes, eNodeVisibility.Visible);
 		await vm.LoadNode(vm.Model.Id);
 		StateHasChanged();
 	}
+
 }

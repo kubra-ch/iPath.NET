@@ -26,7 +26,7 @@ public class GetNodeListQueryHandler(IDbContextFactory<IPathDbContext> dbFactory
         using var ctx = await dbFactory.CreateDbContextAsync();
         var q = ctx.Nodes.AsNoTracking()
             .Include(g => g.Owner)
-            .OrderByDescending(g => g.CreateOn)
+            .OrderByDescending(g => g.CreatedOn)
             .AsQueryable();
 
         if( request.GroupId.HasValue)

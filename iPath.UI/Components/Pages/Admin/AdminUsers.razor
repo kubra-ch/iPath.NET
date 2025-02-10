@@ -122,6 +122,15 @@
     {
         if (usr is null) return;
 
+        var dialog = await srvDialog.ShowPanelAsync<UserMemberDlg>(usr.Id, new DialogParameters()
+            {
+                Alignment = HorizontalAlignment.Right,
+                Title = $"Membership {usr.Username}",
+                Width = "900px",
+                PreventDismissOnOverlayClick = true,
+                PreventScroll = false,
+            });
+        /*
         var dialog = await srvDialog.ShowDialogAsync<UserMemberDlg>(usr.Id, new DialogParameters()
             {
                 Width = "900px",
@@ -129,6 +138,7 @@
                 PreventDismissOnOverlayClick = true,
                 PreventScroll = true,
             });
+        */
 
         var result = await dialog.Result;
         if (!result.Cancelled && result.Data != null)

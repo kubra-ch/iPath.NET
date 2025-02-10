@@ -1,0 +1,136 @@
+﻿@using iPath.UI.Areas.DraftStorage
+@using iPath.UI.Components.Pages.Nodes.Dialogs
+
+@inject IToastService srvToast
+@inject IDialogService srvDialog
+@inject ILogger<AnnotationsView> logger
+
+<section id="annotations">
+	<div class="titleWithActions">
+		<div class="titleHeader">
+			<h4>Annotations</h4>
+		</div>
+		<div class="titleActions">
+			<FluentButton IconEnd="@SortIcon" Title="Sort" OnClick="ToogleSort" />
+			<FluentButton IconEnd="@(new Icons.Regular.Size16.AddCircle())"
+			Title="Create a new Case"
+			OnClick="CreateAnnotation" />
+		</div>
+	</div>
+
+	<AnnotationEdit @ref=@annoEdit OnAnnotationPublished="OnAnnotationPublishedHandler" />
+
+	@if (Models is null)
+	{
+		<FluentProgressRing />
+	}
+	else
+	{
+		@foreach (var a in Models)
+		{
+			@if (vm.AnnotationIsVisible(a))
+			{
+				<div class="node_annotation">
+					<div class="annotation_info">
+						@* 				@if (!a.IsVisible)
+					{
+						<FluentBadge Fill="somevalue" BackgroundColor="red" Color="white">@a.Visibility.Name</FluentBadge>
+						<br />
+					} *@
+						<b>@a.Owner.Username</b>
+						<div>@a.CreatedOn.ToShortDateString()</div>
+					</div>
+					<div class="annotation_text">@a.Html</div>
+				</div>
+			}
+		}
+	}
+</section>
+
+
+@code {
+	[Parameter]
+	public INodeViewModel vm { get; set; }
+
+	AnnotationEdit annoEdit;
+	async Task CreateAnnotation()
+	{
+		await annoEdit.ShowEditor();
+	}
+
+	List<AnnotationModel> Models;
+	private bool sortAscending = true;
+	private Icon SortIcon => sortAscending ? new Icons.Regular.Size16.ArrowSortDown() : new Icons.Regular.Size16.ArrowSortUp();
+
+
+	protected override async void OnAfterRender(bool firstRender)
+	{
+		if( firstRender )
+		{
+			await LoadData();
+		}
+	}
+
+	private async Task LoadData()
+	{
+		if (vm is null || vm.Model is null)
+		{
+			Models = new();
+		}
+		else if (sortAscending)
+		{
+			Models = vm.Model.Annotations.OrderBy(a => a.CreatedOn).ToList();
+		}
+		else
+		{
+			Models = vm.Model.Annotations.OrderByDescending(a => a.CreatedOn).ToList();
+		}
+		StateHasChanged();
+	}
+
+	async Task ToogleSort()
+	{
+		sortAscending = !sortAscending;
+		await LoadData();
+	}
+
+
+	async Task CreateAnnotation_Dialog()
+	{
+		var dialog = await srvDialog.ShowDialogAsync<NodeAnnotationDlg>(vm.Model, new DialogParameters()
+			{
+				Width = "900px",
+				Height = "500px",
+				Title = "Add annotation",
+				PreventDismissOnOverlayClick = true,
+				PreventScroll = true,
+			});
+
+		var result = await dialog.Result;
+		if (!result.Cancelled)
+		{
+			var resp = result.Data as AnnotationCommandResponse;
+			if (resp != null)
+			{
+				if (resp.Success)
+				{
+					StateHasChanged();
+				}
+				else
+				{
+					srvToast.ShowError(resp.Message);
+				}
+			}
+			else
+			{
+				srvToast.ShowError("no answer from server");
+			}
+		}
+	}
+
+	async Task OnAnnotationPublishedHandler(Annotation annotation)
+	{
+		vm.Model.Annotations.Add(new AnnotationModel(annotation));
+		await LoadData();
+	}
+}

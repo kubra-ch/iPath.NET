@@ -5,11 +5,11 @@ using iPath.Data.Entities;
 using iPath.UI.Areas.DataAccess;
 using iPath.UI.Areas.DraftStorage;
 using iPath.UI.ViewModels.Drafts;
-using Microsoft.AspNetCore.Session;
 
 namespace iPath.UI.ViewModels.Nodes;
 
-public class NodeViewModel(IDataAccess srvData, IDraftStore draftStore, ISessionStateService sessState, ILogger<NodeViewModel> logger) : INodeViewModel
+public class NodeViewModel(IDataAccess srvData, IDraftStore draftStore, ISessionStateService sessState, ILogger<NodeViewModel> logger)
+    : INodeViewModel
 {
     private NodeModel _model;
     public NodeModel Model => _model;
@@ -57,6 +57,14 @@ public class NodeViewModel(IDataAccess srvData, IDraftStore draftStore, ISession
 
     private string _message = default!;
     public string Message => _message;
+
+
+    public void ResetData()
+    {
+        ActiveChild = null;
+        _message = "";
+        _model = null;
+    }
 
 
     public async Task LoadNode(int NodeId)
@@ -136,7 +144,7 @@ public class NodeViewModel(IDataAccess srvData, IDraftStore draftStore, ISession
         if (resp.Success) Model.Annotations.Add(new AnnotationModel(resp.Data));
         return resp;
     }
-    public async Task<AnnotationCommandResponse> CreateAnnotationAsync(AnnotationDraft draft)
+    public async Task<AnnotationCommandResponse> CreateAnnotationAsync(CreateAnnotationDraft draft)
     {
         return await CreateAnnotationAsync(UserId: draft.User.Id, text: draft.Text);
     }
@@ -172,15 +180,22 @@ public class NodeViewModel(IDataAccess srvData, IDraftStore draftStore, ISession
 
     public IDraftStore DraftStore => draftStore;
 
-    public async Task<AnnotationDraft> GetAnnotationDraft(int userId, bool autoCreate)
+    public async Task<CreateAnnotationDraft> GetAnnotationDraft(int userId, bool autoCreate)
     {
-        var d = await draftStore.GetDraft<AnnotationDraft>(AnnotationDraft.NodeKey(Model.Id));
+        var d = await draftStore.GetDraft<CreateAnnotationDraft>(CreateAnnotationDraft.NodeKey(Model.Id));
         if( d == null && autoCreate)
         {
-            d = AnnotationDraft.ForNode(Model.Id);
+            d = CreateAnnotationDraft.ForNode(Model.Id);
             d.User = sessState.User;
             draftStore.SetDraft(d);
         }
         return d;
+    }
+
+
+
+    public bool AnnotationIsVisible(AnnotationModel model)
+    {
+        return model != null && model.IsVisibleInSession(sessState);
     }
 }

@@ -19,7 +19,7 @@ public class NodeModel
         Title = node.Title;
         NodeType = node.NodeType.Name.ToLower();
         Description = node.Description;
-        CreatedOn = node.CreateOn;
+        CreatedOn = node.CreatedOn;
         SubTitle = node.SubTitle;
         SortNr = node.SortNr;
         Status = node.Status;
@@ -113,6 +113,7 @@ public class NodeModel
             }
             else if (IsImage)
             {
+                return $"https://www.ipath-network.com/ipath/image/src/{Id}&thumb=1";
                 return $"/api/files/thumb/{Id}";
             }
             else if (NodeType == "folder")
@@ -130,8 +131,8 @@ public class NodeModel
         }
     }
 
-
-    public string FileUrl => $"/api/files/{Id}"; // + "/"  + HttpUtility.UrlEncode(this.Filename);
+    // public string FileUrl => $"/api/files/{Id}"; // + "/"  + HttpUtility.UrlEncode(this.Filename);
+    public string FileUrl => $"https://www.ipath-network.com/ipath/image/src/{Id}";
 
     public NodeModel Parent { get; set; }
 
@@ -141,7 +142,7 @@ public class NodeModel
     public bool HasSubTitle => !string.IsNullOrWhiteSpace(SubTitle);
 
 
-    public string ImageCaption => $"{SortNr} - " + Filename.Substring(0, Math.Min(12, Filename.Length - 1));
+    public string ImageCaption => $"{SortNr} - " + Filename?.Substring(0, Math.Min(12, Filename.Length - 1));
 
 
     public bool HasAnnotationDraft(int Userid) => Annotations.Any(a => a.Owner.Id == Userid && a.Visibility == eAnnotationVisibility.Draft);

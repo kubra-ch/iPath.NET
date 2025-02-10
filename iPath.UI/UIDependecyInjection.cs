@@ -33,7 +33,7 @@ public static class UIDependecyInjection
         services.AddScoped<IAdminGroupViewModel, AdminGroupViewModel>();
         services.AddScoped<IUserMemberViewModel, UserMemberViewModel>();
         services.AddScoped<IGroupListViewModel, GroupListViewModel>();
-        services.AddScoped<IGroupViewModel, GroupViewModelMediator>();
+        services.AddScoped<IGroupViewModel, GroupViewModel>();
         services.AddScoped<INodeViewModel, NodeViewModel>();
 
         // UI services

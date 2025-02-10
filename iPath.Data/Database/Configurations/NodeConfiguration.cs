@@ -10,8 +10,8 @@ internal class NodeConfiguration : IEntityTypeConfiguration<Node>
     {
 		builder.ToTable("Nodes");
         builder.HasKey(x => x.Id);
-		builder.Property(x => x.Title).HasMaxLength(100);
-		builder.Property(x => x.SubTitle).HasMaxLength(200);		
+		builder.Property(x => x.Title).HasMaxLength(255);
+		builder.Property(x => x.SubTitle).HasMaxLength(255);		
         builder.HasOne(x => x.Owner).WithMany().HasForeignKey(x => x.OwnerId).IsRequired(true);
         builder.HasMany(x => x.ChildNodes).WithOne().HasForeignKey(x => x.TopNodeId);
         builder.HasMany(x => x.Fields).WithOne(f => f.Node).HasForeignKey(x => x.NodeId);
@@ -21,7 +21,7 @@ internal class NodeConfiguration : IEntityTypeConfiguration<Node>
         builder.HasIndex(n => n.GroupId);
         builder.HasIndex(n => n.OwnerId);
         builder.HasIndex(n => n.TopNodeId);
-        builder.HasIndex(n => n.CreateOn);
+        builder.HasIndex(n => n.CreatedOn);
     }
 }
 

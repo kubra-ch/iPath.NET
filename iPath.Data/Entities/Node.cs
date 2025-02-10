@@ -8,7 +8,7 @@ public class Node : BaseEntity
     public string? SubTitle { get; set; }
     public string? Description { get; set; }
 
-    public DateTime CreateOn { get; set; }
+    public DateTime CreatedOn { get; set; }
     public DateTime ModifiedOn { get; set; }
 
     public eNodeStatus Status { get; set; } = eNodeStatus.Open;

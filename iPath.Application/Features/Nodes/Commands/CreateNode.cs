@@ -35,7 +35,7 @@ public class CreateNodeCommandHandler(IDbContextFactory<IPathDbContext> dbFactor
             ParentNodeId = request.ParentNodeId,
             TopNodeId = request.TopNodetId,
             NodeType = request.NodeType,
-            CreateOn = DateTime.UtcNow,
+            CreatedOn = DateTime.UtcNow,
         };
         ctx.Nodes.Add(item);
         await ctx.SaveChangesAsync();

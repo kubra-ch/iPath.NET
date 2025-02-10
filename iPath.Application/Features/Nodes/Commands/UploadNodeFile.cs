@@ -38,7 +38,7 @@ public class UploadNodeFileCommandHandler(IDbContextFactory<IPathDbContext> dbFa
         newNode.ParentNodeId = parent.Id;
         newNode.TopNodeId = parent.TopNodeId.HasValue ? parent.TopNodeId : parent.Id;
         newNode.NodeType = NodeType.Image;
-        newNode.CreateOn = DateTime.Now;
+        newNode.CreatedOn = DateTime.Now;
         newNode.OwnerId = request.UserId;
         newNode.SortNr = parent.ChildNodes.Max(n => n.SortNr) + 1;
 

@@ -51,6 +51,7 @@ public class GetGroupListQueryHandler(IDbContextFactory<IPathDbContext> dbFactor
                 }
             }
         }
+
         var data = await q.GetPaginatedListResultAsync(request);
         return new GetGroupListResponse(true, Data: data);
     }

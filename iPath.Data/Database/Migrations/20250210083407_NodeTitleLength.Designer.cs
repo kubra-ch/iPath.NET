@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using iPath.Data.Database;
 
@@ -11,9 +12,11 @@ using iPath.Data.Database;
 namespace iPath.Data.Database.Migrations
 {
     [DbContext(typeof(IPathDbContext))]
-    partial class IPathDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250210083407_NodeTitleLength")]
+    partial class NodeTitleLength
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -317,9 +320,6 @@ namespace iPath.Data.Database.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
-                    b.Property<int?>("Filesize")
-                        .HasColumnType("int");
-
                     b.Property<int?>("ImageHeight")
                         .HasColumnType("int");
 
@@ -335,10 +335,6 @@ namespace iPath.Data.Database.Migrations
 
                     b.Property<int>("NodeId")
                         .HasColumnType("int");
-
-                    b.Property<string>("Originalname")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("ThumbData")
                         .HasColumnType("nvarchar(max)");

@@ -1,4 +1,5 @@
 ﻿using iPath.Application.Features;
+using iPath.Application.Querying;
 using iPath.Data.Entities;
 using iPath.UI.Areas.DataAccess;
 using iPath.UI.ViewModels.Nodes;
@@ -6,7 +7,7 @@ using Microsoft.FluentUI.AspNetCore.Components;
 
 namespace iPath.UI.ViewModels.Groups;
 
-public class GroupViewModelMediator(IDataAccess srvData) : IGroupViewModel
+public class GroupViewModel(IDataAccess srvData) : IGroupViewModel
 {
     private GroupModel _model;
     public GroupModel Model => _model;
@@ -46,6 +47,22 @@ public class GroupViewModelMediator(IDataAccess srvData) : IGroupViewModel
         {
             request.StartIndex = req.StartIndex;
             request.Count = req.Count;
+
+            // sorting
+            request.SortDefinitions = new();
+            var sort = req.GetSortByProperties();
+            if (sort != null && sort.Any())
+            {
+                foreach (var p in sort)
+                {
+                    var sd = new SortDefinition { SortColumn = p.PropertyName, SortAscending = (p.Direction == SortDirection.Ascending) };
+                    request.SortDefinitions.Add(sd);
+                }
+            }
+            else
+            {
+                request.SortDefinitions.Add(new SortDefinition { SortColumn = "CreatedOn", SortAscending = false });
+            }
 
             var response = await srvData.Send(request);
             if (!response.Success)

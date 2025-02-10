@@ -27,11 +27,13 @@
 @code {
 	bool Visible = false;
 
-	AnnotationDraft Model;
+	CreateAnnotationDraft Model;
 
 	[CascadingParameter]
 	public CascadingAppState appState { get; set; }
 
+	[Parameter]
+	public EventCallback<Annotation> OnAnnotationPublished { get; set; }
 
 
 	public async Task ShowEditor()
@@ -64,11 +66,11 @@
 			}
 			else
 			{
+				// delete draft from cache
 				await vm.DraftStore.RemoveAsync(Model.DraftId);
 				Visible = false;
 				Model = null;
-				vm.Model.Annotations.Add(new AnnotationModel(resp.Data));
-				StateHasChanged();
+				OnAnnotationPublished.InvokeAsync(resp.Data);
 			}
 		}
 	}

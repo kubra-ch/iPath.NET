@@ -7,6 +7,7 @@ namespace iPath.UI.ViewModels.Nodes;
 
 public interface INodeViewModel
 {
+    void ResetData();
     Task LoadNode(int NodeId);
 
     NodeModel Model { get; }
@@ -41,12 +42,15 @@ public interface INodeViewModel
 
     // Annotations
     Task<AnnotationCommandResponse> CreateAnnotationAsync(int userId, string? text = null!);
-    Task<AnnotationCommandResponse> CreateAnnotationAsync(AnnotationDraft draft);
+    Task<AnnotationCommandResponse> CreateAnnotationAsync(CreateAnnotationDraft draft);
     Task<AnnotationCommandResponse> UpdateAnnotationAsync(AnnotationModel model, string? text = null!, eAnnotationVisibility? visibility = null!, int? userId = null!);
     Task<AnnotationCommandResponse> DeleteAnnotationAsync(AnnotationModel model);
 
+    bool AnnotationIsVisible(AnnotationModel model);
 
-    Task<AnnotationDraft> GetAnnotationDraft(int userId, bool autoCreate);
+
+
+    Task<CreateAnnotationDraft> GetAnnotationDraft(int userId, bool autoCreate);
     IDraftStore DraftStore { get; }
 
 }

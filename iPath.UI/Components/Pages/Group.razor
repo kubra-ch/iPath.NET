@@ -49,18 +49,19 @@ else
 
 
 		<FluentDataGrid TGridItem="NodeModel" ItemsProvider="@vm.NodesDataProvider"
-		@ref="grid" Pagination="pagination"
-		GridTemplateColumns="4fr 1fr 1fr"
-		OnRowClick="GoToNode">
-			<TemplateColumn Title="Title">
+						@ref="grid" Pagination="pagination"
+						GridTemplateColumns="4fr 1fr 1fr"
+						OnRowClick="GoToNode">
+			<TemplateColumn Title="Title" Sortable="true">
 				<div style="font-weight: bold;">@context.Caption</div>
 				@if (context.HasSubTitle)
 				{
 					<div>@context.SubTitle</div>
 				}
 			</TemplateColumn>
-			<PropertyColumn Title="Sender" Property="@(x => x.OwnerName)" Align="Align.End" />
-			<PropertyColumn Title="Created On" Property="@(x => x.CreatedDateStr)" Align="Align.End" />
+			<PropertyColumn Title="Sender" Property="@(x => x.OwnerName)" Align="Align.End" Sortable="true" />
+			<PropertyColumn Title="Created On" Property="@(x => x.CreatedOn)" Format="yyyy-MM-dd" Align="Align.End"
+							Sortable="true" InitialSortDirection="SortDirection.Descending" />
 		</FluentDataGrid>
 		<FluentPaginator State="pagination" />
 
@@ -99,7 +100,10 @@ else
 
 	void GoToNode(FluentDataGridRow<NodeModel> row)
 	{
-		nm.NavigateTo("/nodes/" + row.Item.Id);
+		if( row.Item != null )
+		{
+			nm.NavigateTo("/nodes/" + row.Item.Id);
+		}
 	}
 
 

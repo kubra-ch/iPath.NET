@@ -1,6 +1,8 @@
 ﻿using iPath.Application.Features;
+using iPath.Application.Querying;
 using iPath.UI.Areas.DataAccess;
 using Microsoft.FluentUI.AspNetCore.Components;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace iPath.UI.ViewModels.Groups;
 
@@ -38,6 +40,22 @@ public class GroupListViewModel
         {
             request.StartIndex = req.StartIndex;
             request.Count = req.Count;
+
+            // sorting
+            request.SortDefinitions = new();
+            var sort = req.GetSortByProperties();
+            if (sort != null && sort.Any())
+            {
+                foreach (var p in sort)
+                {
+                    var sd = new SortDefinition { SortColumn = p.PropertyName, SortAscending = (p.Direction == SortDirection.Ascending) };
+                    request.SortDefinitions.Add(sd);
+                }
+            }
+            else
+            {
+                request.SortDefinitions.Add(new SortDefinition { SortColumn = "Name", SortAscending = true });
+            }
 
             var result = (await srvData.Send(request)).Data;
 

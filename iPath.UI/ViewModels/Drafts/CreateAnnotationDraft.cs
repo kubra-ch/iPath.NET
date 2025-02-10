@@ -3,11 +3,11 @@ using Microsoft.IdentityModel.Abstractions;
 
 namespace iPath.UI.ViewModels.Drafts;
 
-public class AnnotationDraft : IDraft
+public class CreateAnnotationDraft : IDraft
 {
-    public static AnnotationDraft ForNode(int NodeId)
+    public static CreateAnnotationDraft ForNode(int NodeId)
     {
-        return new AnnotationDraft
+        return new CreateAnnotationDraft
         {
             DraftId = NodeKey(NodeId),
             NodeId = NodeId,
