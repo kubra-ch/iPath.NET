@@ -1,7 +1,10 @@
-﻿using iPath.Application.Features;
+﻿using iPath.Application.Configuration;
+using iPath.Application.Features;
 using iPath.Application.Services;
 using iPath.Data.Entities;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using System.Web;
 
 namespace iPath.UI.ViewModels.Nodes;
@@ -103,36 +106,8 @@ public class NodeModel
     }
 
 
-    public string ThumbUrl
-    {
-        get
-        {
-            if( !string.IsNullOrEmpty(ThumbData))
-            {
-                return $"data:image/jpeg;base64, {ThumbData}";
-            }
-            else if (IsImage)
-            {
-                return $"https://www.ipath-network.com/ipath/image/src/{Id}&thumb=1";
-                return $"/api/files/thumb/{Id}";
-            }
-            else if (NodeType == "folder")
-            {
-                return "https://www.ipath-network.com/ipath/images/folder.png";
-            }
-            else if (NodeType == "file" && Filename!.ToLower().EndsWith("pdf"))
-            {
-                return "https://www.ipath-network.com/ipath/images/pdf.png";
-            }
-            else
-            {
-                return "https://www.ipath-network.com/ipath/images/document.png";
-            }
-        }
-    }
-
-    // public string FileUrl => $"/api/files/{Id}"; // + "/"  + HttpUtility.UrlEncode(this.Filename);
-    public string FileUrl => $"https://www.ipath-network.com/ipath/image/src/{Id}";
+    [FromServices]
+    public IOptions<iPathConfig> Opts { get; set; }
 
     public NodeModel Parent { get; set; }
 

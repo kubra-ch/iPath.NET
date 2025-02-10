@@ -13,7 +13,7 @@
         @foreach (var c in ViewModel.Model.VisibleChildren)
         {
             <div class="gallery-item" data-id="@c.Id">
-                <img src="@c.ThumbUrl" alt="@c.Filename" width="@ThumbWidth" height="@ThumbHeight" />
+                <img src="@ViewModel.ThumbUrl(c)" alt="@c.Filename" width="@ThumbWidth" height="@ThumbHeight" />
                 <div class="gallery-item-label">@c.ImageCaption</div>
             </div>
         }

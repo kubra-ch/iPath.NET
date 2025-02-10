@@ -19,7 +19,7 @@ public static class ApplicationDependecyInjection
 
         services.AddMediatR(opts => opts.RegisterServicesFromAssemblyContaining<GetUserQuery>());
         services.AddTransient<IPasswordHasher, PasswordHasher>();
-        services.AddTransient<ThumbImageService, ThumbImageService>();
+        services.AddTransient<IThumbImageService, ThumbImageService>();
 
         services.AddScoped<ISessionStateService, SessionStateService>();
 

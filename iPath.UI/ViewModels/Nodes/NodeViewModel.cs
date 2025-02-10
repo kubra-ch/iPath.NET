@@ -1,14 +1,21 @@
-﻿using iPath.Application.Features;
+﻿using iPath.Application.Configuration;
+using iPath.Application.Features;
 using iPath.Application.Features.Nodes.Commands;
 using iPath.Application.Services;
+using iPath.Data.Database.Migrations;
 using iPath.Data.Entities;
 using iPath.UI.Areas.DataAccess;
 using iPath.UI.Areas.DraftStorage;
 using iPath.UI.ViewModels.Drafts;
+using Microsoft.Extensions.Options;
 
 namespace iPath.UI.ViewModels.Nodes;
 
-public class NodeViewModel(IDataAccess srvData, IDraftStore draftStore, ISessionStateService sessState, ILogger<NodeViewModel> logger)
+public class NodeViewModel(IDataAccess srvData, 
+    IDraftStore draftStore, 
+    ISessionStateService sessState, 
+    IOptions<iPathConfig> opts,
+    ILogger<NodeViewModel> logger)
     : INodeViewModel
 {
     private NodeModel _model;
@@ -197,5 +204,39 @@ public class NodeViewModel(IDataAccess srvData, IDraftStore draftStore, ISession
     public bool AnnotationIsVisible(AnnotationModel model)
     {
         return model != null && model.IsVisibleInSession(sessState);
+    }
+
+    public string ThumbUrl(NodeModel node)
+    {        
+        if (!string.IsNullOrEmpty(node.ThumbData))
+        {
+            return $"data:image/jpeg;base64, {node.ThumbData}";
+        }
+        else if (node.IsImage)
+        {
+            // return $"https://www.ipath-network.com/ipath/image/src/{nodeFile.Id}&thumb=1";
+            var url =  $"{opts.Value.BaseUrl}api/files/thumb/{node.Id}";
+            return url;
+        }
+        else if (node.NodeType == "folder")
+        {
+            return "https://www.ipath-network.com/ipath/images/folder.png";
+        }
+        else if (node.NodeType == "file" && node.Filename!.ToLower().EndsWith("pdf"))
+        {
+            return "https://www.ipath-network.com/ipath/images/pdf.png";
+        }
+        else
+        {
+            return "https://www.ipath-network.com/ipath/images/document.png";
+        }
+
+        return "";
+    }
+
+    public string FileUrl(NodeModel node)
+    {
+        if (node is null ) return "";
+        return $"{opts.Value.BaseUrl}api/files/{node.Id}"; // + "/"  + HttpUtility.UrlEncode(this.Filename);
     }
 }

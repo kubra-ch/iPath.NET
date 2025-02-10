@@ -12,11 +12,7 @@
 	<div class="errormessage">@Message</div>
 }
 
-@if( vm.Model is null )
-{
-	<FluentProgressRing />
-}
-else
+@if( vm.Model != null )
 {
 	<ExpandableErrorBoundary>
 		<div class="nodeheader">
@@ -102,6 +98,7 @@ else
 			srvToast.ShowError(resp.Message);
 			return;
 		}
+		vm.ResetData();
 		nm.NavigateTo($"/nodes/{NodeId}");
 	}
 

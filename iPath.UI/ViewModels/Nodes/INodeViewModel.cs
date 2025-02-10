@@ -38,6 +38,8 @@ public interface INodeViewModel
 
     // Attachments
     Task<NodeCommandRespone> UploadFileAsync(int UserId, string Filename, FileInfo localFile);
+    string ThumbUrl(NodeModel node);
+    string FileUrl(NodeModel node);
 
 
     // Annotations

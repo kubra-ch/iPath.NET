@@ -13,7 +13,7 @@
 				<b>Owner: </b> @c.Owner.Username - @c.CreatedDateStr<br />
 				<b>Filename: </b><a href=@($"/api/files/{@c.Id}") target="_blank">@c.Filename</a>
 			</FluentTooltip>
-			<img id=@($"img-{@c.Id}") src="@c.ThumbUrl" alt="@c.Filename" width="@ThumbWidth" height="@ThumbHeight" @onclick=@(() => SelectChild(c.Id))>
+			<img id=@($"img-{@c.Id}") src="@vm.ThumbUrl(c)" alt="@c.Filename" width="@ThumbWidth" height="@ThumbHeight" @onclick=@(() => SelectChild(c.Id))>
 			<div class="gallery-item-label">@c.ImageCaption</div>
 		</div>
 	}

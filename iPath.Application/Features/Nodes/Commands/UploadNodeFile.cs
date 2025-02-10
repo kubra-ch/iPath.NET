@@ -15,7 +15,7 @@ public record UploadNodeFileCommand(int NodeId, int UserId, string filename, str
 
 public class UploadNodeFileCommandHandler(IDbContextFactory<IPathDbContext> dbFactory,
     IOptions<iPathConfig> opts,
-    ThumbImageService thumbService,
+    IThumbImageService thumbService,
     ILogger<UploadNodeFileCommandHandler> logger)
     : IRequestHandler<UploadNodeFileCommand, NodeCommandRespone>
 {

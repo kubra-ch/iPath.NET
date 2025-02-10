@@ -80,7 +80,7 @@
 		{
 			@**** Image View **********************************************@
 			<div class="image_view">
-				<img src="@vm.ActiveChild.FileUrl" alt="@vm.ActiveChild.Filename"
+				<img src="@vm.FileUrl(vm.ActiveChild)" alt="@vm.ActiveChild.Filename"
 					 width="@vm.ActiveChild.ImageWidth"
 					 @onclick="vm.NextImage" />
 				<div class="image_info">
