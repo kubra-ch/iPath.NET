@@ -7,6 +7,7 @@ using iPath.UI.ViewModels.Admin.Groups;
 using iPath.UI.ViewModels.Admin.Users;
 using iPath.UI.ViewModels.Groups;
 using iPath.UI.ViewModels.Nodes;
+using iPath.UI.ViewModels.Users;
 
 namespace iPath.UI;
 
@@ -35,6 +36,7 @@ public static class UIDependecyInjection
         services.AddScoped<IGroupListViewModel, GroupListViewModel>();
         services.AddScoped<IGroupViewModel, GroupViewModel>();
         services.AddScoped<INodeViewModel, NodeViewModel>();
+        services.AddScoped<IUserProfileViewModel, UserProfileViewModel>();
 
         // UI services
         services.AddScoped<ClipboardService>();

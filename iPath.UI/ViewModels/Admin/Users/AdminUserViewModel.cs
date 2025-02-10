@@ -101,7 +101,11 @@ public class AdminUserViewModel(IDataAccess srvData) : IAdminUserViewModel
     {
         var request = new UpdateUserCommand()
         {
-            Item = item
+            Id = item.Id,
+            Familyname = item.Familyname,
+            Firstname = item.Firstname,
+            Specialisation = item.Specialisation,
+            Country = item.Country,
         };
         var response = srvData.Send(request);
         return response;

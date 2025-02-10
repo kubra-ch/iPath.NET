@@ -11,6 +11,7 @@
 @inject AuthenticationStateProvider authStateProvider
 @inject NavigationManager nm
 @inject IDraftStore srvDrafts
+@inject IToastService srvToast
 
 @if (vm.Model is null)
 {
@@ -25,21 +26,22 @@ else
 	<ExpandableErrorBoundary>
 		<h3>Profile - @vm.Model.Username</h3>
 
-@* 		<EditForm Model="vm.Model" OnValidSubmit="UpdateUser">
+		<FluentEditForm Model="vm.Model" OnValidSubmit="UpdateUser">
 			<DataAnnotationsValidator />
 			<FluentValidationSummary />
 
 			<FluentStack Orientation="Orientation.Vertical">
-				<FluentTextField Label="Email" Placeholder="Password" @bind-Value="vm.Model.Email" Disabled="true" TextFieldType="TextFieldType.Email" />
+				<FluentTextField Label="Email" Placeholder="Password" Value="vm.Model.Email" Disabled="true" TextFieldType="TextFieldType.Email" />
 
 				<FluentTextField Label="Firstname" Placeholder="Firstname" @bind-Value="@vm.Model.Firstname" />
 				<FluentTextField Label="Familyname" Placeholder="Familyname" @bind-Value="@vm.Model.Familyname" />
-				<FluentTextField Label="Country" Placeholder="Country" @bind-Value="vm.Model.Country" />
-				<FluentTextField Label="Specialisation" Placeholder="Specialisation" @bind-Value="vm.Model.Specialisation" />
+				<FluentTextField Label="Specialisation" Placeholder="Specialisation" @bind-Value="vm.Model.Specialisation" Style="width: 100%;" />
+
+				<FluentSelect TOption="string" Items="CountryHelper.CountryCodes" @bind-Value="@vm.Model.Country" Label="Country" />
 
 				<FluentButton Type="ButtonType.Submit" Appearance="Appearance.Accent">Save Changes</FluentButton>
 			</FluentStack>
-		</EditForm> *@
+		</FluentEditForm>
 
 	</ExpandableErrorBoundary>
 }
@@ -56,10 +58,25 @@ else
 
 	private string Message;
 
+	protected override async Task OnParametersSetAsync()
+	{
+		await vm.LoadUserAsync(UserId);
+	}
+
 
 	private async Task UpdateUser()
 	{
-		Message = "updating...";
+		var resp = await vm.SaveModelAsync();
+
+		if( resp.Success )
+		{
+			srvToast.ShowInfo("data saved");
+		}
+		else
+		{
+			srvToast.ShowError(resp.Message);
+		}
+
 		StateHasChanged();
 	}
 

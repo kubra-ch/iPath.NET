@@ -11,10 +11,18 @@ public class UserModel
     public UserModel(UserDto pDto)
     {
         dto = pDto;
+        Familyname = pDto.Familyname;
+        Firstname = pDto.Firstname;
+        Specialisation = pDto.Specialisation;
+        Country = pDto.Country;
     }
     public UserModel(User pEntity)
     {
-        dto = pEntity.ToDto(); 
+        dto = pEntity.ToDto();
+        Familyname = pEntity.Familyname;
+        Firstname = pEntity.Firstname;
+        Specialisation = pEntity.Specialisation;
+        Country = pEntity.Country;
     }
 
 
@@ -23,6 +31,12 @@ public class UserModel
     public string Email => dto.Email;
 
     public string ImageBase64 => dto.ImageBase64;
+
+
+    public string Familyname { get; set; }
+    public string Firstname { get; set; }
+    public string Specialisation { get; set; }
+    public string Country { get; set; }
 
 
     private string? _initials;
