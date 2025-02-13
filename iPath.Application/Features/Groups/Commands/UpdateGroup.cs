@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace iPath.Application.Features;
 
-public record UpdateGroupCommand(Group Item) : IRequest<GroupCommandResponse>
+public record UpdateGroupCommand(GroupDto Item) : IRequest<GroupCommandResponse>
 {
 }
 
@@ -22,13 +22,12 @@ public class UpdateGroupCommandHandler(IDbContextFactory<IPathDbContext> dbFacto
 
         item.Name = request.Item.Name;
         item.Purpose = request.Item.Purpose;
-        item.OwnerId = request.Item.OwnerId;
-        item.CommunityId = request.Item.CommunityId;
-        item.Settings = request.Item.Settings;
+        item.OwnerId = request.Item.Owner?.Id;
+        item.CommunityId = request.Item.Community?.Id;
         item.Visibility = request.Item.Visibility;
 
         ctx.Groups.Update(item);
         await ctx.SaveChangesAsync();
-        return new GroupCommandResponse(true, Data: item);
+        return new GroupCommandResponse(true, Data: item.ToDto());
     }
 }

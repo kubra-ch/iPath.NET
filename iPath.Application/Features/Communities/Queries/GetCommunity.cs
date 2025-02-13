@@ -1,5 +1,4 @@
 ﻿using iPath.Data.Database;
-using iPath.Data.Entities;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,8 +9,8 @@ public record GetCommunityQuery(int Id) : IRequest<GetCommunityResponse>
 }
 
 
-public record GetCommunityResponse(bool Success, string? Message = default!, Community Data = null!)
-    : BaseResponseT<Community>(Success, Message, Data);
+public record GetCommunityResponse(bool Success, string? Message = default!, CommunityDto Data = null!)
+    : BaseResponseT<CommunityDto>(Success, Message, Data);
 
 
 
@@ -31,6 +30,6 @@ public class GetCommunityQueryHandler(IDbContextFactory<IPathDbContext> dbFactor
         if (data == null)
             return new GetCommunityResponse(false, Message: $"Community #{request.Id} not found");
         else
-            return new GetCommunityResponse(true, Data: data);
+            return new GetCommunityResponse(true, Data: data.ToDto());
     }
 }

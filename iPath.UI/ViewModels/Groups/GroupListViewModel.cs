@@ -17,8 +17,8 @@ public class GroupListViewModel
     private string _error;
     public string ErrorMessage => _error;
 
-    private GridItemsProvider<GroupListDTO> _GridDataProvider = default!;
-    public GridItemsProvider<GroupListDTO> GridDataProvider => _GridDataProvider;
+    private GridItemsProvider<GroupListDto> _GridDataProvider = default!;
+    public GridItemsProvider<GroupListDto> GridDataProvider => _GridDataProvider;
 
 
     public async Task ExecuteSearchAsync()

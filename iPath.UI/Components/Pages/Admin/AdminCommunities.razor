@@ -9,7 +9,7 @@
 @inject IDialogService srvDialog
 @inject IToastService srvToast
 
-<FluentBreadcrumb>
+<FluentBreadcrumb class="breadcrumbs">
 	<FluentBreadcrumbItem Href="/">
 		home
 	</FluentBreadcrumbItem>
@@ -27,7 +27,7 @@
 	<Authorized>
 		@if (count == 0)
 		{
-			<p>No communities configured yet</p>
+			<div class="errormessage">No communities configured yet</div>
 		}
 
 		@if (vm.IsReady)
@@ -46,8 +46,9 @@
 					</div>
 
 					<ExpandableErrorBoundary>
-						<FluentDataGrid TGridItem="Community" ItemsProvider="@vm.GridDataProvider"
-										GridTemplateColumns="1fr 4fr"
+						<FluentDataGrid TGridItem="CommunityDto" 
+										ItemsProvider="@vm.GridDataProvider"
+										AutoFit="true"
 										OnRowClick="@OnCommunityRowClick"
 										Pagination="@communityPagination">
 							<PropertyColumn Property="u => u.Id" />
@@ -65,6 +66,11 @@
 							<div class="titleHeader">
 								<h4>Community Groups</h4>
 							</div>
+							<div class="titleActions">
+								<FluentButton IconEnd="@(new Icons.Regular.Size16.AddCircle())"
+											  Title="Create a new group"
+											  OnClick="CreateGroup" Disabled="true" />
+							</div>
 						</div>
 					}
 					else
@@ -80,8 +86,9 @@
 							</div>
 						</div>
 						<ExpandableErrorBoundary>
-							<FluentDataGrid TGridItem="Group" Items="@vm.SelectedCommunity.Groups.AsQueryable()"
-											GridTemplateColumns="1fr 4fr"
+							<FluentDataGrid TGridItem="GroupDto"
+											Items="@vm.SelectedCommunity.Groups.AsQueryable()"
+											AutoFit="true"
 											Pagination="@groupPagination">
 								<PropertyColumn Property="u => u.Id" />
 								<PropertyColumn Property="u => u.Name" />
@@ -110,9 +117,10 @@
 
 
 
-	async Task OnCommunityRowClick(FluentDataGridRow<Community> row)
+	async Task OnCommunityRowClick(FluentDataGridRow<CommunityDto> row)
 	{
-		if( row != null && row.Item != null ){
+		if (row != null && row.Item != null)
+		{
 			await vm.SelectCommunityId(row.Item.Id);
 		}
 	}

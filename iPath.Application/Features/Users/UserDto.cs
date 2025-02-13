@@ -22,7 +22,7 @@ public record UserDto(
     string? ImageBase64
 );
 
-public static class UserEnxentions
+public static class UserExtensions
 {
     public static UserListDto ToListDto(this User usr)
     {

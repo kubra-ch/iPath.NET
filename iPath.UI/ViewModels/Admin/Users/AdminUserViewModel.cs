@@ -1,6 +1,5 @@
 ﻿using iPath.Application.Features;
 using iPath.Application.Querying;
-using iPath.Data.Entities;
 using iPath.UI.Areas.DataAccess;
 using Microsoft.FluentUI.AspNetCore.Components;
 
@@ -8,9 +7,9 @@ namespace iPath.UI.ViewModels.Admin.Users;
 
 public class AdminUserViewModel(IDataAccess srvData) : IAdminUserViewModel
 {
-    public async Task<List<User>> FindUsersAsync(string term)
+    public async Task<List<UserListDto>> FindUsersAsync(string term)
     {
-        var request = new GetUserListQuery(); ;
+        var request = new GetUserListDtoQuery(); ;
 
         if (!string.IsNullOrWhiteSpace(SearchTerm))
         {
@@ -75,19 +74,19 @@ public class AdminUserViewModel(IDataAccess srvData) : IAdminUserViewModel
         };
     }
 
-    private GridItemsProvider<User> _GridDataProvider = default!;
-    public GridItemsProvider<User> GridDataProvider => _GridDataProvider;
+    private GridItemsProvider<UserDto> _GridDataProvider = default!;
+    public GridItemsProvider<UserDto> GridDataProvider => _GridDataProvider;
 
 
 
-    public async Task<User> SelectUserId(int Id)
+    public async Task<UserModel> SelectUserId(int Id)
     {
-        _selectedUser = (await srvData.Send(new GetUserQuery(Id: Id))).Data;
+        _selectedUser = new UserModel((await srvData.Send(new GetUserQuery(Id: Id))).Data);
         return _selectedUser;
     }
 
-    private User _selectedUser = null;
-    public User SelectedUser => _selectedUser;
+    private UserModel _selectedUser = null;
+    public UserModel SelectedUser => _selectedUser;
 
 
 
@@ -97,7 +96,7 @@ public class AdminUserViewModel(IDataAccess srvData) : IAdminUserViewModel
     }
 
 
-    public Task<UserCommandResponse> UpdateUserAsync(User item)
+    public Task<UserCommandResponse> UpdateUserAsync(UserModel item)
     {
         var request = new UpdateUserCommand()
         {

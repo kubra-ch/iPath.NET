@@ -26,17 +26,14 @@ public class UserMemberViewModel(IDataAccess srvData) : IUserMemberViewModel
         return _SelectedUser;
     }
 
-    public async Task<List<Group>> GetGroupList(Community community)
+    public async Task<List<GroupDto>> GetGroupList(int? communityId)
     {
         var request = new GetGroupListQuery() { Count = null, StartIndex = 0 };
-        if (community != null)
-        {
-            request.CommunityId = community.Id;
-        }
+        request.CommunityId = communityId;
         request.SortDefinitions ??= new();
         request.SortDefinitions.Add(new SortDefinition("Name", true));
         var response = await srvData.Send(request);
-        return  response.Success ? response.Data.Items : new List<Group>();
+        return  response.Success ? response.Data.Items : new List<GroupDto>();
     }
 
     public async Task<UserCommandResponse> SaveDataAsync()

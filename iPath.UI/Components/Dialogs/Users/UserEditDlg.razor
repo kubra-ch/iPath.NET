@@ -1,5 +1,5 @@
 ﻿@using iPath.UI.ViewModels.Admin.Users
-@implements IDialogContentComponent<User>
+@implements IDialogContentComponent<UserModel>
 
 @inject IAdminUserViewModel vm
 
@@ -47,7 +47,7 @@
 
 @code {
     [Parameter]
-    public User Content { get; set; } = default!;
+    public UserModel Content { get; set; } = default!;
 
     string pwd1 = default!;
     string pwd2 = default!;

@@ -6,6 +6,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System.ComponentModel.DataAnnotations;
 
 namespace iPath.Application.Features;
 public record UploadNodeFileCommand(int NodeId, int UserId, string filename, string localFilePath) : IRequest<NodeCommandRespone>
@@ -38,7 +39,7 @@ public class UploadNodeFileCommandHandler(IDbContextFactory<IPathDbContext> dbFa
         newNode.ParentNodeId = parent.Id;
         newNode.TopNodeId = parent.TopNodeId.HasValue ? parent.TopNodeId : parent.Id;
         newNode.NodeType = NodeType.Image;
-        newNode.CreatedOn = DateTime.Now;
+        newNode.CreatedOn = DateTime.UtcNow;
         newNode.OwnerId = request.UserId;
         newNode.SortNr = parent.ChildNodes.Max(n => n.SortNr) + 1;
 
@@ -50,6 +51,7 @@ public class UploadNodeFileCommandHandler(IDbContextFactory<IPathDbContext> dbFa
         newNode.File = new()
         {
             Filename = request.filename,
+            Originalname = request.filename,
             MimeType = GetMimeType(request.filename),
             IsImage = IsImage(request.filename)
         };

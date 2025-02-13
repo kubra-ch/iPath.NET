@@ -11,7 +11,7 @@ using iPath.UI.ViewModels.Users;
 
 namespace iPath.UI;
 
-public static class UIDependecyInjection
+public static class DependecyInjectionUI
 {
     public static IServiceCollection AddServerViewModels(this IServiceCollection services, IConfiguration configuration)
     {

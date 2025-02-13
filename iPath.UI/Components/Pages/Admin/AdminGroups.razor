@@ -8,7 +8,7 @@
 @inject IToastService srvToast
 @inject AuthenticationStateProvider authState
 
-<FluentBreadcrumb>
+<FluentBreadcrumb class="breadcrumbs">
     <FluentBreadcrumbItem Href="/">
         home
     </FluentBreadcrumbItem>
@@ -24,11 +24,20 @@
         <div class="errormessage">not authorized</div>
     </NotAuthorized>
     <Authorized>
+        <div class="titleWithActions">
+            <div class="titleHeader">
+                <h4>Discussion Group Administration</h4>
+            </div>
+            <div class="titleActions">
+                <FluentButton IconEnd="@(new Icons.Regular.Size16.AddCircle())"
+                              Title="Create a new group"
+                              OnClick="CreateGroup" />
+            </div>
+        </div>
 
-        <h3>Discussion Group Administration</h3>
 
         <ExpandableErrorBoundary>
-            <FluentDataGrid TGridItem="Group" ItemsProvider="@vm.GridDataProvider"
+            <FluentDataGrid TGridItem="GroupDto" ItemsProvider="@vm.GridDataProvider"
             Pagination="@pagination" @ref="grid"
             GridTemplateColumns="0.2fr 1fr 0.4fr 0.4fr 0.4fr 0.5fr">
                 <PropertyColumn Property="u => u.Id" Sortable="true" />
@@ -42,9 +51,6 @@
                 </TemplateColumn>
             </FluentDataGrid>
             <FluentPaginator State="@pagination" />
-
-            <FluentButton OnClick="CreateGroup">Create new Group</FluentButton>
-
         </ExpandableErrorBoundary>
 
     </Authorized>
@@ -53,7 +59,7 @@
 
 
 @code {
-    FluentDataGrid<Group> grid;
+    FluentDataGrid<GroupDto> grid;
     PaginationState pagination = new PaginationState { ItemsPerPage = 10 };
 
     string ErrorMessage;
@@ -87,12 +93,12 @@
 
 
 
-    async Task EditGroup(Group grp)
+    async Task EditGroup(GroupDto dto)
     {
-        if (grp is null) return;
+        if (dto is null) return;
 
-        await vm.SelectGroupId(grp.Id);
-        grp = vm.SelectedGroup;
+        await vm.SelectGroupId(dto.Id);
+        var grp = vm.SelectedGroup;
 
         var dialog = await srvDialog.ShowDialogAsync<GroupEditDlg>(grp, new DialogParameters()
             {
@@ -105,7 +111,7 @@
         var result = await dialog.Result;
         if (!result.Cancelled && result.Data != null)
         {
-            var resp = await vm.UpdateGroupAsync(grp);
+            var resp = await vm.UpdateGroupAsync(grp.ToDto());
             if( !resp.Success ){
                 srvToast.ShowError(resp.Message);
             }
@@ -116,12 +122,12 @@
         }
     }
 
-    async Task EditGroupMembers(Group grp)
+    async Task EditGroupMembers(GroupDto dto)
     {
 
     }
 
-    async Task DeleteGroup(Group grp)
+    async Task DeleteGroup(GroupDto dto)
     {
 
     }

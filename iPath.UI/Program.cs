@@ -40,6 +40,7 @@ internal class Program
 
         // Application Services
         builder.Services.AddMediatR(opts => opts.RegisterServicesFromAssembly(typeof(Program).Assembly));
+        builder.Services.AddIPathDatabase(builder.Configuration);
         builder.Services.AddIPathApplication(builder.Configuration);
         // builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 

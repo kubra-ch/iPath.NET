@@ -8,7 +8,7 @@
 
 <ExpandableErrorBoundary>
 
-	<FluentDataGrid ItemsProvider="@vm.GridDataProvider" TGridItem="GroupListDTO"
+	<FluentDataGrid ItemsProvider="@vm.GridDataProvider" TGridItem="GroupListDto"
 	@ref=@grid Pagination="@pagination" GridTemplateColumns="4fr 1fr"
 	OnRowClick="GotoGorup">
 		<PropertyColumn Property="@(x => x.Name)" Title="Group Name" Sortable="true" InitialSortDirection="SortDirection.Ascending" />
@@ -20,7 +20,7 @@
 
 
 @code {
-	FluentDataGrid<GroupListDTO> grid;
+	FluentDataGrid<GroupListDto> grid;
 	PaginationState pagination = new PaginationState { ItemsPerPage = 25 };
 
 	[CascadingParameter]
@@ -33,7 +33,7 @@
 		await vm.ExecuteSearchAsync();
 	}
 
-	void GotoGorup(FluentDataGridRow<GroupListDTO> row)
+	void GotoGorup(FluentDataGridRow<GroupListDto> row)
 	{
 		if (row.Item != null)
 		{

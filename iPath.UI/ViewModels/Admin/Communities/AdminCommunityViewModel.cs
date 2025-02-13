@@ -1,6 +1,5 @@
 ﻿using iPath.Application.Features;
 using iPath.Application.Querying;
-using iPath.Data.Entities;
 using iPath.UI.Areas.DataAccess;
 using Microsoft.FluentUI.AspNetCore.Components;
 
@@ -12,6 +11,41 @@ public class AdminCommunityViewModel(IDataAccess srvData) : IAdminCommunityViewM
     public bool IsReady => _IsReady;
 
     public string SearchTerm { get; set; } = default!;
+
+
+    public async Task<List<CommunityDto>> FindCommunityAsync(string term)
+    {
+        var request = new GetCommunityListQuery();
+
+        if (!string.IsNullOrWhiteSpace(SearchTerm))
+        {
+            request.Filter ??= new();
+            request.Filter.AddFilter("Name", SearchTerm);
+        }
+
+        request.StartIndex = 0;
+        request.Count = 100;
+        request.SortDefinitions ??= new();
+        request.SortDefinitions.Add(new SortDefinition { SortColumn = "Name" });
+
+        var response = await srvData.Send(request);
+        if (!response.Success) throw new Exception(response.Message);
+        return response.Data.Items;
+    }
+
+    public async Task<List<CommunityDto>> GetAllCommunityAsync()
+    {
+        var request = new GetCommunityListQuery();
+        request.StartIndex = 0;
+        request.Count = 0;
+        request.SortDefinitions ??= new();
+        request.SortDefinitions.Add(new SortDefinition { SortColumn = "Name" });
+        var response = await srvData.Send(request);
+        if (!response.Success) throw new Exception(response.Message);
+        return response.Data.Items;
+    }
+
+
 
     public async Task ExecuteSearchAsync()
     {
@@ -59,19 +93,23 @@ public class AdminCommunityViewModel(IDataAccess srvData) : IAdminCommunityViewM
 
     }
 
-    private GridItemsProvider<Community> _GridDataProvider = default!;
-    public GridItemsProvider<Community> GridDataProvider => _GridDataProvider;
+    private GridItemsProvider<CommunityDto> _GridDataProvider = default!;
+    public GridItemsProvider<CommunityDto> GridDataProvider => _GridDataProvider;
 
 
 
     public async Task SelectCommunityId(int Id)
     {
         var response = await srvData.Send(new GetCommunityQuery(Id));
-        _selectedCommunity = response.Data;
+
+        // get groups
+        var groupResp = await srvData.Send(new GetGroupListQuery { CommunityId = Id, Count = 0 });
+
+        _selectedCommunity = new CommunityModel(response.Data, groupResp.Data.Items);
     }
 
-    private Community _selectedCommunity = null;
-    public Community SelectedCommunity => _selectedCommunity;
+    private CommunityModel _selectedCommunity = null;
+    public CommunityModel SelectedCommunity => _selectedCommunity;
 
 
     public async Task<int> GetCommunityCountAsync()

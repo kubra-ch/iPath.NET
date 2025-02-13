@@ -12,8 +12,8 @@ public class GetGroupListQuery : PaginatedListQuery, IRequest<GetGroupListRespon
 }
 
 
-public record GetGroupListResponse(bool Success, string? Message = default!, PaginatedListResult<Group> Data = null!)
-    : BaseResponseT<PaginatedListResult<Group>>(Success, Message, Data);
+public record GetGroupListResponse(bool Success, string? Message = default!, PaginatedListResult<GroupDto> Data = null!)
+    : BaseResponseT<PaginatedListResult<GroupDto>>(Success, Message, Data);
 
 
 
@@ -52,7 +52,12 @@ public class GetGroupListQueryHandler(IDbContextFactory<IPathDbContext> dbFactor
             }
         }
 
-        var data = await q.GetPaginatedListResultAsync(request);
+        var entities = await q.GetPaginatedListResultAsync(request);
+        var data = new PaginatedListResult<GroupDto>()
+        {
+            Items = entities.Items.Select(x => x.ToDto()).ToList(),
+            TotalItemsCount = entities.TotalItemsCount
+        };
         return new GetGroupListResponse(true, Data: data);
     }
 }

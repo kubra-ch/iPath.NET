@@ -2,7 +2,7 @@
 using iPath.Data.Entities;
 
 
-namespace iPath.UI.ViewModels.Users;
+namespace iPath.UI.ViewModels;
 
 public class UserModel
 {
@@ -15,28 +15,38 @@ public class UserModel
         Firstname = pDto.Firstname;
         Specialisation = pDto.Specialisation;
         Country = pDto.Country;
+        
+        Username = pDto.Username;
+        Email = pDto.Email;
+        IsActive = pDto.IsActive;
+        IsSysAdmin = pDto.IsSysAdmin;
+
+        _OrigUsername = pDto.Username;
+        _OrigEmail = pDto.Email;
+        _OrigActive = pDto.IsActive;
+        _OrigSysAdmin = pDto.IsSysAdmin;
     }
-    public UserModel(User pEntity)
-    {
-        dto = pEntity.ToDto();
-        Familyname = pEntity.Familyname;
-        Firstname = pEntity.Firstname;
-        Specialisation = pEntity.Specialisation;
-        Country = pEntity.Country;
-    }
+
+    private string _OrigUsername; 
+    private string _OrigEmail;
+    private bool _OrigActive;
+    private bool _OrigSysAdmin;
 
 
     public int Id => dto.Id;
-    public string Username => dto.Username;
-    public string Email => dto.Email;
+    public string Username { get; set; }
+    public string Email { get; set; }
 
-    public string ImageBase64 => dto.ImageBase64;
+    public string ImageBase64 { get; set; }
 
 
     public string Familyname { get; set; }
     public string Firstname { get; set; }
     public string Specialisation { get; set; }
     public string Country { get; set; }
+
+    public bool IsActive { get; set; }
+    public bool IsSysAdmin { get; set; }
 
 
     private string? _initials;

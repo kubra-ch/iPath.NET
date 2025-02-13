@@ -1,6 +1,5 @@
 ﻿using iPath.Application.Querying;
 using iPath.Data.Database;
-using iPath.Data.Entities;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,8 +10,8 @@ public class GetCommunityListQuery : PaginatedListQuery, IRequest<GetCommunityLi
 }
 
 
-public record GetCommunityListResponse(bool Success, string? Message = default!, PaginatedListResult<Community> Data = null!)
-    : BaseResponseT<PaginatedListResult<Community>>(Success, Message, Data);
+public record GetCommunityListResponse(bool Success, string? Message = default!, PaginatedListResult<CommunityDto> Data = null!)
+    : BaseResponseT<PaginatedListResult<CommunityDto>>(Success, Message, Data);
 
 
 
@@ -23,6 +22,7 @@ public class GetCommunityListQueryHandler(IDbContextFactory<IPathDbContext> dbFa
     {
        using var ctx = await dbFactory.CreateDbContextAsync();
         var q = ctx.Communities.AsNoTracking().AsQueryable();
+
         if( request.Filter != null)
         {
            foreach (var f in request.Filter.Filters)
@@ -39,7 +39,11 @@ public class GetCommunityListQueryHandler(IDbContextFactory<IPathDbContext> dbFa
             }
         }
 
-        return new GetCommunityListResponse(true, Data: await q.GetPaginatedListResultAsync(request));
+        var entities = await q.GetPaginatedListResultAsync(request);
+
+        var data = new PaginatedListResult<CommunityDto>(entities.Items.Select(x => x.ToDto()).ToList(), entities.TotalItemsCount);
+
+        return new GetCommunityListResponse(true, Data: data);
     }
 }
 

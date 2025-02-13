@@ -15,8 +15,6 @@ public static class ApplicationDependecyInjection
 {
     public static IServiceCollection AddIPathApplication(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddIPathInfrastructure(configuration);
-
         services.AddMediatR(opts => opts.RegisterServicesFromAssemblyContaining<GetUserQuery>());
         services.AddTransient<IPasswordHasher, PasswordHasher>();
         services.AddTransient<IThumbImageService, ThumbImageService>();

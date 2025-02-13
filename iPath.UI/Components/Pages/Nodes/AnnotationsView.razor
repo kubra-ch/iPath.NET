@@ -5,7 +5,7 @@
 @inject IDialogService srvDialog
 @inject ILogger<AnnotationsView> logger
 
-<section id="annotations">
+<section id="annotations" class="annotations_block">
 	<div class="titleWithActions">
 		<div class="titleHeader">
 			<h4>Annotations</h4>
@@ -67,11 +67,18 @@
 	{
 		if( firstRender )
 		{
-			await LoadData();
+			LoadData();
+
+			// check for draft
+			var draft = await vm.GetAnnotationDraft(false);
+			if( draft != null )
+			{
+				await annoEdit.ShowEditor();
+			}
 		}
 	}
 
-	private async Task LoadData()
+	private void LoadData()
 	{
 		if (vm is null || vm.Model is null)
 		{
@@ -88,10 +95,10 @@
 		StateHasChanged();
 	}
 
-	async Task ToogleSort()
+	void ToogleSort()
 	{
 		sortAscending = !sortAscending;
-		await LoadData();
+		LoadData();
 	}
 
 
@@ -128,9 +135,9 @@
 		}
 	}
 
-	async Task OnAnnotationPublishedHandler(Annotation annotation)
+	void OnAnnotationPublishedHandler(Annotation annotation)
 	{
-		vm.Model.Annotations.Add(new AnnotationModel(annotation));
-		await LoadData();
+		vm.Model.AddAnnotation(annotation);
+		LoadData();
 	}
 }

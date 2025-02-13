@@ -52,7 +52,7 @@ public interface INodeViewModel
 
 
 
-    Task<CreateAnnotationDraft> GetAnnotationDraft(int userId, bool autoCreate);
+    Task<CreateAnnotationDraft> GetAnnotationDraft(bool autoCreate);
     IDraftStore DraftStore { get; }
 
 }

@@ -33,7 +33,7 @@ public class CreateAnnotationCommandHadnler(IDbContextFactory<IPathDbContext> db
         var anno = new Annotation();
         anno.Visibility = eAnnotationVisibility.Draft;
         anno.Text = request.text;
-        anno.CreatedOn = DateTime.Now;
+        anno.CreatedOn = DateTime.UtcNow;
         anno.NodeId = request.NodeId;
         anno.Owner = user;
 

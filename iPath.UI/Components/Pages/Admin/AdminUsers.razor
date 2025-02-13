@@ -32,12 +32,12 @@
 				<FluentButton Type="ButtonType.Submit" OnClick="@vm.ExecuteSearchAsync">Search</FluentButton>
 			</FluentStack>
 
-			<FluentDataGrid TGridItem="User" ItemsProvider="@vm.GridDataProvider" Pagination="@pagination" @ref="grid"
-							GridTemplateColumns="1fr 2fr 3fr 3fr 2fr">
+			<FluentDataGrid TGridItem="UserDto" ItemsProvider="@vm.GridDataProvider" Pagination="@pagination" @ref="grid"
+							GridTemplateColumns="1fr 2fr 3fr 2fr">
 				<PropertyColumn Property="u => u.Id" Sortable="true" />
 				<PropertyColumn Property="u => u.Username" Sortable="true" />
-				<PropertyColumn Property="u => u.Email" />
-				<PropertyColumn Property="u => u.Country" />
+                <PropertyColumn Property="u => u.Email" Title="Email" Sortable="true" />
+                <PropertyColumn Property="u => u.Country" Sortable="true" />
 				<TemplateColumn Title="Actions" Align="Align.End" Context="usr">
 					@if (usr.IsSysAdmin)
 					{
@@ -56,7 +56,7 @@
     [CascadingParameter]
     public CascadingAppState appState {get; set; }
 
-    FluentDataGrid<User> grid;
+    FluentDataGrid<UserDto> grid;
     PaginationState pagination = new PaginationState { ItemsPerPage = 10 };
 
     bool IsAdmin = false;
@@ -72,12 +72,12 @@
     }
 
 
-    async Task EditUser(User usr)
+    async Task EditUser(UserDto dto)
     {
-        if (usr is null) return;
+        if (dto is null) return;
 
         // reload from DB;
-        usr = await vm.SelectUserId(usr.Id);
+        var usr = await vm.SelectUserId(dto.Id);
 
         usernameOrig = usr.Username;
         emailOrig = usr.Email;
@@ -118,7 +118,7 @@
         }
     }
 
-    async Task EditUserMembers(User usr)
+    async Task EditUserMembers(UserDto usr)
     {
         if (usr is null) return;
 
@@ -130,15 +130,6 @@
                 PreventDismissOnOverlayClick = true,
                 PreventScroll = false,
             });
-        /*
-        var dialog = await srvDialog.ShowDialogAsync<UserMemberDlg>(usr.Id, new DialogParameters()
-            {
-                Width = "900px",
-                Title = "Edit Membership",
-                PreventDismissOnOverlayClick = true,
-                PreventScroll = true,
-            });
-        */
 
         var result = await dialog.Result;
         if (!result.Cancelled && result.Data != null)

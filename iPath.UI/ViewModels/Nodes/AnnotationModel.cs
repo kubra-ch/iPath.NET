@@ -1,11 +1,9 @@
 ﻿using iPath.Application.Features;
 using iPath.Application.Services;
 using iPath.Data.Entities;
-using iPath.UI.Areas.Identity;
 using Microsoft.AspNetCore.Components;
-using System.Security.Cryptography.X509Certificates;
 
-namespace iPath.UI.ViewModels.Nodes;
+namespace iPath.UI.ViewModels;
 
 public class AnnotationModel
 {

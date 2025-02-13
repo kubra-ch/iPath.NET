@@ -1,14 +1,15 @@
-﻿using iPath.Data.Entities;
+﻿using iPath.Application.Features;
+using iPath.Data.Entities;
 using System.Security.Cryptography.X509Certificates;
 
 namespace iPath.UI.ViewModels.Admin.Users;
 
 public class UserGroupMemberModel
 {
-    public User User { get; set; }
+    public UserDto User { get; set; }
     public List<MemberRoleModel> Membership { get; set; } = new();
 
-    public UserGroupMemberModel(User usr, List<GroupMember> member)
+    public UserGroupMemberModel(UserDto usr, List<GroupMember> member)
     {
         User = usr;
         foreach (var mb in member)
@@ -17,18 +18,18 @@ public class UserGroupMemberModel
         }
     }
 
-    public void CreateMissingGroups(List<Group> groups)
+    public void CreateMissingGroups(List<GroupDto> groups)
     {
         foreach (var group in groups)
         {
             var dto = Membership.FirstOrDefault(m => m.GroupId == group.Id);
             if (dto == null)
             {
-                dto = new MemberRoleModel(group.CommunityId, group.Id, group.Name, eMemberRole.None);
+                dto = new MemberRoleModel(group.Community?.Id, group.Id, group.Name, eMemberRole.None);
                 Membership.Add(dto);
             }
             dto.Groupname = group.Name;
-            dto.CommunityId  = group.CommunityId;
+            dto.CommunityId  = group.Community?.Id;
         }
     }
 }

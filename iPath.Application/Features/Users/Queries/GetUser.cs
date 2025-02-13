@@ -9,8 +9,8 @@ namespace iPath.Application.Features;
 
 
 
-public record GetUserResponse(bool Success, string? Message = default!, User Data = null!)
-    : BaseResponseT<User>(Success, Message, Data);
+public record GetUserResponse(bool Success, string? Message = default!, UserDto Data = null!)
+    : BaseResponseT<UserDto>(Success, Message, Data);
 
 
 public record GetUserQuery(int? Id = null!, string? Username = null!, [EmailAddress] string? Email = null!) : IRequest<GetUserResponse>
@@ -40,6 +40,6 @@ public class GetUserQueryHandler(IDbContextFactory<IPathDbContext> dbFactory) : 
         if (usr is null)
             return new GetUserResponse(false, $"User #{request.Id} not found");
         else
-            return new GetUserResponse(true, Data: usr);
+            return new GetUserResponse(true, Data: usr.ToDto());
     }
 }

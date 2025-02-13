@@ -37,6 +37,6 @@ public class CreateGroupCommandHandler(IDbContextFactory<IPathDbContext> dbFacto
         };
         ctx.Groups.Add(item);
         await ctx.SaveChangesAsync();
-        return new GroupCommandResponse(true, Data: item);
+        return new GroupCommandResponse(true, Data: item.ToDto());
     }
 }

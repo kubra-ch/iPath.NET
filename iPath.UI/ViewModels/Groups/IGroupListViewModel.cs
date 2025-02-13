@@ -9,7 +9,7 @@ public interface IGroupListViewModel
 {
     string ErrorMessage { get; }
 
-    GridItemsProvider<GroupListDTO> GridDataProvider { get; }
+    GridItemsProvider<GroupListDto> GridDataProvider { get; }
 
     string SearchTerm { get; set; }
     int? UserId { get; set; }

@@ -8,6 +8,7 @@ using iPath.UI.Areas.DataAccess;
 using iPath.UI.Areas.DraftStorage;
 using iPath.UI.ViewModels.Drafts;
 using Microsoft.Extensions.Options;
+using System.Threading.Tasks.Dataflow;
 
 namespace iPath.UI.ViewModels.Nodes;
 
@@ -80,8 +81,10 @@ public class NodeViewModel(IDataAccess srvData,
         var resp = await srvData.Send(new GetNodeQuery(NodeId));
         if( resp.Success )
         {
+            GroupListDto grp = null!;
+            var grpR = await srvData.Send(new GetGroupQuery(resp.Data.GroupId.HasValue ? resp.Data.GroupId.Value : 0));
             _message = "";
-            _model = new NodeModel(resp.Data);
+            _model = new NodeModel(resp.Data, grpR.Data);
         }
         else
         {
@@ -148,7 +151,7 @@ public class NodeViewModel(IDataAccess srvData,
         if (Model is null) return new AnnotationCommandResponse(false);
 
         var resp = await srvData.Send(new CreateAnnotationCommand(NodeId: Model.Id, UserId: UserId, text: text));
-        if (resp.Success) Model.Annotations.Add(new AnnotationModel(resp.Data));
+        if (resp.Success) Model.AddAnnotation(resp.Data);
         return resp;
     }
     public async Task<AnnotationCommandResponse> CreateAnnotationAsync(CreateAnnotationDraft draft)
@@ -187,7 +190,7 @@ public class NodeViewModel(IDataAccess srvData,
 
     public IDraftStore DraftStore => draftStore;
 
-    public async Task<CreateAnnotationDraft> GetAnnotationDraft(int userId, bool autoCreate)
+    public async Task<CreateAnnotationDraft> GetAnnotationDraft(bool autoCreate)
     {
         var d = await draftStore.GetDraft<CreateAnnotationDraft>(CreateAnnotationDraft.NodeKey(Model.Id));
         if( d == null && autoCreate)

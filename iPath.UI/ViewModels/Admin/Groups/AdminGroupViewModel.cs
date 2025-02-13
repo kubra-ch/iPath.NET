@@ -1,8 +1,6 @@
 ﻿using iPath.Application.Features;
 using iPath.Application.Querying;
-using iPath.Data.Entities;
 using iPath.UI.Areas.DataAccess;
-using MediatR;
 using Microsoft.FluentUI.AspNetCore.Components;
 
 namespace iPath.UI.ViewModels.Admin.Groups;
@@ -52,7 +50,7 @@ public class AdminGroupViewModel(IDataAccess srvData) : IAdminGroupViewModel
             {
                 _errorMessage = response.Message;
                 throw new Exception(response.Message);
-                return GridItemsProviderResult.From(items: new List<Group>(), totalItemCount: 0);
+                return GridItemsProviderResult.From(items: new List<GroupDto>(), totalItemCount: 0);
             }
 
             return GridItemsProviderResult.From(
@@ -62,25 +60,25 @@ public class AdminGroupViewModel(IDataAccess srvData) : IAdminGroupViewModel
         };
     }
 
-    private GridItemsProvider<Group> _GridDataProvider = default!;
-    public GridItemsProvider<Group> GridDataProvider => _GridDataProvider;
+    private GridItemsProvider<GroupDto> _GridDataProvider = default!;
+    public GridItemsProvider<GroupDto> GridDataProvider => _GridDataProvider;
 
 
 
     public async Task SelectGroupId(int Id)
     {
         var resp = await srvData.Send(new GetGroupQuery(GroupId: Id));
-        _selectedGroup = resp.Data;
+        _selectedGroup = new GroupModel(resp.Data);
     }
 
-    private Group _selectedGroup = null;
-    public Group SelectedGroup => _selectedGroup;
+    private GroupModel _selectedGroup = null;
+    public GroupModel SelectedGroup => _selectedGroup;
 
 
 
-    public async Task<GroupCommandResponse> CreateGroupAsync(string Name, string? purpose, int? ownerId, Community? community)
+    public async Task<GroupCommandResponse> CreateGroupAsync(string Name, string? purpose, int? ownerId, CommunityModel community)
     {
-        var request = new CreateGroupCommand(Name: Name, Purpose: purpose, OwnerId: ownerId, CommunityId: community?.Id);
+        var request = new CreateGroupCommand(Name: Name, Purpose: purpose, OwnerId: ownerId, CommunityId: community.Id);
         var response = await srvData.Send(request);
         if (response.Success)
         {
@@ -97,9 +95,8 @@ public class AdminGroupViewModel(IDataAccess srvData) : IAdminGroupViewModel
     }
 
 
-    public async Task<GroupCommandResponse> UpdateGroupAsync(Group item)
+    public async Task<GroupCommandResponse> UpdateGroupAsync(GroupDto dto)
     {
-        var request = new UpdateGroupCommand(item);
-        return await srvData.Send(request);
+        return await srvData.Send(new UpdateGroupCommand(dto));
     }
 }

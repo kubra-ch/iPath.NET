@@ -13,8 +13,15 @@
 }
 else
 {
-	<ExpandableErrorBoundary>
+	<FluentBreadcrumb class="breadcrumbs">
+		<FluentBreadcrumbItem Href="/">
+			Home
+		</FluentBreadcrumbItem>
+		<FluentBreadcrumbItem>@vm.Model.Name</FluentBreadcrumbItem>
+	</FluentBreadcrumb>
 
+
+	<ExpandableErrorBoundary>
 		<div class="nodeheader">
 			<div class="nodeheader_title">
 				@vm.Model.Name
@@ -29,7 +36,7 @@ else
 									  IconActive="HomeIcon(active: true)"
 									  Text="Home" />
 
-					@if (appState.Session.IsAdmin)
+					@if (appState.IsAdmin)
 					{
 						<FluentAppBarItem Href=@($"/groups/edit/{GroupId}")
 										  Match="NavLinkMatch.All"
@@ -50,14 +57,17 @@ else
 
 		<FluentDataGrid TGridItem="NodeModel" ItemsProvider="@vm.NodesDataProvider"
 						@ref="grid" Pagination="pagination"
+						MultiLine="true"
 						GridTemplateColumns="4fr 1fr 1fr"
 						OnRowClick="GoToNode">
 			<TemplateColumn Title="Title" Sortable="true">
-				<div style="font-weight: bold;">@context.Caption</div>
-				@if (context.HasSubTitle)
-				{
-					<div>@context.SubTitle</div>
-				}
+				<div>
+					<div style="font-weight: bold;">@context.Caption</div>
+					@if (context.HasSubTitle)
+					{
+						<div>@context.SubTitle</div>
+					}
+				</div>
 			</TemplateColumn>
 			<PropertyColumn Title="Sender" Property="@(x => x.OwnerName)" Align="Align.End" Sortable="true" />
 			<PropertyColumn Title="Created On" Property="@(x => x.CreatedOn)" Format="yyyy-MM-dd" Align="Align.End"

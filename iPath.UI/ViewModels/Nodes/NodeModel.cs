@@ -5,9 +5,8 @@ using iPath.Data.Entities;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
-using System.Web;
 
-namespace iPath.UI.ViewModels.Nodes;
+namespace iPath.UI.ViewModels;
 
 public class NodeModel
 {
@@ -15,10 +14,10 @@ public class NodeModel
     {   
     }
 
-    public NodeModel(Node node)
+    public NodeModel(Node node, GroupDto group)
     {
         Id = node.Id;
-        GroupId = node.GroupId;
+        Group = group;
         Title = node.Title;
         NodeType = node.NodeType.Name.ToLower();
         Description = node.Description;
@@ -48,7 +47,7 @@ public class NodeModel
         {
             foreach (var child in node.ChildNodes)
             {
-                this.Children.Add(new NodeModel(child));
+                this.Children.Add(new NodeModel(child, group));
             }
         }
 
@@ -63,7 +62,7 @@ public class NodeModel
 
 
     public int Id { get; private set; }
-    public int? GroupId { get; private set; }
+    public GroupDto? Group { get; private set; }
 
     public string Title { get; set; }
     public string SubTitle { get; set; }
@@ -95,6 +94,11 @@ public class NodeModel
 
 
     public List<AnnotationModel> Annotations { get; private set; } = new();
+    public void AddAnnotation(Annotation entity)
+    {
+        Annotations.RemoveAll(a => a.Id == entity.Id);
+        Annotations.Add(new AnnotationModel(entity));
+    }
 
 
     public string Caption => !string.IsNullOrEmpty(Title) ? Title : Filename;

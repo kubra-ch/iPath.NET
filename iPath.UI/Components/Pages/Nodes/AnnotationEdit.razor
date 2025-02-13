@@ -12,7 +12,7 @@
 
 		<EditForm Model="Model">
 			<FluentTextArea @bind-Value="@Model.Text" @bind-Value:after="TextValueChanged"
-			Rows="10" style="width: 100%;" Immediate="true" ImmediateDelay="1000"/>
+			Rows="6" style="width: 100%;" Immediate="true" ImmediateDelay="1000"/>
 		</EditForm>
 
 		<div class="sortableGallery_footer">
@@ -25,22 +25,24 @@
 
 
 @code {
-	bool Visible = false;
+		bool Visible = false;
 
-	CreateAnnotationDraft Model;
+		CreateAnnotationDraft Model;
 
-	[CascadingParameter]
-	public CascadingAppState appState { get; set; }
+		[CascadingParameter]
+		public CascadingAppState appState { get; set; }
 
-	[Parameter]
-	public EventCallback<Annotation> OnAnnotationPublished { get; set; }
+		[Parameter]
+		public EventCallback<Annotation> OnAnnotationPublished { get; set; }
+
 
 
 	public async Task ShowEditor()
 	{
 		if (vm.Model != null)
 		{
-			Model = await vm.GetAnnotationDraft(userId: appState.Session.UserId, true);		
+			Model = await vm.GetAnnotationDraft(true);		
+			if (!string.IsNullOrEmpty(Model.Text)) Title = $"Draft from {Model.CreatedOn}";
 			Visible = true;
 			StateHasChanged();
 		}

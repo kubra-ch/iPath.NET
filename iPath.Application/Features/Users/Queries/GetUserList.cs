@@ -1,6 +1,5 @@
 ﻿using iPath.Application.Querying;
 using iPath.Data.Database;
-using iPath.Data.Entities;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,9 +7,8 @@ namespace iPath.Application.Features;
 
 
 
-
-public record GetUserListResponse(bool Success, string? Message = default!, PaginatedListResult<User> Data = null!)
-    : BaseResponseT<PaginatedListResult<User>>(Success, Message, Data);
+public record GetUserListResponse(bool Success, string? Message = default!, PaginatedListResult<UserDto> Data = null!)
+    : BaseResponseT<PaginatedListResult<UserDto>>(Success, Message, Data);
 
 
 public class GetUserListQuery : PaginatedListQuery, IRequest<GetUserListResponse>
@@ -51,7 +49,14 @@ public class GetUserListQueryHandler(IDbContextFactory<IPathDbContext> dbFactory
             }
         }
 
-        return new GetUserListResponse(true, Data: await q.GetPaginatedListResultAsync(request));
+        var entities = await q.GetPaginatedListResultAsync(request);
+        var data = new PaginatedListResult<UserDto>()
+        {
+            TotalItemsCount = entities.TotalItemsCount,
+            Items = entities.Items.Select(e => e.ToDto()).ToList()
+        };
+
+        return new GetUserListResponse(true, Data: data);
     }
 }
 

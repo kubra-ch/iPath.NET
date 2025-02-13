@@ -1,0 +1,39 @@
+﻿@using iPath.UI.ViewModels.Admin.Communities
+@inject IAdminCommunityViewModel vm
+
+<FluentAutocomplete TOption="CommunityDto"
+					MaximumSelectedOptions="1"
+					AutoComplete="off"
+					Autofocus="false"
+					Label="@Label"
+					Width="250px"
+					MaxAutoHeight="200px"
+					Placeholder="Select user"
+					OnOptionsSearch="@OnSearchAsync"
+					OptionText="@(item => item.Name)"
+					@bind-SelectedOptions="@selection" />
+
+@code {
+    [Parameter]
+    public CommunityDto? SelectedCommunity { get; set; }
+
+    [Parameter]
+    public string Label { get; set; }
+
+    [Parameter]
+    public EventCallback<CommunityDto> SelectedUserChanged { get; set; }
+
+    IEnumerable<CommunityDto> selection
+    {
+        get => SelectedCommunity != null ? new List<CommunityDto> { SelectedCommunity } : new List<CommunityDto>();
+        set {
+            SelectedCommunity = value.FirstOrDefault();
+            SelectedUserChanged.InvokeAsync(SelectedCommunity);
+        }
+    }
+
+    private async Task OnSearchAsync(OptionsSearchEventArgs<CommunityDto> e)
+    {
+        e.Items = await vm.FindCommunityAsync(e.Text);
+    }
+}

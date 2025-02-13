@@ -15,7 +15,7 @@ public class DataAccessMediator(IMediator mediator, ILogger<DataAccessREST> logg
         catch (Exception ex)
         {
             logger.LogError(ex.Message, ex);
-            var resp = (TResponse)Activator.CreateInstance(typeof(TResponse), false, ex.InnerException?.Message ?? ex.Message);
+            var resp = (TResponse)Activator.CreateInstance(typeof(TResponse), false, ex.InnerException?.Message ?? ex.Message, null);
             return resp;
         }
     }

@@ -11,10 +11,8 @@ namespace iPath.Application.Features;
 
 
 
-public record GroupListDTO(int Id, string Name, int? CommunityId, int? NodeCount, int? NewObjCount, int? NewCommentCount);
-
-public record GetGroupListDtoResponse(bool Success, string? Message = default!, PaginatedListResult<GroupListDTO> Data = null!)
-    : BaseResponseT<PaginatedListResult<GroupListDTO>>(Success, Message, Data);
+public record GetGroupListDtoResponse(bool Success, string? Message = default!, PaginatedListResult<GroupListDto> Data = null!)
+    : BaseResponseT<PaginatedListResult<GroupListDto>>(Success, Message, Data);
 
 
 public class GetGroupListDtoQuery : PaginatedListQuery, IRequest<GetGroupListDtoResponse>
@@ -78,10 +76,10 @@ public class GetGroupListDtoQueryHandler(IDbContextFactory<IPathDbContext> dbFac
         // get paged data with object count, etx
         var dtos = await q.Include(g => g.Nodes)
             .AsNoTracking()
-            .Select(g => new GroupListDTO(g.Id, g.Name, g.CommunityId, g.Nodes.Count(), 0, 0))
+            .Select(g => new GroupListDto(g.Id, g.Name, g.CommunityId, g.Nodes.Count(), 0, 0))
             .ToListAsync();
 
-        var ret = new PaginatedListResult<GroupListDTO>()
+        var ret = new PaginatedListResult<GroupListDto>()
         {
             TotalItemsCount = total,
             Items = dtos

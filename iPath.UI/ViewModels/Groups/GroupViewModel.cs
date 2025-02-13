@@ -2,7 +2,6 @@
 using iPath.Application.Querying;
 using iPath.Data.Entities;
 using iPath.UI.Areas.DataAccess;
-using iPath.UI.ViewModels.Nodes;
 using Microsoft.FluentUI.AspNetCore.Components;
 
 namespace iPath.UI.ViewModels.Groups;
@@ -31,7 +30,7 @@ public class GroupViewModel(IDataAccess srvData) : IGroupViewModel
         {
             Id = respg.Data.Id,
             Name = respg.Data.Name,
-            Owner = respg.Data.Owner is null ? "" : respg.Data.Owner.Username,
+            Owner = respg.Data.Owner,
             Purpose = respg.Data.Purpose
         };
 
@@ -55,14 +54,19 @@ public class GroupViewModel(IDataAccess srvData) : IGroupViewModel
             {
                 foreach (var p in sort)
                 {
-                    var sd = new SortDefinition { SortColumn = p.PropertyName, SortAscending = (p.Direction == SortDirection.Ascending) };
-                    request.SortDefinitions.Add(sd);
+                    if (p.PropertyName == "OwnerName")
+                    {
+                        var sd = new SortDefinition { SortColumn = "Owner.Username", SortAscending = (p.Direction == SortDirection.Ascending) };
+                        request.SortDefinitions.Add(sd);
+                    }
+                    else
+                    {
+                        var sd = new SortDefinition { SortColumn = p.PropertyName, SortAscending = (p.Direction == SortDirection.Ascending) };
+                        request.SortDefinitions.Add(sd);
+                    }
                 }
             }
-            else
-            {
-                request.SortDefinitions.Add(new SortDefinition { SortColumn = "CreatedOn", SortAscending = false });
-            }
+            request.SortDefinitions.Add(new SortDefinition { SortColumn = "CreatedOn", SortAscending = false });
 
             var response = await srvData.Send(request);
             if (!response.Success)
@@ -74,7 +78,7 @@ public class GroupViewModel(IDataAccess srvData) : IGroupViewModel
             var models = new List<NodeModel>();
             foreach (var node in response.Data.Items)
             {
-                models.Add(new NodeModel(node));
+                models.Add(new NodeModel(node, respg.Data));
             }
 
 

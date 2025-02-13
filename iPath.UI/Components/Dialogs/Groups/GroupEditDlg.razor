@@ -1,11 +1,13 @@
-﻿@implements IDialogContentComponent<Group>
+﻿@using iPath.UI.ViewModels.Admin.Communities
+@implements IDialogContentComponent<GroupModel>
+@inject IAdminCommunityViewModel vmComm
 
 @* Header *@
 <FluentDialogHeader ShowDismiss="true">
     <FluentStack VerticalAlignment="VerticalAlignment.Center">
         <FluentIcon Value="@(new Icons.Regular.Size24.WindowApps())" />
         <FluentLabel Typo="Typography.PaneHeader">
-			Edit Settings for @Content.Name
+            Edit Settings for @Content.Name
         </FluentLabel>
     </FluentStack>
 </FluentDialogHeader>
@@ -18,26 +20,44 @@
 
 @* Body *@
 <FluentDialogBody>
-    <FluentStack Orientation="Orientation.Vertical">
-        <FluentTextField style="width: 100%;" @bind-Value="@Content.Name">Name:</FluentTextField>
-        <FluentTextArea style="width: 100%;" @bind-Value="@Content.Purpose">Purpose:</FluentTextArea>
-        <FluentSelect TOption="eGroupVisibility"
-                      Label="Visibility"
-                      Items="@eGroupVisibility.List"
-                      Placeholder="Make a selection..."
-                      OptionText="@(p => p.Name)"
-                      @bind-SelectedOption="@Content.Visibility" />
+	<FluentStack Orientation="Orientation.Vertical">
+		<FluentTextField style="width: 100%;" @bind-Value="@Content.Name">Name:</FluentTextField>
+		<FluentTextArea style="width: 100%;" @bind-Value="@Content.Purpose">Purpose:</FluentTextArea>
+		<FluentSelect TOption="eGroupVisibility"
+					  Label="Visibility"
+					  Items="@eGroupVisibility.List"
+					  Placeholder="Make a selection..."
+					  OptionText="@(p => p.Name)"
+					  @bind-SelectedOption="@Content.Visibility" />
+
+
+		<FluentSelect TOption="CommunityDto"
+					  Label="Community"
+					  Items="@communities"
+					  Placeholder="Make a selection..."
+					  OptionText="@(p => p.Name)"
+					  @bind-SelectedOption="Content.Community" />
+
 		<UserSelection Label="Group Owner" @bind-SelectedUser="@Content.Owner" />
-    </FluentStack>
-    
+	</FluentStack>
+
 </FluentDialogBody>
 
 @code {
     [Parameter]
-    public Group Content { get; set; } = default!;
+    public GroupModel Content { get; set; } = default!;
 
     [CascadingParameter]
     public FluentDialog Dialog { get; set; } = default!;
+
+
+    List<CommunityDto> communities;
+
+    protected override async Task OnInitializedAsync()
+    {
+        communities = await vmComm.GetAllCommunityAsync();
+    }
+
 
     private async Task SaveAsync()
     {         

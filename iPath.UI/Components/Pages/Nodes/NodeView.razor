@@ -8,8 +8,20 @@
 @inject IDialogService srvDialog
 @inject IJSRuntime js
 
-<div>@vm.Message</div>
+@if (vm.Model != null)
+{
+	<FluentBreadcrumb class="breadcrumbs">
+		<FluentBreadcrumbItem Href="/">
+			home
+		</FluentBreadcrumbItem>
+		<FluentBreadcrumbItem Href=@($"/groups/{vm.Model.Group.Id}")>
+			@vm.Model.Group.Name
+		</FluentBreadcrumbItem>
+		<FluentBreadcrumbItem>@vm.Model.Caption</FluentBreadcrumbItem>
+	</FluentBreadcrumb>
+}
 
+<ErrorMessage Message="@vm.Message" />
 
 <ExpandableErrorBoundary>
 	@if (vm.Model == null)
@@ -34,9 +46,9 @@
 									  IconActive="HomeIcon(active: true)"
 									  Text="Home" />
 
-					@if (vm.Model.GroupId.HasValue)
+					@if (vm.Model.Group != null)
 					{
-						<FluentAppBarItem Href=@($"/groups/{vm.Model.GroupId}")
+						<FluentAppBarItem Href=@($"/groups/{vm.Model.Group.Id}")
 										  Match="NavLinkMatch.All"
 										  IconRest="ListIcon()"
 										  IconActive="ListIcon(active: true)"
@@ -147,10 +159,10 @@
 	private static Icon AttachIcon(bool active = false) =>
 		active ? new Icons.Filled.Size24.Attach() : new Icons.Regular.Size24.Attach();
 
-	private static Icon CaseIcon(bool active = false) =>
+	private static Icon ListIcon(bool active = false) =>
 		active ? new Icons.Filled.Size24.ArrowEnterUp() : new Icons.Regular.Size24.ArrowEnterUp();
 
-	private static Icon ListIcon(bool active = false) =>
+	private static Icon CaseIcon(bool active = false) =>
 		active ? new Icons.Filled.Size24.Library() : new Icons.Regular.Size24.Library();
 
 	private static Icon HomeIcon(bool active = false) =>
@@ -173,7 +185,7 @@
 		try
 		{
 			await vm.LoadNode(NodeId);
-			canEdit = appState.Session.IsAdmin || vm.Model.Owner.Id == appState.Session.UserId;
+			canEdit = appState.IsAdmin || vm.Model.Owner.Id == appState.Session?.UserId;
 		}
 		catch (Exception ex)
 		{

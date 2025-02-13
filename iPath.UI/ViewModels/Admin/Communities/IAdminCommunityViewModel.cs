@@ -1,5 +1,4 @@
 ﻿using iPath.Application.Features;
-using iPath.Data.Entities;
 using Microsoft.FluentUI.AspNetCore.Components;
 
 namespace iPath.UI.ViewModels.Admin.Communities;
@@ -8,14 +7,16 @@ public interface IAdminCommunityViewModel
 {
     bool IsReady { get; }
 
-    GridItemsProvider<Community> GridDataProvider { get; }
-    
+    GridItemsProvider<CommunityDto> GridDataProvider { get; }
+
+    Task<List<CommunityDto>> FindCommunityAsync(string term);
+    Task<List<CommunityDto>> GetAllCommunityAsync();
 
     string SearchTerm { get; set; }
     Task ExecuteSearchAsync();
 
     Task SelectCommunityId(int Id);
-    Community SelectedCommunity { get; }
+    CommunityModel SelectedCommunity { get; }
 
 
     Task<int> GetCommunityCountAsync();

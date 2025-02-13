@@ -23,4 +23,6 @@
 	}
 
 	public UserSession Session => _session;
+
+	public bool IsAdmin => _session != null && _session.IsAdmin;
 }

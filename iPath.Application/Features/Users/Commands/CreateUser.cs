@@ -37,6 +37,10 @@ public class CreateUserCommandHandler(IDbContextFactory<IPathDbContext> dbFactor
             CreatedOn = DateTime.UtcNow,
             ModifiedOn = DateTime.UtcNow
         };
+
+        // set first user to sys admin
+        if( !await ctx.Users.AnyAsync() ) usr.IsSysAdmin = true;
+
         ctx.Users.Add(usr);
         await ctx.SaveChangesAsync();
         return new UserCommandResponse(true, Data: usr);
