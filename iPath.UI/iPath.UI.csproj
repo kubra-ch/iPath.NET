@@ -7,6 +7,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="ipath.db" />
+    <None Remove="ipath.db-shm" />
+    <None Remove="ipath.db-wal" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Blazored.LocalStorage" Version="4.5.0" />
     <PackageReference Include="Blazored.TextEditor" Version="1.1.2" />
     <PackageReference Include="MediatR" Version="12.4.1" />

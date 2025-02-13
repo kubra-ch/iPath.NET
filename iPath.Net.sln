@@ -9,7 +9,18 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "iPath.UI", "iPath.UI\iPath.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "iPath.Application", "iPath.Application\iPath.Application.csproj", "{C315996A-9501-4218-A121-E856920BC1D4}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{D0D0B709-0EEC-4669-B8DD-D75F8539B86B}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Migrations", "Migrations", "{DE6436FA-3DD5-4B71-B02C-9C89CA691E2D}"
+	ProjectSection(SolutionItems) = preProject
+		INSTALL\ipath2 to ipath_net.sql = INSTALL\ipath2 to ipath_net.sql
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "iPath.Migrations.SqlServer", "iPath.Migrations.MSSQL\iPath.Migrations.SqlServer.csproj", "{8479F16B-81E2-471A-B1A7-FB4582911F6F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "iPath.Migrations.Postgres", "iPath.Migrations.Postgres\iPath.Migrations.Postgres.csproj", "{0AFDCA8F-7384-40CE-A927-6D669558948F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "iPath.Migrations.Sqlite", "iPath.Migrations.SQLite\iPath.Migrations.Sqlite.csproj", "{2E25B252-2DA6-4AFE-8069-B7FCF54A6CD6}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SQL", "SQL", "{556C5034-BA03-4908-BCCB-8157BD62D5EA}"
 	ProjectSection(SolutionItems) = preProject
 		INSTALL\ipath2 to ipath_net.sql = INSTALL\ipath2 to ipath_net.sql
 	EndProjectSection
@@ -32,8 +43,26 @@ Global
 		{C315996A-9501-4218-A121-E856920BC1D4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C315996A-9501-4218-A121-E856920BC1D4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C315996A-9501-4218-A121-E856920BC1D4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8479F16B-81E2-471A-B1A7-FB4582911F6F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8479F16B-81E2-471A-B1A7-FB4582911F6F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8479F16B-81E2-471A-B1A7-FB4582911F6F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8479F16B-81E2-471A-B1A7-FB4582911F6F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0AFDCA8F-7384-40CE-A927-6D669558948F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0AFDCA8F-7384-40CE-A927-6D669558948F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0AFDCA8F-7384-40CE-A927-6D669558948F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0AFDCA8F-7384-40CE-A927-6D669558948F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2E25B252-2DA6-4AFE-8069-B7FCF54A6CD6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2E25B252-2DA6-4AFE-8069-B7FCF54A6CD6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2E25B252-2DA6-4AFE-8069-B7FCF54A6CD6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2E25B252-2DA6-4AFE-8069-B7FCF54A6CD6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{8479F16B-81E2-471A-B1A7-FB4582911F6F} = {DE6436FA-3DD5-4B71-B02C-9C89CA691E2D}
+		{0AFDCA8F-7384-40CE-A927-6D669558948F} = {DE6436FA-3DD5-4B71-B02C-9C89CA691E2D}
+		{2E25B252-2DA6-4AFE-8069-B7FCF54A6CD6} = {DE6436FA-3DD5-4B71-B02C-9C89CA691E2D}
+		{556C5034-BA03-4908-BCCB-8157BD62D5EA} = {DE6436FA-3DD5-4B71-B02C-9C89CA691E2D}
 	EndGlobalSection
 EndGlobal
