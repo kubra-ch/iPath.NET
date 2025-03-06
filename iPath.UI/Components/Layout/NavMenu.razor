@@ -1,0 +1,36 @@
+﻿<MudNavMenu>
+    <MudNavLink Href="/">Home</MudNavLink>
+    <AuthorizeView>
+        <NotAuthorized>
+			<MudNavLink Href="/account/login">Login</MudNavLink>
+			<MudNavLink Href="/account/register">Register</MudNavLink>
+        </NotAuthorized>
+		<Authorized>
+			<MudNavGroup Title="My Space" Expanded="true">
+				<MudNavLink Href="/communities">Communities</MudNavLink>
+				<MudNavLink Href="/groups">My Groups</MudNavLink>
+				<MudNavLink Href="/nodes">My Cases</MudNavLink>
+			</MudNavGroup>
+
+			<MudNavLink Href="/account/logout">Logout</MudNavLink>
+        </Authorized>
+    </AuthorizeView>
+
+	<AuthorizeView Roles="Admin">
+		<Authorized>
+			<MudDivider />
+			<MudNavGroup Title="Admin" Expanded="false">
+				<MudNavLink Href="/admin/index">System</MudNavLink>
+				<MudNavLink Href="/admin/users">Users</MudNavLink>
+				<MudNavLink Href="/admin/groups">Groups</MudNavLink>
+				<MudNavLink Href="/admin/communities">Communities</MudNavLink>
+				<MudNavLink Href="/admin/import">Data Import</MudNavLink>
+				<MudNavLink Href="/swagger">API</MudNavLink>
+			</MudNavGroup>
+		</Authorized>
+	</AuthorizeView>
+
+	<MudDivider />
+	<MudNavLink Href="/about">About</MudNavLink>
+	<MudNavLink Href="/test">Test</MudNavLink>
+</MudNavMenu>

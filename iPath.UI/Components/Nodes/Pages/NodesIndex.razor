@@ -1,0 +1,206 @@
+﻿@page "/nodes"
+@page "/group/{gid:int}"
+@using iPath.Application.Querying
+@using iPath.UI.Areas.DataAccess
+@using iPath.UI.Components.Nodes.Dialogs
+@using iPath.UI.Components.Nodes.ViewModels
+
+@inject IDbContextFactory<NewDB> fct
+@inject IDialogService srvDialog
+@inject IDataCache srvCache
+@inject NodeListViewModel vm
+@inject NavigationManager nm
+@inject ISnackbar snackbar
+@inject IDataAccess srvData
+@inject IStringLocalizer T
+@inject BreadCrumbService srvBreadcumbs
+
+
+<AuthorizeView Context="auth">
+    <NotAuthorized>
+        please <MudLink Href="login">login</MudLink> to access your cases
+    </NotAuthorized>
+    <Authorized>
+        <div class="ipath_node_header">
+            <div class="ipath_header_title">@Title</div>
+            <div class="ipath_header_actions">
+            </div>
+        </div>
+
+        <MudTable ServerData="ServerReload" @ref="table"
+        RowsPerPage="25"
+        Bordered="false" Dense="true" Hover="true"
+        Class="ipath_table">
+            <ToolBarContent>
+                @if (gid.HasValue)
+                {
+                    <MudToolBar>
+                        <MudTooltip Text="create a new case">
+                            <MudIconButton Icon="@Icons.Material.Outlined.Add" OnClick="OnNewCase"/>
+                        </MudTooltip>
+                        <MudTooltip Text="export data">
+                            <MudIconButton Icon="@Icons.Material.Outlined.Save" />
+                        </MudTooltip>
+                    </MudToolBar>
+                }
+                <MudSpacer />
+                <MudTextField T="string" ValueChanged="@(s=>OnSearch(s))" Placeholder="Search" Adornment="Adornment.Start"
+                AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+            </ToolBarContent>
+            <HeaderContent>
+                <MudTh><MudTableSortLabel SortLabel="Id" T="NodeListDTO" InitialDirection="SortDirection.Descending">Id</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel SortLabel="Description.Title" T="NodeListDTO">Title</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel SortLabel="Description.CaseType" T="NodeListDTO">Type</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel SortLabel="Owner.Username" T="NodeListDTO">Sender</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel SortLabel="CreatedOn" T="NodeListDTO">Date</MudTableSortLabel></MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Id" Class="ipath_table_fixed">@context.Id</MudTd>
+                <MudTd DataLabel="Name">
+                    <b><MudLink Href=@($"/node/{context.Id}")>@context.Title</MudLink></b>
+                    <div>@context.SubTitle</div>
+                </MudTd>
+                <MudTd DataLabel="Cases">@context.CaseType</MudTd>
+                <MudTd DataLabel="Cases"><MudLink OnClick="@(() => ShowUserProfile(context.Owner.UserId))">@context.Owner.Username</MudLink></MudTd>
+                <MudTd DataLabel="Cases">@context.CreatedOn.ToShortDateString()</MudTd>
+            </RowTemplate>
+            <NoRecordsContent>
+                <MudText>No matching records found</MudText>
+            </NoRecordsContent>
+            <LoadingContent>
+                <MudText>Loading...</MudText>
+            </LoadingContent>
+            <PagerContent>
+                <MudTablePager/>
+            </PagerContent>
+        </MudTable>
+
+    </Authorized>
+</AuthorizeView>
+
+
+@code {
+    [CascadingParameter]
+    CascadingAppState appState { get; set; }
+
+
+    [Parameter]
+    public int? gid { set; get; }
+
+
+    private MudTable<NodeListDTO> table;
+    private string searchString;
+
+    private string Title = "My Cases";
+
+
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (gid.HasValue)
+        {
+            using var ctx = await fct.CreateDbContextAsync();
+            var grp = await ctx.Groups.FindAsync(gid);
+            Title = grp == null ? "???" : grp.Name;
+
+            srvBreadcumbs.LoadItems([
+                new("Home", "/"),
+                new("Groups", "/groups"),
+                new(Title, null, translatable: false)
+            ]);
+
+            appState.activeGroupId = grp?.Id;
+        }
+        else
+        {
+            Title = "My Cases";
+
+            srvBreadcumbs.LoadItems([
+                new("Home", "/"),
+                new("My Cases", null)
+            ]);
+
+            appState.activeGroupId = null;
+        }
+        if( table != null ) await table.ReloadServerData();
+    }
+
+
+    private async Task<TableData<NodeListDTO>> ServerReload(TableState state, CancellationToken token)
+    {
+        var sorting = new List<SortDefinition>();
+        if (!string.IsNullOrEmpty(state.SortLabel))
+        {
+            sorting.Add(new SortDefinition { SortColumn = state.SortLabel, SortAscending = (state.SortDirection == SortDirection.Ascending) });
+        }
+
+        var resp1 = await srvData.Send(new GetNodeIdListQuery(GroupId: gid, UserId: appState.SessionUser.UserId, SearchString: searchString, sorting: sorting));
+        appState.activeNodeIds = resp1.Data;
+
+        var request = new GetNodeListQuery()
+            {
+                PageSize = state.PageSize,
+                Page = state.Page,
+                GroupId = gid,
+                UserId = appState.SessionUser.UserId,
+                SearchString = searchString,
+                SortDefinitions = sorting
+            };
+
+        var resp = await srvData.Send(request);
+        if( resp.Success )
+        {
+            return new TableData<NodeListDTO>() { TotalItems = resp.TotalItemsCount, Items = resp.Data };            
+        }
+        else
+        {
+            return new TableData<NodeListDTO>();
+        }
+    }
+
+    private async Task OnSearch(string text)
+    {
+        searchString = text;
+        await table.ReloadServerData();
+    }
+
+    async Task ShowUserProfile(int UserId)
+    {
+        await srvDialog.ShowProfile(await srvCache.GetProfileAsync(UserId));
+    }
+
+
+    async Task OnNewCase()
+    {
+        if( !appState.activeGroupId.HasValue  )
+        {
+            await srvDialog.ShowMessageBox("Error", "new cases can be created in a group only");
+            return;
+        }
+
+        var dialog = await srvDialog.ShowAsync<CreateNodeDialog>();
+        var result = await dialog.Result;
+        if( !result.Canceled )
+        {
+            var m = result.Data as NodeModel;
+
+            var n = new Node();
+            n.CreatedOn = DateTime.UtcNow;
+            n.OwnerId = appState.SessionUser.UserId;
+            n.GroupId = appState.activeGroupId.Value;
+            n.NodeType = m.NodeType ?? "case";
+            n.Description = m.Description;
+
+            var resp = await vm.CreateNewNode(n);
+            if( resp.Success)
+            {
+                // navigate to new node
+                nm.NavigateTo("node/" + resp.Data.Id);
+            }
+            else
+            {
+                snackbar.Add(resp.Message, Severity.Error);
+            }
+        }
+    }
+}

@@ -1,0 +1,111 @@
+﻿@page "/"
+@using iPath.Application.Authentication
+
+@inject IHttpClientFactory httpFactory
+@inject AuthManagerBlazor am
+@inject BreadCrumbService srvBreadcumbs
+
+<PageTitle>iPath.NET</PageTitle>
+
+<div class="ipath_topheader">
+	<MudText Typo="Typo.h3" GutterBottom="true">Hello @usr</MudText>
+</div>
+
+<MudGrid>
+	<MudItem xs="12" md="6">
+		<div class="ipath_header">
+			<MudText Typo="Typo.h5">Connection Test</MudText>
+		</div>
+		<MudStack Row="true">
+			<MudButton OnClick="NoAuth">No Auth</MudButton>
+			<MudButton OnClick="Auth">Auth</MudButton>
+			<MudButton OnClick="AuthAdmin">Admin</MudButton>
+		</MudStack>
+		<MudAlert Severity="@severity">@testMessage</MudAlert>
+
+		<div class="ipath_header">
+			<MudText Typo="Typo.h5">Snomed CT</MudText>
+		</div>
+
+		<SnomedLookUp FocusConcept="91723000" Label="Body Structure" />
+		<SnomedLookUp FocusConcept="118292001" Label="Removal Procedure" />
+	</MudItem>
+
+	<MudItem xs="12" md="6">	
+		<div class="ipath_header">
+			<MudText Typo="Typo.h5">Recently visitied cases</MudText>
+		</div>
+		<AuthorizeView>
+			<Authorized>
+				<iPath.UI.Components.Nodes.Components.RecentlyVisitedNodes />
+			</Authorized>
+			<NotAuthorized>
+				<MudLink Href="/account/login">please login</MudLink>
+			</NotAuthorized>
+		</AuthorizeView>
+	</MudItem>
+</MudGrid>
+
+
+<MudDivider />
+
+
+@code{
+	[CascadingParameter]
+	CascadingAppState appState { get; set; }
+
+	protected override async Task OnInitializedAsync()
+	{
+		srvBreadcumbs.LoadItems([new("Home", null)]);
+	}
+
+
+
+	string usr;
+
+	string testMessage = "...";
+	Severity severity = Severity.Normal;
+
+
+
+	protected override async Task OnAfterRenderAsync(bool firstrender)
+	{
+		if (firstrender)
+		{
+			var p = await am.GetProfileAync();
+			usr = p?.Username ?? "anonymous";
+		}
+	}
+
+
+	async Task NoAuth()
+	{
+		await GetData("api/test/noauth");
+	}
+
+	async Task Auth()
+	{
+		await GetData("api/test/auth");
+	}
+
+	async Task AuthAdmin()
+	{
+		await GetData("api/test/admin");
+	}
+
+	async Task GetData(string ep)
+	{
+		var http = httpFactory.CreateClient("Api");
+		var resp = await http.GetAsync(ep);
+		if (resp.IsSuccessStatusCode)
+		{
+			severity = Severity.Success;
+			testMessage = await resp.Content.ReadAsStringAsync();
+		}
+		else
+		{
+			severity = Severity.Error;
+			testMessage = resp.StatusCode.ToString();
+		}
+	}
+}

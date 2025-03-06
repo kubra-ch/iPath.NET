@@ -1,0 +1,56 @@
+﻿@using iPath.UI.Components.Nodes.ViewModels
+@using Tizzani.MudBlazor.HtmlEditor
+
+
+@if (vm.Model != null)
+{
+    <MudForm Model="vm.Model" Class="ipath_node_form">
+        <MudTextField @bind-Value="vm.Model.Description.Title" Label="Title" />
+        <MudTextField @bind-Value="vm.Model.Description.Subtitle" Label="Sub-Title" />
+
+        <MudGrid>
+            <MudItem xs="12" sm="6" md="4">
+                <MudTextField @bind-Value="vm.Model.Description.CaseType" Label="Type" />
+            </MudItem>
+            <MudItem xs="12" sm="6" md="4">
+                <MudTextField @bind-Value="vm.Model.Description.AccessionNo" Label="AccessionNo" />
+            </MudItem>
+        </MudGrid>
+
+        <MudText Typo="Typo.h6">Description</MudText>
+
+        <MudHtmlEditor @bind-Html=@vm.Model.Description.Text>
+            <MudHtmlToolbarOptions InsertImage="false" /> 
+        </MudHtmlEditor>
+
+        <MudDivider />
+
+        <MudStack Row="true">
+            <MudButton OnClick="OnSave" Variant="Variant.Filled" ButtonType="ButtonType.Submit" >Save</MudButton>
+            <MudButton OnClick="OnCancel" Variant="Variant.Outlined">Cancel</MudButton>
+            <MudSpacer />
+        </MudStack>
+    </MudForm>
+}
+
+@code {
+    [Parameter]
+    public NodeDetailViewModel vm { get; set; }
+
+    [Parameter]
+    public bool EditMode { get; set; }
+
+    [Parameter]
+    public EventCallback<eNodeCommands> OnNodeCommand { get; set; }
+
+
+    async Task OnSave()
+    {
+        await OnNodeCommand.InvokeAsync(eNodeCommands.Save);
+    }
+
+    async Task OnCancel()
+    {
+        await OnNodeCommand.InvokeAsync(eNodeCommands.Cancel);
+    }
+}

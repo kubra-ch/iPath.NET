@@ -1,0 +1,139 @@
+﻿@page "/admin"
+@page "/admin/index"
+
+@using Microsoft.Extensions.Localization
+@using Microsoft.Extensions.Options
+@using iPath.Data.Configuration
+@using iPath.Data.EFCore
+
+@inject IDbContextFactory<NewDB> dbFactory
+@inject IOptions<iPathConfig> opts
+@inject IDialogService srvDialog
+@inject IStringLocalizer T
+@inject LocalizationService srvLocalization
+@inject ISnackbar snackbar
+@inject BreadCrumbService srvBreadcumbs
+
+
+<h2 class="ipath_topheader">@T["Administration"]</h2>
+
+<AuthorizeView Roles="Admin">
+	<NotAuthorized>
+		<NotAuthorizedWarning />
+	</NotAuthorized>
+	<Authorized>
+		<ul>
+			<li><MudLink Href="/admin/users">Users</MudLink></li>
+			<li><MudLink Href="/admin/groups">Groups</MudLink></li>
+			<li><MudLink Href="/admin/communities">Communities</MudLink></li>
+		</ul>
+
+
+		<h3 class="ipath_sectionheader">@T["Translations"]</h3>
+		<MudButton Variant="Variant.Filled" OnClick="SaveTranslations">@T["Save Translations"]</MudButton>
+
+
+		<h3 class="ipath_sectionheader">@T["Database Administration"]</h3>
+
+		<div style="max-width: 300px;">
+			<b>@T["Update Node Sequence"]</b> <br />
+			<MudSelect T="Type" @bind-Value="selectedEntity">
+				@foreach (var t in EntityTypes)
+				{
+					<MudSelectItem Value="t">@t.Name</MudSelectItem>
+				}
+			</MudSelect>
+			<br />
+			<MudButton Variant="Variant.Filled" OnClick="UpdateSequence">@T["Update"]</MudButton>
+		</div>
+	</Authorized>
+</AuthorizeView>
+
+
+@code {
+	[CascadingParameter]
+	CascadingAppState appState { get; set; }
+
+	protected override async Task OnInitializedAsync()
+	{
+		srvBreadcumbs.LoadItems([
+			new("Home", "/"),
+			new("Admin",  null)
+		]);
+	}
+
+
+	private void SaveTranslations()
+	{
+		try
+		{
+			snackbar.Add(T["saving tranlations"], Severity.Info);
+			int count = srvLocalization.SaveTranslations();
+			snackbar.Add(T["{0} tranlations saved", count], Severity.Success);
+		}
+		catch (Exception ex)
+		{
+			snackbar.Add(ex.Message, Severity.Error);
+		}
+	}
+
+
+
+    private IEnumerable<Type> EntityTypes = typeof(Node).Assembly.GetTypes().Where(type => typeof(BaseEntity).IsAssignableFrom(type) && !type.IsAbstract);
+    private Type selectedEntity;
+
+    async Task UpdateSequence()
+    {
+        if( selectedEntity != null)
+        {
+            using var ctx = await dbFactory.CreateDbContextAsync();
+            var resp = await ReseedTable(ctx, selectedEntity);
+            await srvDialog.ShowMessageBox("Result", resp);            
+        }
+    }
+
+
+    private async Task<string> ReseedTable(NewDB ctx, Type entityType)
+    {
+        var entityTypeInContext = ctx.Model.FindEntityType(entityType);
+        var schema = entityTypeInContext.GetSchema();
+        string? tableName = entityTypeInContext.GetTableName();
+
+        if (string.IsNullOrEmpty(tableName)) return $"table for {entityTypeInContext.Name} no found";
+
+        try
+        {
+            int maxId;
+
+			if (entityType.Equals(typeof(Annotation)))
+				maxId = await ctx.Set<Annotation>().MaxAsync(x => x.Id);
+			else if (entityType.Equals(typeof(Community)))
+				maxId = await ctx.Set<Community>().MaxAsync(x => x.Id);
+			else if (entityType.Equals(typeof(FileUpload)))
+				maxId = await ctx.Set<FileUpload>().MaxAsync(x => x.Id);
+			else if (entityType.Equals(typeof(Group)))
+				maxId = await ctx.Set<Group>().MaxAsync(x => x.Id);
+			else if (entityType.Equals(typeof(Node)))
+				maxId = await ctx.Set<Node>().MaxAsync(x => x.Id);
+			else if (entityType.Equals(typeof(User)))
+				maxId = await ctx.Set<User>().MaxAsync(x => x.Id);
+			else if (entityType.Equals(typeof(UserRole)))
+				maxId = await ctx.Set<UserRole>().MaxAsync(x => x.Id);
+			else
+				return "unknown entity";
+
+            if (opts.Value.DbProvider == DBProvider.Postgres.Name)
+            {             
+                await ctx.Database.ExecuteSqlRawAsync($"ALTER TABLE public.\"{tableName}\" ALTER \"Id\" RESTART {maxId + 1}");
+                return $"{tableName} reseeded to {maxId + 1}";
+            }
+
+            return $"no reseed for {opts.Value.DbProvider}";
+        }
+        catch(Exception ex)
+        {
+            return ex.Message;
+        }
+    }
+
+}

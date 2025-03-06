@@ -1,0 +1,19 @@
+﻿@using iPath.UI.Components.Nodes.ViewModels
+
+@inject NodeDetailViewModel vm
+
+@if (Model.IsImage)
+{
+    <img src=@vm.ThumbUrl(Model) alt="@Model.GalleryCaption.ShortenTo(25)">
+}
+else
+{
+    <MudIcon Size="Size.Large" Icon=@vm.SelectedNode.FileIcon /><br />
+    <div>@Model.GalleryCaption.ShortenTo(12)</div>
+}
+
+@code {
+    [Parameter]
+    public NodeModel Model { get; set; }
+
+}

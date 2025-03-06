@@ -1,0 +1,53 @@
+﻿<MudDialog>
+	<TitleContent>
+		<MudText Typo="Typo.h6">@Profile.FirstName @Profile.FamilyName</MudText>
+	</TitleContent>
+	<DialogContent>
+		@if (Contact != null)
+		{
+			<div class="organisation">@((MarkupString)Contact.Organisation)</div>
+			<div class="address">@((MarkupString)Contact.Address?.Street)</div>
+			<div class="address">@Contact.Address?.PostalCode @Contact.Address?.City</div>
+			<div class="address">@Contact.Address?.Country</div>
+			<div class="contact">
+				<MudStack Row="true">
+					<MudIcon Icon="@Icons.Material.Outlined.Email" /> @Contact.Email
+					<MudIcon Icon="@Icons.Material.Outlined.Phone" /> @Contact.PhoneNr
+				</MudStack>
+			</div>
+		}
+		else
+		{
+			<p>no data</p>
+		}
+	</DialogContent>
+	<DialogActions>
+		<MudButton Color="Color.Primary" OnClick="Close">Ok</MudButton>
+	</DialogActions>
+</MudDialog>
+<style>
+	.organisation{
+		font-weight: bold;
+		border-bottom: 1px outset;
+	}
+	.address{
+		font-style: italic;
+	}
+	.contact{
+		margin-top: 1em;
+		border-bottom: 1px outset;
+	}
+</style>
+
+
+@code {
+	[CascadingParameter]
+	private IMudDialogInstance MudDialog { get; set; }
+
+	[Parameter]
+	public UserProfile Profile { get; set; }
+
+	private ContactDetails Contact => Profile?.ContactDetails.FirstOrDefault(cd => cd.IsMainContact);
+
+	private void Close() => MudDialog.Cancel();
+}

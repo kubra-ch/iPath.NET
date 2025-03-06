@@ -1,0 +1,63 @@
+﻿@using iPath.Application.Services
+@using iPath.UI.Components.Users.ViewModels
+
+
+<MudForm Model="@ViewModel.Model" @ref="@form" Spacing="4">
+    <MudText Typo="Typo.h6">Personal Info</MudText>
+    <MudGrid>
+        <MudItem xs="12" sm="12" md="5">
+            <MudTextField Label="FirstName" For="@(() => ViewModel.Model.FirstName)" @bind-Value="ViewModel.Model.FirstName" />
+        </MudItem>
+        <MudItem xs="12" sm="12" md="5">
+            <MudTextField Label="FamilyName" For="@(() => ViewModel.Model.FamilyName)" @bind-Value="ViewModel.Model.FamilyName" />
+        </MudItem>
+        <MudItem xs="12" sm="12" md="2">
+            <MudTextField Label="Initials" For="@(() => ViewModel.Model.Initials)" @bind-Value="ViewModel.Model.Initials" />
+        </MudItem>
+    </MudGrid>
+
+    <MudTextField Label="Specialisation" For="@(() => ViewModel.Model.Specialisation)" @bind-Value="ViewModel.Model.Specialisation" />
+
+
+    <MudText Typo="Typo.h6">Address & Contact</MudText>
+    <MudTextField Label="Organisation" For="@(() => ViewModel.Contact.Organisation)" @bind-Value="ViewModel.Contact.Organisation" />
+    <MudTextField Label="Street" For="@(() => ViewModel.Contact.Address.Street)" @bind-Value="ViewModel.Contact.Address.Street" />
+
+    <MudGrid>
+        <MudItem xs="12" sm="4">
+            <MudTextField Label="PostalCode" For="@(() => ViewModel.Contact.Address.PostalCode)" @bind-Value="ViewModel.Contact.Address.PostalCode" />
+        </MudItem>
+        <MudItem xs="12" sm="8">
+            <MudTextField Label="City" For="@(() => ViewModel.Contact.Address.City)" @bind-Value="ViewModel.Contact.Address.City" />
+        </MudItem>
+    </MudGrid>
+
+    <MudAutocomplete T="string" Label="Country" @bind-Value="ViewModel.Contact.Address.Country" SearchFunc="@SearchCountry"
+    ResetValueOnEmptyText="false" CoerceText="false" CoerceValue="true" SelectValueOnTab="true" />
+
+    <MudGrid>
+        <MudItem xs="12" md="6">
+            <MudTextField Label="Email" For="@(() => ViewModel.Contact.Email)" @bind-Value="ViewModel.Contact.Email" />
+        </MudItem>
+        <MudItem xs="12" md="6">
+            <MudTextField Label="PhoneNr" For="@(() => ViewModel.Contact.PhoneNr)" @bind-Value="ViewModel.Contact.PhoneNr" />
+        </MudItem>
+    </MudGrid>
+
+</MudForm>
+
+
+@code {
+    [Parameter]
+    public UserProfileViewModel ViewModel { get; set; }
+
+    MudForm form;
+
+
+    private async Task<IEnumerable<string>> SearchCountry(string value, CancellationToken ctk)
+    {
+        if (string.IsNullOrEmpty(value)) return CountryService.CountryNames;
+        return CountryService.CountryNames.Where(x => x.Contains(value, StringComparison.InvariantCultureIgnoreCase));
+    }
+
+}

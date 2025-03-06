@@ -1,0 +1,47 @@
+﻿@using iPath.UI.Components.Communities
+
+@inject IStringLocalizer T
+
+
+<MudDialog>
+	<DialogContent>
+		<div style="padding: 1em; width: 500px;">
+			<MudForm Spacing="4">
+				<MudTextField Label=@T["Name"] Variant="Variant.Filled" For="@(() => Model.Name)" @bind-Value="Model.Name" Immediate="true" />
+				<MudTextField Label=@T["Descritption"] Variant="Variant.Outlined" For="@(() => Model.Description)" @bind-Value="Model.Description" Lines="5" Immediate="true" />
+				<UserLoopkup Label=@T["Owner"] />
+			</MudForm>
+		</div>
+	</DialogContent>
+	<DialogActions>
+		<MudButton Color="Color.Primary" OnClick="Submit">@T["Save"]</MudButton>
+		<MudButton OnClick="Cancel">@T["Cancel"]</MudButton>
+	</DialogActions>
+</MudDialog>
+
+
+@code {
+	[CascadingParameter]
+	private IMudDialogInstance dlg { get; set; }
+
+	[CascadingParameter]
+	CascadingAppState appState { get; set; }
+
+	[Parameter]
+	public UpdateCommunityCommand Model { get; set; }
+
+	MudForm form;
+	bool success;
+	string[] errors = { };
+
+
+	private async Task Submit()
+	{
+		Model.OwnerId ??= appState.SessionUser.UserId;
+		dlg.Close(DialogResult.Ok(Model));
+    }
+
+
+    private void Cancel() => dlg.Cancel();
+
+}

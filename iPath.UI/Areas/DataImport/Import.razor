@@ -1,0 +1,283 @@
+﻿@page "/admin/import"
+@using Microsoft.AspNetCore.Authorization
+@using iPath.UI.Areas.BreadCrumbs
+@inherits DisposableComponentBase
+
+@attribute [Authorize(Roles = "Admin")]
+
+@inject IImportService srvExport;
+@inject IDbContextFactory<NewDB> fct;
+@inject BreadCrumbService srvBreadcumbs
+
+
+<MudText Typo="Typo.h3">Data Import</MudText>
+<p>Json Data Path: @srvExport.JsonDataPath</p>
+<MudDivider />
+
+<MudGrid>
+    <MudItem xs="12" sm="6" md="3">
+        <MudStack Spacing="4">
+            <MudText Typo="Typo.h4">Import</MudText>
+            <MudSwitch @bind-Value="deleteData" Label="Delete existing Data" />
+            <MudDivider />
+            <MudButton OnClick="ImportUsers" Variant="userButtonVar" Color="Color.Primary" Disabled="importRunning" EndIcon="UserIcon">@userText</MudButton>
+            <MudButton OnClick="ImportCommunities" Variant="communityButtonVar" Color="Color.Primary" Disabled="importRunning">@communityText</MudButton>
+            <MudButton OnClick="ImportGroups" Variant="groupButtonVar" Color="Color.Primary" Disabled="importRunning">@groupText</MudButton>
+
+            <MudDivider />
+            <MudSelect @bind-Value="nodeGroupId" Label="Group" Disabled="nodeImportDisabled">
+                <MudSelectItem Value="0">[All]</MudSelectItem>
+                @foreach (var g in groups)
+                {
+                    <MudSelectItem Value="g.Item1">@g.Item2</MudSelectItem>
+                }
+            </MudSelect>
+            <MudSwitch @bind-Value="reImportAllNodes" Label="re-import all Nodes" />
+            <MudButton OnClick="ImportNodes" Variant="nodeButtonVar" Color="Color.Primary" Disabled="@(importRunning || nodeImportDisabled)">Import Nodes</MudButton>
+            <MudButton OnClick="DeleteNodes" Variant="nodeButtonVar" Color="Color.Secondary" Disabled="@(importRunning || nodeImportDisabled)">@btnDeleteNodesText</MudButton>
+            <p>@nodeMsg</p>
+        </MudStack>
+    </MudItem>
+    <MudItem xs="12" sm="6" md="9">
+        <MudText Typo="Typo.h4">Progress</MudText>
+        <MudProgressLinear Color="Color.Tertiary" Striped="true" Size="Size.Large" Value="@progress">@progMsg</MudProgressLinear>
+
+        <MudText Typo="Typo.h4">Log</MudText>
+        <MudText>@((MarkupString)Message)</MudText>
+    </MudItem>
+</MudGrid>
+
+
+
+@code {
+    string Message = "";
+    string TaskTitle = "Log";
+
+    private int progress = 0;
+    private string progMsg;
+    private bool importRunning;
+    private bool deleteData = false;
+
+
+    private bool usersImported;
+    private Variant userButtonVar = Variant.Outlined;
+    private string userText = "Users";
+
+    private bool communitiesImported;
+    private Variant communityButtonVar = Variant.Outlined;
+    private string communityText = "Communities";
+
+    private bool groupsImported;
+    private Variant groupButtonVar = Variant.Outlined;
+    private string groupText = "Groups";
+
+    private Variant nodeButtonVar = Variant.Outlined;
+    private string nodeText = "Nodes";
+    private int nodeGroupId = 1000;
+    private List<Tuple<int, string>> groups = new();
+    private bool nodeImportDisabled = true;
+    private string nodeMsg;
+    bool reImportAllNodes = false;
+    string btnDeleteNodesText = "Delete all nodes";
+
+    protected override async Task OnInitializedAsync()
+    {
+        srvBreadcumbs.LoadItems([new("Home", "/"), new("Admin", "/admin"), new("Data-Import", null)]);
+
+        using var ctx = await fct.CreateDbContextAsync();
+        var cu = await ctx.Users.CountAsync();
+        if( cu > 0 )
+        {
+            usersImported = true;
+            userButtonVar = Variant.Filled;
+            userText = $"Users ({cu})";
+        }
+        var cc = await ctx.Communities.CountAsync();
+        if (cc > 0)
+        {
+            communitiesImported = true;
+            communityButtonVar = Variant.Filled;
+            communityText = $"Communities ({cc})";
+        }
+        var cg = await ctx.Groups.CountAsync();
+        if (cg > 0)
+        {
+            groupsImported = true;
+            groupButtonVar = Variant.Filled;
+            groupText = $"Groups ({cg})";
+        }
+
+        var cn = await ctx.Nodes.CountAsync();
+        if (cn > 0)
+        {
+            btnDeleteNodesText = $"Delete {cn} nodes";
+        }
+
+        // check if not import is possible
+        if( !System.IO.Directory.Exists(srvExport.JsonDataPath))
+        {
+            nodeMsg = $"data path does not exist: {srvExport.JsonDataPath}";
+            nodeImportDisabled = true;
+        }
+        else
+        {
+            nodeImportDisabled = false;
+            groups = await ctx.Groups.AsNoTracking().OrderBy(g => g.Name).Select(g => new Tuple<int, string>(g.Id, g.Name)).ToListAsync();
+        }
+
+        // init sqlite bulk
+        SQLitePCL.Batteries.Init();
+    }
+
+
+
+
+    async Task ImportUsers()
+    {
+        progress = 0;
+        importRunning = true;
+        srvExport.MessageEvent += OnMessage;
+        srvExport.ProgressEvent += OnProgress;
+        Message = "starting user import ... <br />";
+
+        try
+        {
+            await srvExport.ImportUsersAsync(deleteData, CancellationToken);
+            usersImported = true;
+            userButtonVar = Variant.Filled;
+            progress = 0;
+        }
+        catch(Exception ex)
+        {
+            Message += "<br />Error: " + ex.Message + "<br />";
+            if (ex.InnerException != null) Message += "<br />Inner Exception: " + ex.InnerException.Message + "<br />";
+        }
+        finally
+        {
+            srvExport.MessageEvent -= OnMessage;
+            srvExport.ProgressEvent -= OnProgress;
+            importRunning = false;
+        }
+    }
+    object UserIcon => usersImported ? null : Icons.Material.Filled.Check;
+
+
+    async Task ImportCommunities()
+    {
+        progress = 0;
+        importRunning = true;
+        srvExport.MessageEvent += OnMessage;
+        srvExport.ProgressEvent += OnProgress;
+        Message = "starting user import ... <br />";
+
+        try
+        {
+            using var ctx = await fct.CreateDbContextAsync();
+            await srvExport.ImportCommunitiesAsync(deleteData, CancellationToken);
+            communitiesImported = true;
+            communityButtonVar = Variant.Filled;
+            communityText = $"Communities ({ctx.Communities.Count()})";
+            progress = 0;
+        }
+        catch (Exception ex)
+        {
+            Message += "<br />Error: " + ex.Message + "<br />";
+            if( ex.InnerException != null ) Message += "<br />Inner Exception: " + ex.InnerException.Message + "<br />";
+        }
+        finally
+        {
+            srvExport.MessageEvent -= OnMessage;
+            srvExport.ProgressEvent -= OnProgress;
+            importRunning = false;
+        }
+    }
+
+    async Task ImportGroups()
+    {
+        progress = 0;
+        importRunning = true;
+        srvExport.MessageEvent += OnMessage;
+        srvExport.ProgressEvent += OnProgress;
+        Message = "starting group import ... <br />";
+
+        try
+        {
+            using var ctx = await fct.CreateDbContextAsync();
+            await srvExport.ImportGroupsAsync(deleteData, CancellationToken);
+            groupsImported = true;
+            groupButtonVar = Variant.Filled;
+            groupText = $"Groups ({ctx.Groups.Count()})";
+            progress = 0;
+            await OnInitializedAsync();
+        }
+        catch (Exception ex)
+        {
+            Message += "<br />Error: " + ex.Message + "<br />";
+            if (ex.InnerException != null) Message += "<br />Inner Exception: " + ex.InnerException.Message + "<br />";
+        }
+        finally
+        {
+            srvExport.MessageEvent -= OnMessage;
+            srvExport.ProgressEvent -= OnProgress;
+            importRunning = false;
+        }
+    }
+
+
+    async Task ImportNodes()
+    {
+        progress = 0;
+        importRunning = true;
+        srvExport.MessageEvent += OnMessage;
+        srvExport.ProgressEvent += OnProgress;
+        Message = "starting import of " + (nodeGroupId == 0 ? "all groups" : $"group #{nodeGroupId}") + " ... <br />";
+
+        try
+        {
+            HashSet<int> gids = nodeGroupId == 0 ? null! : new HashSet<int>() { nodeGroupId };
+            await srvExport.ImportNodesAsync(deleteData, reImportAllNodes, gids, CancellationToken);
+            nodeButtonVar = Variant.Filled;
+            progress = 0;
+        }
+        catch (Exception ex)
+        {
+            Message += "<br />Error: " + ex.Message + "<br />";
+            if (ex.InnerException != null) Message += "<br />Inner Exception: " + ex.InnerException.Message + "<br />";
+            Message += "<pre><code>" + ex.StackTrace.ToString() + "</code></pre>";
+        }
+        finally
+        {
+            srvExport.MessageEvent -= OnMessage;
+            srvExport.ProgressEvent -= OnProgress;
+            importRunning = false;
+        }
+    }
+
+
+    async Task DeleteNodes()
+    {
+        importRunning = true;
+        using var ctx = await fct.CreateDbContextAsync();
+        var c = await ctx.Nodes.CountAsync();
+        Message = $"deleting all {c} nodes ... ";
+        await ctx.Nodes.Where(n => !n.RootNodeId.HasValue).ExecuteDeleteAsync();
+        Message += "done";
+        importRunning = false;
+    }
+
+
+    void OnMessage(object sender, MessageEventArgs e)
+    {
+        Message += e.Message + "<br />";
+        StateHasChanged();
+    }
+
+    void OnProgress(object sender, iPath2.DataImport.ProgressEventArgs e)
+    {
+        progress = e.Progress;
+        progMsg = e.Message;
+        StateHasChanged();
+    }
+}
+
+

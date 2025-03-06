@@ -1,0 +1,77 @@
+﻿@using iPath.Application.Querying
+@using iPath.UI.Areas.DataAccess
+
+@inject IDataAccess srvData
+@inject IDataCache srvCache
+@inject IDialogService srvDialog
+
+
+<MudTable ServerData="ServerReload" @ref="table"
+RowsPerPage="25"
+Bordered="false" Dense="true" Hover="true"
+Class="ipath_table">
+    <HeaderContent>
+        <MudTh><MudTableSortLabel SortLabel="Id" T="NodeListDTO" InitialDirection="SortDirection.Descending">Id</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortLabel="Description.Title" T="NodeListDTO">Title</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortLabel="Owner.Username" T="NodeListDTO">Sender</MudTableSortLabel></MudTh>
+        <MudTh><MudTableSortLabel SortLabel="CreatedOn" T="NodeListDTO">Date</MudTableSortLabel></MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Id" Class="ipath_table_fixed">@context.Id</MudTd>
+        <MudTd DataLabel="Name">
+            <b><MudLink Href=@($"/node/{context.Id}")>@context.Title</MudLink></b>
+            <div>@context.CaseType</div>
+        </MudTd>
+        <MudTd DataLabel="Cases"><MudLink OnClick="@(() => ShowUserProfile(context.Owner.UserId))">@context.Owner.Username</MudLink></MudTd>
+        <MudTd DataLabel="Cases">@context.CreatedOn.ToShortDateString()</MudTd>
+    </RowTemplate>
+    <NoRecordsContent>
+        <MudText>No matching records found</MudText>
+    </NoRecordsContent>
+    <LoadingContent>
+        <MudText>Loading...</MudText>
+    </LoadingContent>
+    <PagerContent>
+        <MudTablePager />
+    </PagerContent>
+</MudTable>
+
+
+
+@code {
+    [CascadingParameter]
+    CascadingAppState appState { get; set; }
+
+    private MudTable<NodeListDTO> table;
+
+
+    private async Task<TableData<NodeListDTO>> ServerReload(TableState state, CancellationToken token)
+    {
+        var request = new GetRecentlyVisitedNodesQuery()
+            {
+                PageSize = state.PageSize,
+                Page = state.Page,
+                UserId = appState.SessionUser.UserId
+            };
+
+        if (!string.IsNullOrEmpty(state.SortLabel))
+        {
+            request.SortDefinitions.Add(new SortDefinition { SortColumn = state.SortLabel, SortAscending = (state.SortDirection == SortDirection.Ascending) });
+        }
+
+        var resp = await srvData.Send(request);
+        if (resp.Success)
+        {
+            return new TableData<NodeListDTO>() { TotalItems = resp.TotalItemsCount, Items = resp.Data };
+        }
+        else
+        {
+            return new TableData<NodeListDTO>();
+        }
+    }
+
+    async Task ShowUserProfile(int UserId)
+    {
+        await srvDialog.ShowProfile(await srvCache.GetProfileAsync(UserId));
+    }
+}

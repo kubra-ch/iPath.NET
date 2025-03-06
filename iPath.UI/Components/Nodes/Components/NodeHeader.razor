@@ -1,0 +1,54 @@
+﻿@using iPath.UI.Components.Nodes.ViewModels
+
+<div class="ipath_node_header">
+	<div class="ipath_header_title">@vm.Model.Description.Title</div>
+	<div class="ipath_header_actions">
+		<MudIconButton OnClick="vm.GoPrevious" Icon="@Icons.Material.Filled.ArrowLeft" Size="Size.Small" Title="Previous" />
+		<MudIconButton OnClick="vm.GoUp" Icon="@Icons.Material.Filled.ArrowDropUp" Size="Size.Small" Title="Up" />
+		<MudIconButton OnClick="vm.GoNext" Icon="@Icons.Material.Filled.ArrowRight" Size="Size.Small" Title="Next" />
+	</div>
+	<div class="ipath_header_toolbar">
+		<MudToolBar>
+			<MudIconButton Icon="@Icons.Material.Outlined.Edit" OnClick="OnEdit" Disabled="@(!vm.EditEnabled)" />
+			<MudIconButton Icon="@Icons.Material.Outlined.Save" OnClick="OnSave" hidden="@hideSave" />
+			<MudIconButton Icon="@Icons.Material.Outlined.Cancel" OnClick="OnCancel" hidden="@hideSave">Cancel</MudIconButton>
+			<MudIconButton Icon="@Icons.Material.Outlined.Delete" OnClick="OnDelete" Disabled="@(!vm.EditEnabled)" />
+			<MudIconButton Icon="@Icons.Material.Outlined.AttachFile" OnClick="@(() => OnNodeCommand.InvokeAsync(eNodeCommands.AddAttachment))" />
+			<MudIconButton Icon="@Icons.Material.Outlined.Comment" OnClick="@(() => OnNodeCommand.InvokeAsync(eNodeCommands.AddAnnotation))" />
+		</MudToolBar>
+	</div>
+</div>
+
+@code {
+	[Parameter]
+	public NodeDetailViewModel vm { get; set; }
+
+	[Parameter]
+	public EventCallback<eNodeCommands> OnNodeCommand { get; set; }
+
+	bool hideSave = true;
+
+	async Task OnEdit()
+	{
+		hideSave = false;
+		await OnNodeCommand.InvokeAsync(eNodeCommands.Edit);
+	}
+
+	async Task OnSave()
+	{
+		await OnNodeCommand.InvokeAsync(eNodeCommands.Save);
+		hideSave = true;
+	}
+
+	async Task OnCancel()
+	{
+		await OnNodeCommand.InvokeAsync(eNodeCommands.Cancel);
+		hideSave = true;
+	}
+
+	async Task OnDelete()
+	{
+		await OnNodeCommand.InvokeAsync(eNodeCommands.Delete);
+		hideSave = true;
+	}
+}

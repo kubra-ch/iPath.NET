@@ -1,0 +1,85 @@
+﻿@using iPath.UI.Components.Users.ViewModels
+
+@inject UserProfileViewModel vm
+@inject ISnackbar snackbar
+
+<h3>Notifications</h3>
+
+@if( vm.Model != null )
+{
+    <MudDataGrid Items="data" Filterable="false" Height="600px" Virtualize="true" FixedHeader="true"
+    Dense="true" Hover="true"
+    ReadOnly="false" EditMode="DataGridEditMode.Cell">
+        <Columns>
+            <PropertyColumn Property="x => x.Groupname" Title="Group" Sortable="true" />
+            <PropertyColumn Property="x => x.NotifyNewCase" Title="New case" Editable="true">
+                <EditTemplate><MudCheckBox @bind-Value="context.Item.NotifyNewCase" /></EditTemplate>
+            </PropertyColumn>
+            <PropertyColumn Property="x => x.NotifyNewAnnotation" Title="New annotation" Editable="true">
+                <EditTemplate><MudCheckBox @bind-Value="context.Item.NotifyNewAnnotation" /></EditTemplate>
+            </PropertyColumn>
+            <PropertyColumn Property="x => x.NotifyNewAnnotationOnMyCase" Title="Nnoation on my case" Editable="true">
+                <EditTemplate><MudCheckBox @bind-Value="context.Item.NotifyNewAnnotationOnMyCase" /></EditTemplate>
+            </PropertyColumn>
+        </Columns>
+    </MudDataGrid>
+
+    <div style="margin-top: 1em;">
+        <MudStack Row="true">
+            <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Save">Save</MudButton>
+            <MudButton Color="Color.Primary" Variant="Variant.Outlined" OnClick="Cancel">Cancel</MudButton>
+            <MudButton Color="Color.Error" Variant="Variant.Outlined" OnClick="ClearAll">Clear All</MudButton>
+        </MudStack>
+    </div>
+}
+
+
+@code {
+    [Parameter]
+    public int UserId { get; set; }
+
+    List<GroupMemberModel> data;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (UserId > 0)
+        {
+            await vm.LoadUserAsync(UserId);
+            data = await vm.GetMembershipsAsync(true);
+        }
+        else
+        {
+            data = new();
+        }
+    }
+
+
+    async Task Save()
+    {
+        if( UserId > 0)
+        {
+            var resp = await vm.SaveNotificationsAsync(data);
+            snackbar.Add("Notifications saved", Severity.Success);
+        }
+    }
+
+    async Task Cancel()
+    {
+        if (UserId > 0)
+        {
+            data = await vm.GetMembershipsAsync(true);
+            snackbar.Add("Notifications relaoded", Severity.Info);
+        }
+    }
+
+    async Task ClearAll()
+    {
+        if (UserId > 0)
+        {
+            data.ForEach(x => x.ClearAll());
+            var resp = await vm.SaveNotificationsAsync(data);
+            snackbar.Add("Notifications cleared", Severity.Success);
+        }
+    }
+
+}

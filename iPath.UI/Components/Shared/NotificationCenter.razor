@@ -1,0 +1,126 @@
+﻿@using Microsoft.AspNetCore.SignalR.Client
+@using iPath.UI.Areas.Authentication
+@using iPath.Application.Hubs
+
+@inject NavigationManager nm
+@inject TokenCache tkCache
+@inject ISnackbar snackbar
+@inject IDbContextFactory<NewDB> fct;
+
+
+<MudBadge Content="Count" Overlap="true" Visible="@Visible">
+    <MudIcon Icon="@Icon" Title="Favorite" Size="Size.Large" @onclick="ToggleOpen" />
+</MudBadge>
+
+<MudPopover Open="@_open" Fixed="true" Class="px-4 pt-4" AnchorOrigin="Origin.TopRight">
+    <MudStack Row="true">
+        <MudText>Notifications</MudText>
+        <MudSpacer />
+        <MudIcon Icon="@Icons.Material.Rounded.Close" Size="Size.Small" @onclick="ClosePopOver" />
+    </MudStack>
+    @foreach(var m in Messages)
+    {
+        <MudAlert Severity="Severity.Info" OnClick="@(() => MarkAsRead(m))">@((MarkupString)m.Message)</MudAlert>
+    }
+</MudPopover>
+
+
+
+@code {
+    [CascadingParameter]
+    public CascadingAppState appState { get; set; }
+
+    private bool _open;
+
+    private void ToggleOpen() => _open = !_open;
+    private void ClosePopOver() => _open = false;
+
+    int Count => Messages.Count();
+    bool Visible => Count > 0;
+    string Icon => Count == 0 ? Icons.Material.Outlined.NotificationsNone : Icons.Material.Outlined.NotificationsActive;
+    int currentUserid = 0;
+
+    List<NotificationMessage> Messages = new();
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            currentUserid = appState.SessionUser!.UserId;
+
+            // load pending message
+            using var ctx = await fct.CreateDbContextAsync();
+            var notifications = await ctx.Set<UserNotification>().AsNoTracking()
+                .Where(n => n.UserId == currentUserid && !n.Seen)
+                .OrderByDescending(n => n.Date)
+                .Take(50)
+                .ToListAsync();
+
+            foreach( var n in notifications)
+            {
+                var msg = new NotificationMessage()
+                    {
+                        Id = n.Id,
+                        Message = n.Message,
+                        CreatedOn = n.Date
+                    };
+                Messages.Add(msg);
+            }
+
+            // init signalR
+            await StartHubConnection();
+            SetRefreshDataListener();
+        }
+        catch (Exception ex)
+        {
+            snackbar.Add("cannot connect to notification updates", Severity.Error);
+            Console.WriteLine(ex.Message);
+        }
+    }
+
+    async Task MarkAsRead(NotificationMessage msg)
+    {
+        using var ctx = await fct.CreateDbContextAsync();
+        await ctx.Set<UserNotification>().Where(x => x.Id == msg.Id).ExecuteUpdateAsync(setters => setters.SetProperty(x => x.Seen, true));
+        Messages.Remove(msg);
+        ClosePopOver();
+    }
+
+
+
+    #region "-- SignalR --"
+
+    private HubConnection _hub;
+
+
+    private async Task StartHubConnection()
+    {
+        var hubUrl = nm.ToAbsoluteUri(NotificationHub.url);
+        _hub = new HubConnectionBuilder()
+                        .WithUrl(hubUrl, opts =>
+                        {
+                            opts.UseStatefulReconnect = true;
+                            opts.AccessTokenProvider = async () => tkCache.Token;
+                        })
+                        .Build();
+
+        await _hub.StartAsync();
+    }
+
+
+    private void SetRefreshDataListener()
+    {
+        _hub.On<NotificationMessage>(NotificationHub.method, (msg) =>
+        {
+            if (msg != null && msg.ReceiverUserId == currentUserid)
+            {
+                Messages.Insert(0, msg);
+                InvokeAsync(() => StateHasChanged());
+            }
+        });
+    }
+
+    #endregion
+
+}

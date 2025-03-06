@@ -1,0 +1,59 @@
+﻿@using iPath.Application.SnomedCT
+@inject SnomedClient sct
+
+<MudAutocomplete T="CodeableConcept"
+@bind-Value="_value"
+@bind-Text="inputText"
+SearchFunc="Search"
+Variant="Variant.Outlined"
+Label="@Label"
+ShowProgressIndicator="true"
+CoerceText="true"
+Clearable="true" />
+
+<p>@progress</p>
+
+<p>
+    <b>selection: @result</b>
+</p>
+
+
+@code {
+    [Parameter]
+    public string? FocusConcept { get; set; }
+
+    [Parameter]
+    public bool AllowEmptySearch { get; set; }
+
+    [Parameter]
+    public string? Label { get; set; }
+
+    CodeableConcept _value = default!;
+    string inputText;
+
+    string progress = "";
+    string result => _value is null ? inputText : $"{_value.Code} - {_value.Display}";
+
+    private async Task<IEnumerable<CodeableConcept>> Search(string value, CancellationToken token)
+    {
+        if (AllowEmptySearch || (value != null && value.Length > 3))
+        {
+            progress = "searching ...";
+
+            var valueset = "http://snomed.info/sct?fhir_vs=ecl/<138875005"; // any snomed concept
+            if (!string.IsNullOrEmpty(FocusConcept))
+            {
+                valueset = $"http://snomed.info/sct?fhir_vs=ecl/<{FocusConcept}";
+            }
+
+            var concepts = await sct.Lookup(valueset, value);
+
+            progress = $"found {concepts.Count} results";
+            return concepts;
+        }
+
+        progress = "please type at least 3 characters";
+        return new List<CodeableConcept>();
+    }
+
+}

@@ -1,0 +1,118 @@
+﻿@using System.ComponentModel.DataAnnotations
+@using System.Text.RegularExpressions
+@using iPath.UI.Components.Users.ViewModels
+
+@inject UserProfileViewModel vm
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">User-Account @vm.User?.Username</MudText>
+    </TitleContent>
+    <DialogContent>
+        @if (vm.User is null)
+        {
+            <MudProgressCircular Indeterminate="true"></MudProgressCircular>
+        }
+        else
+        {
+            <div style="padding: 1em; width: 500px;" >
+                <MudForm Spacing="4">
+                    <MudText Typo="Typo.h6">User Profile</MudText>
+                    <MudTextField Label="Username" For="@(() => newUsername)" @bind-Value="newUsername" Immediate="true" />
+                    <MudTextField Label="Email" For="@(() => newEmail)" @bind-Value="newEmail" Immediate="true" />
+                    <MudTextField Label="Password" InputType="InputType.Password" @bind-Value="newPassword" Immediate="true" />
+                </MudForm>
+
+                <iPath.UI.Components.Users.Components.UserProfileForm Model="@vm.Model" />
+            </div>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="Color.Primary" OnClick="Submit">Save</MudButton>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+    </DialogActions>
+</MudDialog>
+
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance dlg { get; set; }
+
+    [Parameter]
+    public int UserId { get; set; }
+
+    MudForm form;
+    bool success;
+    string[] errors = { };
+
+    // local placeholders
+    private string newUsername;
+    [EmailAddress]
+    private string newEmail;
+    private string newPassword;
+
+
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (UserId > 0)
+        {
+            var resp = await vm.LoadUserAsync(UserId);
+            if( !resp.Success)
+            {
+                return;    
+            }
+
+            newUsername = vm.User.Username;
+            newEmail = vm.User.Email;
+            newPassword = "xxx";
+
+            // ensure that a profile is created
+            vm.User.Profile ??= new();;
+        }
+    }
+
+
+    private async Task Submit()
+    {
+        if (vm.User.Username != newUsername) await vm.UpdateUsername(newUsername);
+        if (vm.User.Email != newEmail) await vm.UpdateEmail(newEmail);
+        if (newPassword != "xxx") await vm.UpdatePassword(newPassword);
+
+        var resp = await vm.SaveProfileAsync();
+
+        dlg.Close(DialogResult.Ok(true));
+    }
+
+
+    private void Cancel() => dlg.Cancel();
+
+
+    public class GroupMemberModel
+    {
+        public GroupMember member { get; set; }
+        public string Groupname { get; set; }
+        public int GroupId { get; set; }
+
+        public bool IsMember
+        {
+            get => member.Role.HasFlag(eMemberRole.User);
+            set => member.Role = value ? eMemberRole.User : eMemberRole.None;
+        }
+
+        public bool IsModerator
+        {
+            get => member.Role.HasFlag(eMemberRole.Moderator);
+            set => member.Role = value ? eMemberRole.Moderator : eMemberRole.None;
+        } 
+
+        public bool IsGuest
+        {
+            get => member.Role.HasFlag(eMemberRole.Guest);
+            set => member.Role = value ? eMemberRole.Guest : eMemberRole.None;
+        }
+
+        public eMemberRole Role => member.Role;
+    }
+
+}

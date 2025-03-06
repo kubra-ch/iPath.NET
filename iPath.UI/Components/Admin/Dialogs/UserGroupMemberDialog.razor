@@ -1,0 +1,100 @@
+﻿@using iPath.UI.Components.Users.ViewModels
+
+@inject UserProfileViewModel vm
+
+@if( vm.Model is null )
+{
+    <MudProgressCircular />
+}
+else
+{
+    <MudDialog>
+        <TitleContent>
+            <MudText Typo="Typo.h6">Group Memebership for @vm.Model.Username</MudText>
+            <MudSwitch Label="show active only" @bind-Value="@ShowActiveOnly" />
+        </TitleContent>
+        <DialogContent>
+            <MudDataGrid @ref="dataGrid" Items="VisibleItems" Filterable="false"
+            Dense="true" Hover="true"
+            ReadOnly="false" EditMode="DataGridEditMode.Cell">
+                <Columns>
+                    <PropertyColumn Property="x => x.Groupname" Title="Group" Sortable="true" />
+                    <PropertyColumn Property="x => x.IsMember" Title="Member" Editable="true">
+                        <EditTemplate><MudCheckBox @bind-Value="context.Item.IsMember" /></EditTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.IsModerator" Title="Moderator" Editable="true">
+                        <EditTemplate><MudCheckBox @bind-Value="context.Item.IsModerator" /></EditTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.IsGuest" Title="Guest" Editable="true">
+                        <EditTemplate><MudCheckBox @bind-Value="context.Item.IsGuest" /></EditTemplate>
+                    </PropertyColumn>
+                </Columns>
+            </MudDataGrid>
+        </DialogContent>
+        <DialogActions>
+            <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Submit">Save</MudButton>
+            <MudButton OnClick="Cancel">Cancel</MudButton>
+        </DialogActions>
+    </MudDialog>
+}
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance dlg { get; set; }
+
+    [Parameter]
+    public int UserId { get; set; }
+
+
+    private readonly DialogOptions _opts = new() { FullScreen = true, CloseButton = true };
+
+    private User usr { get; set; }
+
+    MudDataGrid<GroupMemberModel> dataGrid;
+    List<GroupMemberModel> data;
+
+    private bool _showActiveOnly;
+    private bool ShowActiveOnly
+    {
+        get => _showActiveOnly;
+        set
+        {
+            _showActiveOnly = value;
+            VisibleItems = _showActiveOnly ? data.Where(m => m.Role != eMemberRole.None).ToList() : data;
+        }
+    }
+    List<GroupMemberModel> VisibleItems = new();
+
+    string searchString = null;
+
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (UserId > 0)
+        {
+            await vm.LoadUserAsync(UserId);
+            data = await vm.GetMembershipsAsync(false);
+            ShowActiveOnly = true;
+            await dlg.SetOptionsAsync(_opts);
+        }
+        else
+        {
+            data = new();
+            usr = null;
+        }
+    }
+
+    private async Task Submit()
+    {
+        if (UserId > 0)
+        {
+            var resp = await vm.SaveMembershipAsync(data);
+        }
+        dlg.Close(DialogResult.Ok(true));
+    }
+
+
+    private void Cancel() => dlg.Cancel();
+      
+
+}

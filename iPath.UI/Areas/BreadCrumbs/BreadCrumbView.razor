@@ -1,0 +1,31 @@
+﻿@using MudBlazor
+@using System.ComponentModel
+@using iPath.UI.Areas.BreadCrumbs
+@implements IDisposable
+
+@inject BreadCrumbService srv
+
+
+@if (srv != null && srv.HasBreadCrumbs)
+{
+    <div class="ipath_breadcrumbs">
+        <MudBreadcrumbs Items="@srv.Breadcrumbs" />
+    </div>
+}
+
+@code {
+    protected override void OnInitialized()
+    {
+        srv.PropertyChanged += PropertyChangedHandler;
+    }
+
+    void PropertyChangedHandler(object sender, PropertyChangedEventArgs e)
+    {
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        srv.PropertyChanged -= PropertyChangedHandler;
+    }
+}

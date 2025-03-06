@@ -1,0 +1,136 @@
+﻿@page "/admin/users"
+@using iPath.UI.Components.Admin.Dialogs
+
+@attribute [Authorize(Roles = "Admin")]
+
+@inject NewDB ctx
+@inject IDialogService srvDialog
+@inject BreadCrumbService srvBreadcumbs
+
+
+<h3 class="ipath_topheader">User Administration</h3>
+
+<AuthorizeView Roles="Admin" Context="auth">
+	<NotAuthorized>
+		<NotAuthorizedWarning />
+	</NotAuthorized>
+	<Authorized>
+
+		<MudTable ServerData="ServerReload" Dense="true" Hover="true" @ref="table">
+			<ToolBarContent>
+				<MudText Typo="Typo.h6">Users</MudText>
+				<MudSpacer />
+				<MudTextField T="string" ValueChanged="@(s=>OnSearch(s))" Placeholder="Search" Adornment="Adornment.Start"
+							  AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+			</ToolBarContent>
+			<HeaderContent>
+				<MudTh><MudTableSortLabel SortLabel="Id" T="User" InitialDirection="SortDirection.Ascending">Id</MudTableSortLabel></MudTh>
+				<MudTh><MudTableSortLabel SortLabel="Username" T="User">Username</MudTableSortLabel></MudTh>
+				<MudTh><MudTableSortLabel SortLabel="Email" T="User">Email</MudTableSortLabel></MudTh>
+				<MudTh><MudTableSortLabel SortLabel="FullName" T="User">Name</MudTableSortLabel></MudTh>
+				<MudTh><MudTableSortLabel SortLabel="Country" T="User">Country</MudTableSortLabel></MudTh>
+				<MudTh><MudTableSortLabel SortLabel="Specialisation" T="User">Specialisation</MudTableSortLabel></MudTh>
+				<MudTh></MudTh>
+			</HeaderContent>
+			<RowTemplate>
+				<MudTd DataLabel="Id">@context.Id</MudTd>
+				<MudTd DataLabel="Username">@context.Username</MudTd>
+				<MudTd DataLabel="Email">@context.Email</MudTd>
+				<MudTd DataLabel="Country">@context.Profile.FamilyName @context.Profile.FirstName</MudTd>
+				<MudTd DataLabel="Country">@context.Profile.ContactDetails?.FirstOrDefault()?.Address.Country</MudTd>
+				<MudTd DataLabel="Specialisation">@context.Profile.Specialisation</MudTd>
+				<MudTd>
+					<MudIconButton OnClick=@(() => Edit(context)) Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" aria-label="edit" />
+					<MudIconButton OnClick=@(() => Membership(context)) Icon="@Icons.Material.Filled.GroupAdd" Color="Color.Primary" aria-label="group membership" />
+				</MudTd>
+			</RowTemplate>
+			<NoRecordsContent>
+				<MudText>No matching records found</MudText>
+			</NoRecordsContent>
+			<LoadingContent>
+				<MudText>Loading...</MudText>
+			</LoadingContent>
+			<PagerContent>
+				<MudTablePager />
+			</PagerContent>
+		</MudTable>
+
+	</Authorized>
+</AuthorizeView>
+
+
+@code {
+	[CascadingParameter]
+	CascadingAppState appState { get; set; }
+
+	protected override async Task OnInitializedAsync()
+	{
+		srvBreadcumbs.LoadItems([
+			new("Home", "/"),
+			new("Admin", "/admin"),
+			new("Users", null)
+		]);
+	}
+
+
+    private MudTable<User> table;
+    private string searchString;
+
+    private async Task<TableData<User>> ServerReload(TableState state, CancellationToken token)
+    {
+        var q = ctx.Users.AsNoTracking().AsQueryable();
+        if( !string.IsNullOrEmpty(searchString) )
+        {
+            q = q.Where(u => u.Username.Contains(searchString) || u.Email.Contains(searchString));
+        }
+
+        var totalItems = await q.CountAsync();
+
+        if (!string.IsNullOrEmpty(state.SortLabel))
+        {
+            if (state.SortLabel == "Specialisation")
+            {
+                q = q.OrderByDirection(state.SortDirection, u => u.Profile.Specialisation);
+            }
+            else if (state.SortLabel == "Country")
+            {
+                q = q.OrderByDirection(state.SortDirection, u => u.Profile.ContactDetails.FirstOrDefault().Address.Country);
+            }
+            else if (state.SortLabel == "FullName")
+            {
+                q = q.OrderByDirection(state.SortDirection, u => u.Profile.FamilyName).ThenBy(u => u.Profile.FirstName);
+            }
+            else
+            {
+                var sort = state.SortLabel + " " + (state.SortDirection == SortDirection.Ascending ? "ASC" : "DESC");
+                q = q.OrderBy(sort);                
+            }
+        }
+
+        var items = await q.Skip(state.Page * state.PageSize).Take(state.PageSize).ToArrayAsync();
+
+        return new TableData<User>() { TotalItems = totalItems, Items = items };
+    }
+
+    private void OnSearch(string text)
+    {
+        searchString = text;
+        table.ReloadServerData();
+    }
+
+
+    async Task Edit(User usr)
+    {
+        var parameters = new DialogParameters<UserEditDialog> { { x => x.UserId, usr.Id } };
+        var dialog = await srvDialog.ShowAsync<UserEditDialog>("User Profile", parameters);
+        var result = await dialog.Result;
+        table.ReloadServerData();
+    }
+
+    async Task Membership(User usr)
+    {
+        var parameters = new DialogParameters<UserGroupMemberDialog> { { x => x.UserId, usr.Id } };
+        var dialog = await srvDialog.ShowAsync<UserGroupMemberDialog>("User Profile", parameters);
+        var result = await dialog.Result;
+    }
+}

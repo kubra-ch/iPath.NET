@@ -1,0 +1,46 @@
+﻿@using iPath.UI.Components.Nodes.ViewModels
+
+
+<MudFocusTrap DefaultFocus="DefaultFocus.FirstChild">
+	<MudDialog ContentStyle="width: 720px; height: 300px;">
+		<TitleContent>
+			<MudText Typo="Typo.h6">Create a new case</MudText>
+		</TitleContent>
+		<DialogContent>
+			<MudTextField AutoGrow="true" @bind-Value="Model.Description.Title" Immediate="true" Label="Case Title" />
+			<MudTextField AutoGrow="true" @bind-Value="Model.Description.Subtitle" Immediate="true" Label="Sub-Title" />
+			<MudGrid>
+				<MudItem xs="12" md="6">
+					<MudTextField AutoGrow="true" @bind-Value="Model.Description.CaseType" Immediate="true" Label="Cate Type" />
+				</MudItem>
+				<MudItem xs="12" md="6">
+					<MudTextField AutoGrow="true" @bind-Value="Model.Description.AccessionNo" Immediate="true" Label="Accession No" />
+				</MudItem>
+			</MudGrid>
+			<MudTextField AutoGrow="true" Lines="5" @bind-Value="Model.Description.Text" Immediate="true" Label="Description" />
+		</DialogContent>
+		<DialogActions>
+			<MudButton Color="Color.Primary" OnClick="@Save" Variant="Variant.Filled">
+				Save
+			</MudButton>
+			<MudButton Color="Color.Error" OnClick="@Cancel" Variant="Variant.Filled">
+				Cancel
+			</MudButton>
+		</DialogActions>
+	</MudDialog>
+</MudFocusTrap>
+
+
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; }
+
+    [Parameter]
+    public NodeModel Model { get; set; } = NodeModel.CreateModel();
+
+    private void Save() => MudDialog.Close(DialogResult.Ok(Model));
+
+	private void Cancel() => MudDialog.Cancel();
+    
+}

@@ -1,0 +1,124 @@
+﻿@using iPath.UI.Components.Nodes.ViewModels
+@inject ISnackbar Snackbar
+@inject NodeDetailViewModel vm
+
+<MudDialog ContentStyle="width: 700px">
+    <TitleContent>
+        <MudText Typo="Typo.h6">upload images</MudText>
+    </TitleContent>
+    <DialogContent>
+
+        <MudStack Style="width: 100%">
+            <MudFileUpload T="IReadOnlyList<IBrowserFile>"
+            @ref="@_fileUpload"
+            OnFilesChanged="OnInputFileChanged"
+            AppendMultipleFiles
+            Hidden="@false"
+            Disabled="@uploading"
+            InputClass="absolute mud-width-full mud-height-full overflow-hidden z-10"
+            InputStyle="opacity:0"
+            tabindex="-1"
+            @ondrop="@ClearDragClass"
+            @ondragenter="@SetDragClass"
+            @ondragleave="@ClearDragClass"
+            @ondragend="@ClearDragClass">
+                <ActivatorContent>
+                    <MudPaper Height="300px" Outlined="true" Class="@_dragClass">
+                        <MudText Typo="Typo.h6">
+                            @Msg
+                        </MudText>
+                        @foreach (var file in _files)
+                        {
+                            <MudChip T="IBrowserFile" Color="Color.Dark" Text="@file.Name" tabindex="-1" />
+                        }
+                    </MudPaper>
+                </ActivatorContent>
+                <SelectedTemplate>
+                    <div>my custom content</div>
+                </SelectedTemplate>
+            </MudFileUpload>
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="Color.Primary" OnClick="@OpenFilePickerAsync" Variant="Variant.Filled">
+            Open file picker
+        </MudButton>
+        <MudButton Color="Color.Primary" Disabled="@(!_files.Any())" OnClick="@Upload" Variant="Variant.Filled">
+            Upload
+        </MudButton>
+        <MudButton Color="Color.Secondary" Disabled="@(!_files.Any())" OnClick="@Cancel" Variant="Variant.Filled">
+            Clear
+        </MudButton>
+        <MudButton Color="Color.Error" Disabled="@(!_files.Any())" OnClick="@ClearAsync" Variant="Variant.Filled">
+            Clear
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; }
+
+    [Parameter]
+    public NodeModel Model { get; set; }
+
+
+    string Msg = "Drag and drop files here or click";
+    bool uploading = false;
+
+    private const string DefaultDragClass = "relative rounded-lg border-2 border-dashed pa-4 mt-4 mud-width-full mud-height-full";
+    private string _dragClass = DefaultDragClass;
+
+    private readonly List<IBrowserFile> _files = new();
+    private MudFileUpload<IReadOnlyList<IBrowserFile>>? _fileUpload;
+
+    private async Task ClearAsync()
+    {
+        await (_fileUpload?.ClearAsync() ?? Task.CompletedTask);
+        ClearDragClass();
+    }
+
+    private Task OpenFilePickerAsync()
+        => _fileUpload?.OpenFilePickerAsync() ?? Task.CompletedTask;
+
+    private void OnInputFileChanged(InputFileChangeEventArgs e)
+    {
+        ClearDragClass();
+        var uploads = e.GetMultipleFiles();
+        _files.AddRange(uploads);
+    }
+
+    private void RemoveFile(MudChip<IBrowserFile> chip)
+    {
+        if( _files.Contains(chip.Value))
+        {
+            _files.Remove(chip.Value);
+        }
+    }
+
+    private async Task Upload()
+    {
+        uploading = true;
+        Msg = "Uploading Files ...";
+
+        foreach(var f in _files)
+        {
+            await vm.UploadFileAsync(f);
+        }
+
+        MudDialog.Close(true);
+    }
+
+    private void SetDragClass()
+        => _dragClass = $"{DefaultDragClass} mud-border-primary";
+
+    private async Task ClearDragClass() => _dragClass = DefaultDragClass;
+
+    private async Task Cancel()
+    {
+        MudDialog.Cancel();
+    }
+
+}

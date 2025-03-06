@@ -1,0 +1,23 @@
+﻿@page "/communities"
+@page "/communities/index"
+
+@inject BreadCrumbService srvBreadcumbs
+
+
+<h3>Communities</h3>
+
+
+
+@code {
+    [CascadingParameter]
+    CascadingAppState appState { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        srvBreadcumbs.LoadItems([
+            new("Home", "/"),
+            new("Communities", null)
+        ]);
+    }
+	
+}

@@ -1,0 +1,190 @@
+﻿@page "/node/{id:int}"
+@implements IDisposable
+
+@using iPath.UI.Components.Nodes.Components
+@using iPath.UI.Components.Nodes.Dialogs
+@using iPath.UI.Components.Nodes.ViewModels
+
+@inject IDataCache srvCache
+@inject IDialogService srvDialog
+@inject ISnackbar snackbar
+@inject NodeDetailViewModel vm
+@inject NavigationManager nm
+@inject BreadCrumbService srvBreadcumbs
+
+
+<AuthorizeView Context="auth">
+	<NotAuthorized>
+		please <MudLink Href="login">login</MudLink> to access your cases
+	</NotAuthorized>
+	<Authorized>
+
+
+		@if( vm.Model != null )
+		{
+			<NodeHeader vm="@vm" OnNodeCommand="NodeCommandHandler" />
+
+			@if (!EditMode)
+			{
+				<NodeDescriptionPanel vm="@vm" />
+			}
+			else
+			{
+				<NodeDescriptionSimple vm="@vm" OnNodeCommand="NodeCommandHandler" />
+			}
+
+
+			<MudDivider />
+			<NodeGallery vm="@vm" />
+
+			<MudDivider />
+			<NodeAnnotations vm="@vm" />
+		}
+
+	</Authorized>
+</AuthorizeView>
+
+
+@code {
+	private List<BreadcrumbItem> _breadcrumbs =
+            [
+		new("Home", href: "/"),
+        new("Administration", href: "/admin"),
+        new("Groups", href: null, disabled: true)
+	];
+
+
+	[Parameter]
+	public int id { get; set; }
+
+	[CascadingParameter]
+	CascadingAppState appState { get; set; }
+
+
+	private int? prevId;
+	private int? nextId;
+
+
+	private bool EditMode;
+
+
+	protected override async Task OnParametersSetAsync()
+	{
+		vm.PropertyChanged += PropertyChangedHandler;
+		await LoadNode();
+	}
+
+
+	private async Task LoadNode()
+	{
+		await vm.LoadNodeAync(id, appState);
+		await vm.SetNodeVisitedAync();
+
+		if( vm.Model!= null && vm.Model.Group != null )
+		{
+			srvBreadcumbs.LoadItems([
+				new("Home", "/"),
+				new("Groups", "/groups"),
+				new(vm.Model.Group.Name.ShortenTo(30), "/group/"+ vm.Model.Group.Id, translatable: false),
+				new(vm.Model.Description.Title.ShortenTo(30), null, translatable: false)
+			]);
+		}
+		else
+		{
+			srvBreadcumbs.LoadItems([new("Home", "/")]);
+		}
+
+
+		StateHasChanged();
+	}
+
+
+	async Task NodeCommandHandler(eNodeCommands cmd)
+	{
+		if( cmd == eNodeCommands.Edit )
+		{
+			EditMode = true;
+		}
+		else if (cmd == eNodeCommands.Cancel)
+		{
+			EditMode = false;
+			// relaod data
+			await LoadNode();
+			snackbar.Add("edit cancelled", Severity.Info);
+		}
+		else if (cmd == eNodeCommands.Save)
+		{
+			var resp = await vm.SaveNodeDescription();
+			if( !resp.Success )
+			{
+				snackbar.Add(resp.Message, Severity.Error);
+			}
+			else
+			{
+				snackbar.Add("Data saved", Severity.Success);
+			}
+			EditMode = false;
+		}
+		else if (cmd == eNodeCommands.Delete)
+		{
+			var isRoot = vm.IsRootNodeSelected;
+			var grpId = vm.Model.Group.Id;
+
+			var res = await srvDialog.ShowMessageBox("Warning", "Do you really want to delete this node?", "Yes", "No");
+			if( res != null)
+			{
+				await vm.DeleteNodeAsync(vm.SelectedNode);
+
+				if( isRoot )
+				{
+					nm.NavigateTo($"group/{grpId}");
+				}
+			}
+		}
+		else if ( cmd == eNodeCommands.AddAnnotation )
+		{
+			await AddAnnotation();
+		}
+		else if (cmd == eNodeCommands.AddAttachment)
+		{
+			await AddFiles();
+		}
+		StateHasChanged();
+	}
+
+
+	async Task AddAnnotation()
+	{
+		await vm.ShowNewAnnotationDialog();
+	}
+
+	async Task AddFiles()
+	{
+		var parameters = new DialogParameters<NodeAddImageDialog> { { x => x.Model, vm.Model } };
+		var dialog = await srvDialog.ShowAsync<NodeAddImageDialog>("Add Images", parameters);
+		var result = await dialog.Result;
+		if( !result.Canceled )
+		{
+			await vm.ReloadNodeAsync();
+		}
+	}
+
+	private async Task ShowProfile()
+	{
+		await srvDialog.ShowProfile(await srvCache.GetProfileAsync(vm.Model.Owner.UserId));
+	}
+
+
+
+
+	void PropertyChangedHandler(object sender, PropertyChangedEventArgs e)
+	{
+		StateHasChanged();
+	}
+
+	public void Dispose()
+	{
+		vm.PropertyChanged -= PropertyChangedHandler;
+	}
+
+}

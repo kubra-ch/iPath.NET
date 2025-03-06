@@ -1,0 +1,180 @@
+﻿@using System.Security.Claims
+@using iPath.Application.Authentication
+@implements IAppState
+
+<CascadingValue Value="this">
+    @ChildContent
+</CascadingValue>
+
+@code {
+    [Parameter]
+    public RenderFragment ChildContent { get; set; }
+
+    [Inject]
+    ILocalStorageService localStorage { get; set; }
+
+    [Inject]
+    public AuthenticationStateProvider authenticationStateProvider { get; set; }
+
+    [Inject]
+    public IAuthManager authManager { get; set; }
+
+    [Inject]
+    public IStringLocalizer T { get; set; }
+
+
+    private readonly string StorageKey = "MyAppState";
+    private readonly int StorageTimeoutInSeconds = 300;
+
+    bool loaded = false;
+
+
+    // temporary properties => not persistaed into local storage
+    public DateTime LastChanged { get; set; }
+    public int? activeGroupId;
+    public List<int> activeNodeIds = null!;
+    private UserDTO _sessionUser = new UserDTO { UserId = 0, Username = "anonymous" };
+    public UserDTO SessionUser => _sessionUser;
+
+
+    // persisted properties (IAppState)
+    private bool _DarkTheme;
+    public bool DarkTheme
+    {
+        get => _DarkTheme;
+        set
+        {
+            _DarkTheme = value;
+            SaveStateValue(nameof(DarkTheme), _DarkTheme);
+        }
+    }
+
+
+
+    // functionality
+    private List<EventCallback<StatePropertyChangedArgs>> Callbacks = new();
+
+    public void RegisterCallback(EventCallback<StatePropertyChangedArgs> callback)
+    {
+        if (!Callbacks.Contains(callback))
+            Callbacks.Add(callback);
+    }
+
+
+    private void NotifyPropertyChanged(StatePropertyChangedArgs args)
+    {
+        foreach (var callback in Callbacks)
+        {
+            try
+            {
+                callback.InvokeAsync(args);
+            }
+            catch { }
+        }
+    }
+
+
+    private void SaveStateValue(string PropertyName, object Value)
+    {
+        StateHasChanged();
+        NotifyPropertyChanged(new(PropertyName, Value));
+        if (loaded)
+        {
+            new Task(async () =>
+            {
+                await Save();
+            }).Start();
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await Load();
+            loaded = true;
+            StateHasChanged();
+        }
+    }
+
+    private async Task Save()
+    {
+        if (!loaded) return;
+
+        LastChanged = DateTime.Now;
+        var state = (IAppState)this;
+        try
+        {
+            await localStorage.SetItemAsync<IAppState>(StorageKey, state);
+        }
+        catch (Exception ex)
+        {
+
+        }
+
+    }
+
+    private async Task Load()
+    {
+        try
+        {
+            var json = await localStorage.GetItemAsStringAsync(StorageKey);
+            if (json == null || json.Length == 0) return;
+            var state = System.Text.Json.JsonSerializer.Deserialize<AppState>(json);
+            if (state != null)
+            {
+                if (DateTime.Now.Subtract(state.LastChanged).TotalSeconds <= StorageTimeoutInSeconds)
+                {
+                    var t = typeof(IAppState);
+                    var props = t.GetProperties();
+                    foreach (var prop in props)
+                    {
+                        if (prop.Name != "LastChanged")
+                        {
+                            object val = prop.GetValue(state);
+                            prop.SetValue(this, val, null);
+                        }
+                    }
+                }
+            }
+        }
+        catch { }
+    }
+
+
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        if( authenticationStateProvider != null )
+        {
+            authenticationStateProvider.AuthenticationStateChanged += AuthenticationStateChangedHandler;
+            AuthenticationStateChangedHandler(authenticationStateProvider.GetAuthenticationStateAsync());
+        }
+    }
+
+    private async void AuthenticationStateChangedHandler(Task<AuthenticationState> e)
+    {
+        var newState = await e;
+
+        if( newState.User.Identity.IsAuthenticated )
+        {
+            var name = newState.User.Identity.Name;
+            var id = newState.User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.NameIdentifier)?.Value;
+            id ??= "0";
+            _sessionUser = new UserDTO { UserId = int.Parse(id), Username = name };
+        }
+        else
+        {
+            _sessionUser = new UserDTO { UserId = 0, Username = "anonymous" };
+        }
+
+        if( newState != null)
+        {
+            authManager.Init(newState.User);            
+        }
+    }
+
+
+
+}

@@ -1,0 +1,47 @@
+﻿@inject IStringLocalizer T
+
+<MudDialog>
+	<TitleContent>
+		<MudText Typo="Typo.h6">@T["New Group"]</MudText>
+	</TitleContent>
+	<DialogContent>		
+		<div style="padding: 1em; width: 500px;">
+			<MudForm Spacing="4">
+				<MudTextField Label=@T["Name"] Variant="Variant.Filled" For="@(() => Model.Name)" @bind-Value="Model.Name" Immediate="true" />
+				<MudTextField Label=@T["Purpose"] Variant="Variant.Outlined" For="@(() => Model.Purpose)" @bind-Value="Model.Purpose" Lines="5" Immediate="true" />
+			</MudForm>
+		</div>
+	</DialogContent>
+	<DialogActions>
+		<MudButton Color="Color.Primary" OnClick="Submit">@T["Save"]</MudButton>
+		<MudButton OnClick="Cancel">@T["Cancel"]</MudButton>
+	</DialogActions>
+</MudDialog>
+
+
+@code {
+	[CascadingParameter]
+	private IMudDialogInstance dlg { get; set; }
+
+	[CascadingParameter]
+	CascadingAppState appState { get; set; }
+
+	[Parameter]
+	public CreateGroupCommand Model { get; set; }
+
+
+	MudForm form;
+	bool success;
+	string[] errors = { };
+
+
+	private async Task Submit()
+	{
+		Model.Owner ??= appState.SessionUser;
+		dlg.Close(DialogResult.Ok(Model));
+    }
+
+
+    private void Cancel() => dlg.Cancel();
+
+}

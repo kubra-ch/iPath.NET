@@ -1,0 +1,100 @@
+﻿@page "/test"
+
+
+@using iPath.UI.Components.Nodes.ViewModels
+@inject ISnackbar Snackbar
+@inject NodeDetailViewModel vm
+
+
+<MudStack Style="width: 100%">
+    <MudFileUpload T="IReadOnlyList<IBrowserFile>"
+                    @ref="@_fileUpload"
+                    OnFilesChanged="OnInputFileChanged"
+                    AppendMultipleFiles
+                    Hidden="@false"
+                    InputClass="absolute mud-width-full mud-height-full overflow-hidden z-10"
+                    InputStyle="opacity:0"
+                    tabindex="-1"
+                    @ondrop="@ClearDragClass"
+                    @ondragenter="@SetDragClass"
+                    @ondragleave="@ClearDragClass"
+                    @ondragend="@ClearDragClass">
+        <ActivatorContent>
+            <MudPaper Height="300px" Outlined="true" Class="@_dragClass">
+                <MudText Typo="Typo.h6">
+                    Drag and drop files here or click
+                </MudText>
+                <div>
+                @foreach (var file in _files)
+                {
+                    <MudChip T="IBrowserFile" Color="Color.Dark" Text="@file.Name" tabindex="-1" OnClose="RemoveFile" />
+                }
+                </div>
+            </MudPaper>
+        </ActivatorContent>
+    </MudFileUpload>
+</MudStack>
+<div>
+    @foreach (var file in _files)
+    {
+        <MudChip T="IBrowserFile" Color="Color.Dark" Text="@file.Name" tabindex="-1" OnClose="RemoveFile" />
+    }
+</div>
+
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; }
+
+    [Parameter]
+    public NodeModel Model { get; set; }
+
+
+    private const string DefaultDragClass = "relative rounded-lg border-2 border-dashed pa-4 mt-4 mud-width-full mud-height-full";
+    private string _dragClass = DefaultDragClass;
+
+    private readonly List<IBrowserFile> _files = new();
+    private MudFileUpload<IReadOnlyList<IBrowserFile>>? _fileUpload;
+
+    private async Task ClearAsync()
+    {
+        await (_fileUpload?.ClearAsync() ?? Task.CompletedTask);
+        ClearDragClass();
+    }
+
+    private Task OpenFilePickerAsync()
+        => _fileUpload?.OpenFilePickerAsync() ?? Task.CompletedTask;
+
+    private void OnInputFileChanged(InputFileChangeEventArgs e)
+    {
+        ClearDragClass();
+        var uploads = e.GetMultipleFiles();
+        _files.AddRange(uploads);
+    }
+
+    private void RemoveFile(MudChip<IBrowserFile> chip)
+    {
+        if (_files.Contains(chip.Value))
+        {
+            _files.Remove(chip.Value);
+        }
+    }
+
+    private async Task Upload()
+    {
+        // Upload the files here
+        Snackbar.Configuration.PositionClass = Defaults.Classes.Position.TopCenter;
+        Snackbar.Add("TODO: Upload your files!");
+    }
+
+    private void SetDragClass()
+        => _dragClass = $"{DefaultDragClass} mud-border-primary";
+
+    private async Task ClearDragClass() => _dragClass = DefaultDragClass;
+
+    private async Task Cancel()
+    {
+        MudDialog.Cancel();
+    }
+
+}

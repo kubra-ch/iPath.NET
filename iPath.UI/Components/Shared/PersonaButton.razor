@@ -1,0 +1,29 @@
+﻿
+<MudMenu>
+    <ActivatorContent>
+        <MudBadge Color="Color.Success" Overlap="true" Bordered="true">
+            <MudAvatar>@Profile?.Initials</MudAvatar>
+        </MudBadge>
+    </ActivatorContent>
+    <ChildContent>
+        <MudMenuItem Label="Profile" Icon="@Icons.Material.Filled.Person" Href="/account/myprofile" />
+        <MudMenuItem Label="@ThemeLabel" Icon="@ThemeIcon" OnClick="ToggleDarkTheme" />
+        <MudMenuItem Label="Logout" Icon="@Icons.Material.Filled.ExitToApp" Href="/account/logout" />
+    </ChildContent>
+</MudMenu>
+
+@code {
+    [Parameter]
+    public UserProfile Profile { get; set; }
+
+    [CascadingParameter]
+    CascadingAppState appState { get; set; }
+
+    void ToggleDarkTheme()
+    {
+        appState.DarkTheme = !appState.DarkTheme;
+    }
+
+    string ThemeLabel => !appState.DarkTheme ? "Theme (Dark)" : "Theme (Light)";
+    string ThemeIcon => !appState.DarkTheme ? Icons.Material.Filled.DarkMode : Icons.Material.Filled.LightMode;
+}

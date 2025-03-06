@@ -1,0 +1,16 @@
+﻿@inject NavigationManager nm
+
+@code {
+	[CascadingParameter]
+	private Task<AuthenticationState> authStateTask { get; set; }
+
+	protected override async Task OnInitializedAsync()
+	{
+		var authState = await authStateTask;
+		if( authState?.User?.Identity is null || !authState.User.Identity.IsAuthenticated )
+		{
+			var returnUrl = nm.ToBaseRelativePath(nm.Uri);
+			nm.NavigateTo("/account/login");
+		}
+	}
+}

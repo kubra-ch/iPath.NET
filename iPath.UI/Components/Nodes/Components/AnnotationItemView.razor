@@ -1,0 +1,51 @@
+﻿@using iPath.UI.Components.Nodes.ViewModels
+@inject IDataCache srvCache
+@inject IDialogService srvDialog
+
+
+<MudChat ChatPosition="ChatBubblePosition.Start">
+	<MudAvatar @onclick="ShowProfile">@Item.Owner.Initials</MudAvatar>
+	<MudChatHeader Name=@Item.Owner.Username Time=@Item.CreatedOn.ToString() />
+	<MudChatBubble @onmouseenter="@(() => Hovering = true)"
+	@onmouseleave="@(() => Hovering = false)">
+		@((MarkupString)Item.Text)
+		<MudPopover Open="@Hovering" Class="hoverarea"
+		AnchorOrigin="Origin.CenterRight"
+		TransformOrigin="Origin.BottomRight"
+		@onmouseenter="@(() => Hovering = true)"
+		@onmouseleave="@(() => Hovering = false)">
+			<div class="d-flex" style="width: 100%;" @onclick:stopPropagation="true" @onclick:preventDefault="true">
+				<MudIcon Icon="@Icons.Material.Rounded.Delete" Size="Size.Small" @onclick="@Delete" />
+				<MudIcon Icon="@Icons.Material.Rounded.Reply" Size="Size.Small" @onclick="@Reply" />
+			</div>
+		</MudPopover>
+	</MudChatBubble>
+</MudChat>
+
+@code {
+	[Parameter]
+	public AnnotationModel Item { get; set; }
+
+	[Parameter]
+	public EventCallback<AnnotationModel> OnDelete { get; set; }
+
+	[Parameter]
+	public EventCallback<AnnotationModel> OnReply { get; set; }
+
+	private bool Hovering;
+
+	private async Task ShowProfile()
+	{
+		await srvDialog.ShowProfile(await srvCache.GetProfileAsync(Item.Owner.UserId));
+	}
+
+	async Task Delete()
+	{
+		await OnDelete.InvokeAsync(Item);
+	}
+
+	async Task Reply()
+	{
+		await OnReply.InvokeAsync(Item);
+	}
+}

@@ -1,0 +1,82 @@
+﻿@implements IDisposable
+
+@using iPath.UI.Components.Nodes.ViewModels
+
+@inject ISnackbar snackbar
+@inject IJSRuntime JS
+@inject IHttpClientFactory httpFactory
+
+
+@if( !vm.IsRootNodeSelected && !vm.SelectedNode.ChildNodes.Any() )
+{
+    <div class="ipath_image">
+        @if( vm.SelectedNode.IsImage)
+        {
+            <img src=@($"/api/files/{vm.SelectedNode.Id}") @onclick="@vm.GoNext" />
+        }
+        else
+        {
+            <MudIcon Size="Size.Large" Icon=@vm.SelectedNode.FileIcon />
+        }
+        <div class="image_info">@vm.SelectedNode.GalleryCaption.ShortenTo(50)</div>
+    </div>
+}
+else
+{
+    <div class="ipath_section_header">
+        <div class="ipath_header_title">Gallery</div>
+        <div class="ipath_header_actions">
+            <MudTooltip Text="Sort Images">
+                <MudIcon Size="Size.Small" Icon="@Icons.Material.Rounded.Sort" @onclick="ActivateSort"/>
+            </MudTooltip>
+        </div>
+    </div>
+
+    @if (vm.Model != null)
+    {
+        @if( !Sorting )
+        {
+            <NodeGalleryView vm="@vm" />
+        }
+        else
+        {
+            <NodeGallerySortable vm="@vm" OnSortingFinished="SortingFinished" />
+        }
+    }
+}
+
+@code {
+    [Parameter]
+    public NodeDetailViewModel vm { get; set; }
+
+
+    protected override void OnParametersSet()
+    {
+        vm.PropertyChanged += PropertyChangedHandler;
+    }
+
+    async void PropertyChangedHandler(object sender, PropertyChangedEventArgs e)
+    {
+        StateHasChanged();
+    }
+
+
+    bool Sorting;
+
+    void ActivateSort()
+    {
+        Sorting = true;
+    }
+
+    void SortingFinished(bool sorted)
+    {
+        Sorting = false;
+        StateHasChanged();
+    }
+
+
+    public void Dispose()
+    {
+        vm.PropertyChanged -= PropertyChangedHandler;
+    }
+}

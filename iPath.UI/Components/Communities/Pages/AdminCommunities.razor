@@ -1,0 +1,181 @@
+﻿@page "/admin/communities"
+@using iPath.UI.Components.Communities
+@using iPath.UI.Components.Groups
+
+@inject IStringLocalizer T
+@inject CommunityAdminViewModel vm
+@inject GroupAdminViewModel vmGroup
+@inject BreadCrumbService srvBreadcumbs
+
+
+<h2 class="ipath_topheader">@T["Community Administration"]</h2>
+
+<AuthorizeView Roles="Admin" Context="auth">
+    <NotAuthorized>
+        <NotAuthorizedWarning />
+    </NotAuthorized>
+    <Authorized>
+
+        <MudGrid>
+            <MudItem xs="12" md="6">
+                <MudTable T="Community" ServerData="ServerCommunityReload" Dense="true" Hover="true" @ref="comTable"
+                RowClass="cursor-pointer" RowClassFunc="@vm.SelectedRowClassFunc" OnRowClick="RowClickEvent" >
+                    <ToolBarContent>
+                        <MudText Typo="Typo.h6">@T["Communities"]</MudText>
+
+                        <MudSpacer />
+                        <MudToolBar>
+                            <MudTooltip Text=@T["Create a new community"]><MudIconButton Icon="@Icons.Material.Filled.Add" OnClick="CreateCommunity"/></MudTooltip>
+                            <MudTooltip Text=@T["Edit community"]><MudIconButton Icon="@Icons.Material.Filled.Edit" OnClick="UpdateCommunity" Disabled=@vm.EditDisabled /></MudTooltip>
+                            <MudTooltip Text=@T["Delete community"]><MudIconButton Icon="@Icons.Material.Filled.Delete" OnClick="DeleteCommunity" Disabled=@vm.EditDisabled /></MudTooltip>
+                        </MudToolBar>
+
+                        <MudSpacer />
+                        <MudTextField T="string" ValueChanged="@(s=>OnSearchCommunity(s))" Placeholder="Search" Adornment="Adornment.Start"
+                        AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+                    </ToolBarContent>
+                    <HeaderContent>
+                        <MudTh><MudTableSortLabel SortLabel="Id" T="Community">Id</MudTableSortLabel></MudTh>
+                        <MudTh><MudTableSortLabel SortLabel="Name" T="Community">Name</MudTableSortLabel></MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Id">@context.Id</MudTd>
+                        <MudTd DataLabel="Name">@context.Name</MudTd>
+                    </RowTemplate>
+                    <NoRecordsContent>
+                        <MudText>No matching records found</MudText>
+                    </NoRecordsContent>
+                    <LoadingContent>
+                        <MudText>Loading...</MudText>
+                    </LoadingContent>
+                    <PagerContent>
+                        <MudTablePager />
+                    </PagerContent>
+                </MudTable>
+            </MudItem>
+
+            <MudItem xs="12" md="6">
+                <MudTable T="GroupDTO" ServerData="ServerGroupReload" Dense="true" Hover="true" @ref="grpTable"
+                          RowClassFunc="@vmGroup.SelectedRowClassFunc" OnRowClick="GroupClick">
+                    <ToolBarContent>
+                        <MudText Typo="Typo.h6">@T["Groups"]</MudText>
+                        <MudSpacer />
+
+                        <MudSpacer />
+                        <MudToolBar>
+                            <MudTooltip Text=@T["Create a new group"]><MudIconButton Icon="@Icons.Material.Filled.Add" OnClick="CreateGroup" Disabled=@vm.EditDisabled /></MudTooltip>
+                            <MudTooltip Text=@T["Edit group"]><MudIconButton Icon="@Icons.Material.Filled.Edit" OnClick="UpdateGroup" Disabled=@vmGroup.EditDisabled /></MudTooltip>
+                            <MudTooltip Text=@T["Delete group"]><MudIconButton Icon="@Icons.Material.Filled.Delete" OnClick="DeleteGroup" Disabled=@vmGroup.EditDisabled /></MudTooltip>
+                        </MudToolBar>
+                    </ToolBarContent>
+                    <HeaderContent>
+                        <MudTh><MudTableSortLabel SortLabel="Id" T="Group">Id</MudTableSortLabel></MudTh>
+                        <MudTh><MudTableSortLabel SortLabel="Name" T="Group">Name</MudTableSortLabel></MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Id">@context.Id</MudTd>
+                        <MudTd DataLabel="Name">@context.Name</MudTd>
+                    </RowTemplate>
+                </MudTable>
+            </MudItem>
+        </MudGrid>
+
+    </Authorized>
+</AuthorizeView>
+
+
+@code {
+    [CascadingParameter]
+    CascadingAppState appState { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        srvBreadcumbs.LoadItems([
+            new("Home", "/"),
+            new("Admin", "/admin"),
+            new("Communities", null)
+        ]);
+    }
+
+
+    private MudTable<Community> comTable;
+    private string searchString;
+
+    private async Task<TableData<Community>> ServerCommunityReload(TableState state, CancellationToken ctk)
+    {
+        return await vm.GetCommunityTableData(state, searchString, ctk);
+    }
+
+    private void OnSearchCommunity(string text)
+    {
+        searchString = text;
+        comTable.ReloadServerData();
+    }
+
+
+    async Task CreateCommunity()
+    {
+        var resp = await vm.CreateCommunity();
+        if (resp.Success) 
+            comTable.ReloadServerData();
+    }
+
+    async Task UpdateCommunity()
+    {
+        var resp = await vm.UpdateCommunity();
+        if (resp.Success) 
+            comTable.ReloadServerData();
+    }
+
+    async Task DeleteCommunity()
+    {
+        if( await vm.DeleteCommunity() )
+            comTable.ReloadServerData();
+    }
+
+    private async Task RowClickEvent(TableRowClickEventArgs<Community> e)
+    {
+        await vm.LoadSelectedCommunity(e.Item.Id);
+        await grpTable.ReloadServerData();
+    }
+
+
+
+
+
+    private MudTable<GroupDTO> grpTable;
+    private async Task<TableData<GroupDTO>> ServerGroupReload(TableState state, CancellationToken ctk)
+    {
+        return await vmGroup.GetTableData(state, vm.SelectedCommunity, ctk);
+    }
+
+    private async Task GroupClick(TableRowClickEventArgs<GroupDTO> e)
+    {
+        await vmGroup.LoadSelectedGroup(e.Item.Id);
+    }
+
+
+
+    async Task CreateGroup()
+    {
+        if( vm.SelectedCommunity != null )
+        {
+            var resp = await vmGroup.CreateGroup(vm.SelectedCommunity);
+            if (resp.Success)
+                grpTable.ReloadServerData();
+        }
+    }
+    
+    async Task UpdateGroup()
+    {
+        var resp = await vmGroup.UpdateGroup();
+        if (resp.Success)
+            grpTable.ReloadServerData();
+    }
+
+    async Task DeleteGroup()
+    {
+        if (await vmGroup.DeleteGroup())
+            grpTable.ReloadServerData();
+    }
+}

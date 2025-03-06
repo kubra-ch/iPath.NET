@@ -1,0 +1,102 @@
+﻿@page "/admin/groups"
+@using System.Linq.Dynamic.Core
+
+
+@inject NewDB ctx
+@inject BreadCrumbService srvBreadcumbs
+
+
+<h3 class="ipath_topheader">Group Administration</h3>
+
+<AuthorizeView Roles="Admin" Context="auth">
+    <NotAuthorized>
+        <NotAuthorizedWarning />
+    </NotAuthorized>
+    <Authorized>
+
+        <MudTable ServerData="ServerReload" Dense="true" Hover="true" @ref="table">
+            <ToolBarContent>
+                <MudText Typo="Typo.h6">Groups</MudText>
+                <MudSpacer />
+                <MudTextField T="string" ValueChanged="@(s=>OnSearch(s))" Placeholder="Search" Adornment="Adornment.Start"
+                AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+            </ToolBarContent>
+            <HeaderContent>
+                <MudTh><MudTableSortLabel SortLabel="Id" T="Group">Id</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel SortLabel="Name" T="Group">Name</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel SortLabel="Purpose" T="Group">Purpose</MudTableSortLabel></MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Id">@context.Id</MudTd>
+                <MudTd DataLabel="Name">@context.Name</MudTd>
+                <MudTd DataLabel="Purpose">@context.Settings.Purpose</MudTd>
+            </RowTemplate>
+            <NoRecordsContent>
+                <MudText>No matching records found</MudText>
+            </NoRecordsContent>
+            <LoadingContent>
+                <MudText>Loading...</MudText>
+            </LoadingContent>
+            <PagerContent>
+                <MudTablePager />
+            </PagerContent>
+        </MudTable>
+
+    </Authorized>
+</AuthorizeView>
+
+
+@code {
+    [CascadingParameter]
+    CascadingAppState appState { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        srvBreadcumbs.LoadItems([
+            new("Home", "/"),
+            new("Admin", "/admin"),
+            new("Groups", null)
+        ]);
+    }
+
+
+    private MudTable<Group> table;
+    private string searchString;
+
+
+
+    private async Task<TableData<Group>> ServerReload(TableState state, CancellationToken token)
+    {
+        var q = ctx.Groups.AsNoTracking().AsQueryable();
+        if( !string.IsNullOrEmpty(searchString) )
+        {
+            q = q.Where(g => g.Name.Contains(searchString));
+        }
+
+        var totalItems = await q.CountAsync();
+
+        if (!string.IsNullOrEmpty(state.SortLabel))
+        {
+
+            if (state.SortLabel == "Purpose")
+            {
+                q = q.OrderByDirection(state.SortDirection, g => g.Settings.Purpose);
+            }
+            else
+            {
+                var sort = state.SortLabel + " " + (state.SortDirection == SortDirection.Ascending ? "ASC" : "DESC");
+                q = q.OrderBy(sort);
+            }
+        }
+
+        var items = await q.Skip(state.Page * state.PageSize).Take(state.PageSize).ToArrayAsync();
+
+        return new TableData<Group>() { TotalItems = totalItems, Items = items };
+    }
+
+    private void OnSearch(string text)
+    {
+        searchString = text;
+        table.ReloadServerData();
+    }
+}

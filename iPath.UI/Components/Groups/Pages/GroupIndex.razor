@@ -1,0 +1,71 @@
+﻿@page "/groups"
+
+@inject GroupListViewModel vm;
+@inject BreadCrumbService srvBreadcumbs
+
+
+<AuthorizeView Context="auth">
+    <NotAuthorized>
+        please <MudLink Href="login">login</MudLink> to access your cases
+    </NotAuthorized>
+    <Authorized>
+        <MudTable ServerData="ServerReload" @ref="table"
+        RowsPerPage="25"
+        Bordered="false" Dense="true" Hover="true"
+        Class="ipath_table">
+            <ToolBarContent>
+                <MudText Typo="Typo.h6">My Groups</MudText>
+                <MudSpacer />
+                <MudTextField T="string" ValueChanged="@(s=>OnSearch(s))" Placeholder="Search" Adornment="Adornment.Start"
+                AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+            </ToolBarContent>
+            <HeaderContent>
+                <MudTh><MudTableSortLabel SortLabel="Name" T="GroupDTO" InitialDirection="SortDirection.Ascending">Name</MudTableSortLabel></MudTh>
+                <MudTh>Cases</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Name"><MudLink Href=@($"/group/{context.Id}")>@context.Name</MudLink></MudTd>
+                <MudTd DataLabel="Cases">@context.NodeCount</MudTd>
+            </RowTemplate>
+            <NoRecordsContent>
+                <MudText>No matching records found</MudText>
+            </NoRecordsContent>
+            <LoadingContent>
+                <MudText>Loading...</MudText>
+            </LoadingContent>
+            <PagerContent>
+                <MudTablePager />
+            </PagerContent>
+        </MudTable>
+    </Authorized>
+</AuthorizeView>
+
+@code {
+    [CascadingParameter]
+    CascadingAppState appState { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        srvBreadcumbs.LoadItems([
+            new("Home", "/"),
+            new("My Groups", null)
+        ]);
+    }
+
+    private MudTable<GroupDTO> table;
+    private string searchString;
+
+    private async Task<TableData<GroupDTO>> ServerReload(TableState state, CancellationToken ctk)
+    {
+        vm.UserId = appState.SessionUser.UserId;
+        return await vm.GetTableData(state, searchString, ctk);
+    }
+
+    private void OnSearch(string text)
+    {
+        searchString = text;
+        table.ReloadServerData();
+    }
+
+}
+

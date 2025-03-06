@@ -1,0 +1,89 @@
+﻿@using iPath.UI.Components.Nodes.ViewModels
+@implements IDisposable
+
+@if (ExpandDescription)
+{
+	<div class="ipath_node">
+		<div class="ipath_node_title">
+			<div class="ipath_bold">@vm.Model.Description.Title</div>
+			<div>@vm.Model.Description.Subtitle</div>
+		</div>
+		<div class="ipath_node_type">
+			<div class="ipath_bold">Type:</div>
+			<div>@vm.Model.Description.CaseType</div>
+		</div>
+		<div class="ipath_node_sender">
+			<div class="ipath_bold">Sender:</div>
+			<MudLink OnClick="@vm.ShowProfileAsync">@vm.Model.Owner.Username</MudLink>
+		</div>
+		<div class="ipath_node_date">
+			<div>@vm.Model.CreatedOn.ToString()</div>
+			<div>
+				<MudLink Href=@($"/group/{vm.Model.Group.Id}")>@vm.Model.Group.Name</MudLink>
+			</div>
+		</div>
+	</div>
+	<div class="ipath_node_description">
+		@vm.Model.DescriptionHtml
+	</div>
+}
+else
+{
+	<div class="ipath_node">
+		<div class="ipath_node_title2">
+			<div><b>Filename: </b>@vm.SelectedNode.GalleryCaption.ShortenTo(50)</div>
+			<div onclick="@ToggleDescription">
+				<MudIcon Icon="@ExpandIcon" Size="Size.Small" />
+				<b>@vm.Model.Description.Title</b>
+			</div>
+			<div class="ipath_node_description" hidden="@HideDescription">
+				@vm.Model.DescriptionHtml
+			</div>
+		</div>
+		<div class="ipath_node_sender2">
+			<div><b>Sender:</b> <MudLink OnClick="@vm.ShowProfileAsync">@vm.Model.Owner.Username</MudLink></div>
+			<div><b>Type:</b> @vm.Model.Description.CaseType</div>
+		</div>
+		<div class="ipath_node_date2">
+			<div>@vm.Model.CreatedOn.ToString()</div>
+			<div>@vm.Model.Group.Name</div>
+		</div>
+	</div>
+}
+
+
+
+@code {
+	[Parameter]
+	public NodeDetailViewModel vm { get; set; }
+
+	bool ExpandDescription => vm.IsRootNodeSelected;
+
+
+	bool HideDescription = true;
+
+	string ExpandIcon => HideDescription ? Icons.Material.Filled.ExpandMore : Icons.Material.Filled.ExpandLess;
+
+	void ToggleDescription()
+	{
+		HideDescription = !HideDescription;
+	}
+
+
+
+	protected override async Task OnParametersSetAsync()
+	{
+		vm.PropertyChanged -= PropertyChangedHandler;
+		vm.PropertyChanged += PropertyChangedHandler;
+	}
+
+	void PropertyChangedHandler(object sender, PropertyChangedEventArgs e)
+	{
+		StateHasChanged();
+	}
+
+	public void Dispose()
+	{
+		vm.PropertyChanged -= PropertyChangedHandler;
+	}
+}

@@ -1,0 +1,30 @@
+﻿@using iPath.Application.SnomedCT
+
+@inject IDataAccess srvData
+
+<MudAutocomplete T="UserDTO"
+				 @bind-Value="_value"
+				 @bind-Text="inputText"
+				 SearchFunc="Search"
+				 Variant="Variant.Outlined"
+				 Label="@Label"
+				 ShowProgressIndicator="true"
+				 CoerceText="true"
+				 Clearable="true" />
+
+
+@code {
+    [Parameter]
+    public string? Label { get; set; }
+
+    UserDTO _value;
+    string inputText;
+
+
+    private async Task<IEnumerable<UserDTO>> Search(string value, CancellationToken token)
+    {
+        var resp = await srvData.Send(new GetUserListQuery(value));
+        return resp.Data;
+    }
+
+}
